@@ -2,7 +2,13 @@
  * Created by yuliang on 2017/6/30.
  */
 
+const koaValidate = require('koa-validate')
+
 module.exports = app => {
+
+    koaValidate(app)
+
+    app.context.success.bind(app)
 
     app.on('error', (err, ctx) => {
         if (!err || !ctx) {

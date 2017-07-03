@@ -49,14 +49,14 @@ module.exports = app => {
          * @param condition 资源查找条件
          * @returns {Promise.<*>}
          */
-        async getResourceList(condition) {
+        async getResourceList(condition, page, pageSize) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return knex.resource('resources').where(condition).select()
+            return knex.resource('resources').where(condition).limit(pageSize).offset((page - 1) * pageSize).select()
         }
 
         /**

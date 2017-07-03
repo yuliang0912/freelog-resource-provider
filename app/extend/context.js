@@ -32,6 +32,18 @@ module.exports = {
             });
     },
 
+    /**
+     * 校验参数,有错误就抛出异常
+     * @returns {exports}
+     */
+    validate(){
+        if (!this.errors) {
+            return this
+        }
+
+        let msg = '参数校验失败,details:' + JSON.stringify(this.errors);
+        throw Object.assign(new Error(msg), {errCode: this.app.errCodeEnum.paramTypeError});
+    },
 
     /**
      * 构建API返回数据格式
@@ -41,7 +53,8 @@ module.exports = {
      * @param data {object} 返回数据
      * @returns {{ret: number, errcode: number, msg: string}}
      */
-    buildReturnObject  (ret, errCode, msg, data)  {
+    buildReturnObject(ret, errCode, msg, data)
+    {
         let is = this.app.type
         let result = {
             ret: is.int32(ret) ? ret : app.retCodeEnum.success,
