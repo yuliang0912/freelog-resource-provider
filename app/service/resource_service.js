@@ -11,23 +11,55 @@ module.exports = app => {
          * @param sharePolicy 资源分享策略
          * @returns {Promise.<*>}
          */
-        async createResource(resource, sharePolicy) {
+        // async createResource(resource, sharePolicy) {
+        //     let {type, knex} = this.app
+        //
+        //     if (!type.object(resource) || !type.object(sharePolicy)) {
+        //         return Promise.reject(new Error("resource or sharePolicy is not object"))
+        //     }
+        //
+        //     return knex.resource.transaction(trans => {
+        //         let task1 = knex.resource('resources').transacting(trans).insert(resource)
+        //         let task2 = knex.resource('resourceSharePolicy').transacting(trans).insert(sharePolicy)
+        //
+        //         return Promise.all([task1, task2]).then(trans.commit).catch(err => {
+        //             trans.rollback()
+        //             return err
+        //         })
+        //     })
+        // }
+
+        /**
+         * 资源是否存在
+         * @param condition
+         * @returns {Promise.<void>}
+         */
+        async exists(condition) {
             let {type, knex} = this.app
 
-            if (!type.object(resource) || !type.object(sharePolicy)) {
-                return Promise.reject(new Error("resource or sharePolicy is not object"))
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("resource is not object"))
             }
 
-            return knex.resource.transaction(trans => {
-                let task1 = knex.resource('resources').transacting(trans).insert(resource)
-                let task2 = knex.resource('resourceSharePolicy').transacting(trans).insert(sharePolicy)
-
-                return Promise.all([task1, task2]).then(trans.commit).catch(err => {
-                    trans.rollback()
-                    return err
-                })
-            })
+            return knex.resource('resources').where(condition).select('resourceId').first()
         }
+
+
+        /**
+         * 创建资源信息
+         * @param resource
+         * @returns {Promise.<*>}
+         */
+        async createResource(resource) {
+            let {type, knex} = this.app
+
+            if (!type.object(resource)) {
+                return Promise.reject(new Error("resource is not object"))
+            }
+
+            return knex.resource('resources').insert(resource)
+        }
+
 
         /**
          * 获取单个资源信息

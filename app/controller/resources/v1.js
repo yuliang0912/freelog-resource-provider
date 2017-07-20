@@ -4,8 +4,8 @@
  */
 
 const sendToWormhole = require('stream-wormhole');
-const fileBodyParse = require('../../extend/tools/file_body_parse')
 const upload = require('../../extend/upload/upload_factory')
+//const fileBodyParse = require('../../extend/tools/file_body_parse')
 
 module.exports = app => {
     return class ResourcesController extends app.Controller {
@@ -16,8 +16,8 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let page = ctx.checkQuery("page").default(1).toInt().value
-            let pageSize = ctx.checkQuery("pageSize").default(1).toInt().value
+            let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
+            let pageSize = ctx.checkQuery("pageSize").default(1).gt(0).toInt().value
             let condition = {
                 userId: 1
             }
@@ -66,7 +66,8 @@ module.exports = app => {
             if (!ctx.is("multipart")) {
                 ctx.error('资源创建只能接受multipart类型的表单数据')
             }
-            const stream = await ctx.getFileStream();
+
+            const stream = await ctx.getFileStream()
             ctx.request.body = stream.fields
 
             let meta = ctx.checkBody('meta').toJson().value
@@ -77,6 +78,7 @@ module.exports = app => {
             if (!stream || !stream.filename) {
                 ctx.errors.push({file: 'Can\'t found upload file'})
             }
+
             ctx.validate()
 
             let fileSha1Async = ctx.helper.fileSha1Helper.getFileSha1ByStream(stream)
@@ -85,19 +87,25 @@ module.exports = app => {
             const resourceInfo = await Promise.all([fileSha1Async, fileUploadAsync]).spread((fileSha1, file) => {
                 return {
                     resourceId: fileSha1,
-                    resourceType,
-                    meta, status,
+                    resourceType, status,
+                    meta: JSON.stringify(meta),
                     resourceUrl: file.url,
                     userId: 1,
                     resourceName: resourceName === '' ? stream.filename : resourceName,
-                    mimeType: stream.mimetype
+                    mimeType: stream.mimeType
                 }
             }).catch(err => {
                 sendToWormhole(stream)
                 ctx.error(err)
             })
 
-            ctx.success(resourceInfo)
+            await ctx.service.resourceService.exists({resourceId: resourceInfo.resourceId}).then(existsResource => {
+                existsResource && ctx.error('资源已经被创建,不能创建重复的资源')
+            })
+
+            await ctx.service.resourceService.createResource(resourceInfo)
+                .then(data => ctx.success(resourceInfo))
+                .catch(err => ctx.error(err))
         }
 
         /**
@@ -107,6 +115,10 @@ module.exports = app => {
          *
          */
         async update(ctx) {
+            let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            ctx.validate()
+
+            
             ctx.error("资源不接受更新")
         }
 

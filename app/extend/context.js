@@ -9,7 +9,6 @@ module.exports = {
      * @returns {exports}
      */
     success(data){
-
         let {retCodeEnum, errCodeEnum} = this.app
 
         this.body = this.buildReturnObject(retCodeEnum.success, errCodeEnum.success, 'success', data)
