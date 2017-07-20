@@ -12,7 +12,7 @@
 const retCodeEnum = {
     //服务器维护中
     "serverRepair": -10,
-    //常结果
+    //正常结果
     "success": 0,
     //程序内部错误
     "serverError": 1,
@@ -71,6 +71,8 @@ const errCodeEnum = {
     "accessTokenTimeOutError": 27,
     //jtw错误
     "jwtTokenAuthError": 28,
+    //没有权限,被拒绝
+    "refuse": 29,
     //异常占位区
     "apiError": 100,
 }

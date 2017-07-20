@@ -8,8 +8,6 @@ module.exports = app => {
 
     koaValidate(app)
 
-    app.context.success.bind(app)
-
     app.on('error', (err, ctx) => {
         if (!err || !ctx) {
             return
@@ -26,4 +24,6 @@ module.exports = app => {
     process.on('uncaughtException', err => {
         console.log("process-on-uncaughtException,请检查日志,[detail]:" + err.stack || err.toString())
     })
+
+    global.Promise = require('bluebird')
 }

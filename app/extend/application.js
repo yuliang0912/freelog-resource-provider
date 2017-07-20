@@ -6,6 +6,8 @@ const is = require('is-type-of')
 const knexClient = require('./tools/knex_client')
 const {retCodeEnum, errCodeEnum} = require('../enum/error_code')
 const knexInstall = Symbol("application#knexInstall")
+const resourceType = require('../enum/resource_type')
+const resourceStatus = require('../enum/resource_status')
 
 module.exports = (() => {
 
@@ -24,6 +26,16 @@ module.exports = (() => {
          * 二级错误码
          */
         errCodeEnum: errCodeEnum,
+
+        /**
+         * 资源类型
+         */
+        resourceType: resourceType,
+
+        /**
+         * 资源状态
+         */
+        resourceStatus: resourceStatus,
 
         /**
          * knex-DB操作

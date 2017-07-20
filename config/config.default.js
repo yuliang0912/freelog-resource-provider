@@ -27,11 +27,39 @@ module.exports = appInfo => {
         //     enable: false,
         // },
 
-        middleware: ['errorHandler'], //koaBodyparse
+        middleware: ['errorHandler'],
 
-        errorHandler: {},
+        /**
+         * DB-mysql相关配置
+         */
         dbConfig: dbConfig,
 
+        /**
+         * 上传文件相关配置
+         */
+        uploadConfig: {
+            curr: "aliOss",
+            aliOss: {
+                accessKeyId: "LTAIy8TOsSnNFfPb",
+                accessKeySecret: "Bt5yMbW89O7wMTVQsNUfvYfou5GPsL",
+                bucket: "freelog-shenzhen",
+                internal: false,
+                region: "oss-cn-shenzhen",
+                timeout: 180000
+            }
+        },
+
+        multipart: {
+            autoFields: true,
+            defaultCharset: 'utf8',
+            fieldNameSize: 100,
+            fieldSize: '100kb',
+            fields: 10,
+            fileSize: '10mb',
+            files: 10,
+            fileExtensions: [],
+            whitelist: null,
+        }
     }
 
     return config;

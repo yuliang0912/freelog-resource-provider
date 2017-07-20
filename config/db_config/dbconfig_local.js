@@ -9,41 +9,49 @@ module.exports = {
      * 用户相关DB配置
      */
     user: {
-        username: "root",
-        password: "yuliang@@",
-        database: "user_info",
-        debug: true,
-        config: {
-            host: "127.0.0.1",
-            port: 3306,
-            dialect: "mysql2",
-            timezone: "+08:00",
-            pool: {
-                maxConnections: 50,
-                minConnections: 2,
-                maxIdleTime: 10000
-            }
-        }
+        client: 'mysql2',
+        connection: {
+            host: '127.0.0.1',
+            user: 'root',
+            password: 'yuliang@@',
+            database: 'user_info',
+            charset: 'utf8',
+            timezone: '+08:00',
+            bigNumberStrings: true,
+            supportBigNumbers: true,
+            dateStrings: true,
+            connectTimeout: 10000
+        },
+        pool: {
+            maxConnections: 50,
+            minConnections: 2,
+        },
+        acquireConnectionTimeout: 10000,
+        debug: true
     },
 
     /**
      * 资源相关DB配置
      */
     resource: {
-        username: "root",
-        password: "yuliang@@",
-        database: "fr_resource",
-        debug: true,
-        config: {
-            host: "127.0.0.1",
-            port: 3306,
-            dialect: "mysql2",
-            timezone: "+08:00",
-            pool: {
-                maxConnections: 50,
-                minConnections: 2,
-                maxIdleTime: 10000
-            }
-        }
+        client: 'mysql2',
+        connection: {
+            host: '127.0.0.1',
+            user: 'root',
+            password: 'yuliang@@',
+            database: 'fr_resource',
+            charset: 'utf8',
+            timezone: '+08:00',
+            bigNumberStrings: true,
+            supportBigNumbers: true,
+            dateStrings: true,
+            connectTimeout: 10000
+        },
+        pool: {
+            maxConnections: 50,
+            minConnections: 2,
+        },
+        acquireConnectionTimeout: 10000,
+        debug: true
     }
 }

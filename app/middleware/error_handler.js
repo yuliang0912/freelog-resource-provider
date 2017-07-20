@@ -9,6 +9,7 @@ module.exports = options => async (ctx, next) => {
         if (process.env.pm_id !== undefined) {
             ctx.set("X-Agent-Server-Id", process.env.pm_id)
         }
+        ctx.errors = []
         await next()
         if (ctx.response.status === 404 && ctx.body === undefined) {
             ctx.body = ctx.buildReturnObject(

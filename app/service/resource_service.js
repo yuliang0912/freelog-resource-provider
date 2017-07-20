@@ -59,6 +59,7 @@ module.exports = app => {
             return knex.resource('resources').where(condition).limit(pageSize).offset((page - 1) * pageSize).select()
         }
 
+
         /**
          * 获取资源分享策略
          * @param condition
@@ -80,7 +81,7 @@ module.exports = app => {
          * @param condition
          * @returns {Promise.<*>}
          */
-        async editResource(model, condition) {
+        async updateResource(model, condition) {
             let {type, knex} = this.app
 
             if (!type.object(model)) {

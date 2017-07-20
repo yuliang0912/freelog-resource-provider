@@ -3,13 +3,13 @@
  */
 
 module.exports = {
-
     /**
      * 定义成功返回的API数据结构
      * @param data
      * @returns {exports}
      */
     success(data){
+
         let {retCodeEnum, errCodeEnum} = this.app
 
         this.body = this.buildReturnObject(retCodeEnum.success, errCodeEnum.success, 'success', data)
@@ -37,7 +37,7 @@ module.exports = {
      * @returns {exports}
      */
     validate(){
-        if (!this.errors) {
+        if (!this.errors || this.errors.length < 1) {
             return this
         }
 
@@ -59,10 +59,8 @@ module.exports = {
         let result = {
             ret: is.int32(ret) ? ret : app.retCodeEnum.success,
             errcode: is.int32(errCode) ? errCode : app.errCodeEnum.success,
-            msg: is.string(msg) || is.number(msg) ? msg.toString() : "success"
-        }
-        if (!is.undefined(data)) {
-            result.data = data
+            msg: is.string(msg) || is.number(msg) ? msg.toString() : "success",
+            data: is.nullOrUndefined(data) ? null : data
         }
         return result
     }
