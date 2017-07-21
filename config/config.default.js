@@ -27,7 +27,7 @@ module.exports = appInfo => {
         //     enable: false,
         // },
 
-        middleware: ['errorHandler'],
+        middleware: ['errorHandler', 'basiceAuth'],
 
         /**
          * DB-mysql相关配置

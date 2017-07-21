@@ -9,6 +9,7 @@ module.exports = {
      * @returns {exports}
      */
     success(data){
+
         let {retCodeEnum, errCodeEnum} = this.app
 
         this.body = this.buildReturnObject(retCodeEnum.success, errCodeEnum.success, 'success', data)
@@ -54,12 +55,12 @@ module.exports = {
      */
     buildReturnObject(ret, errCode, msg, data)
     {
-        let is = this.app.type
+        let {type, retCodeEnum, errCodeEnum} = this.app
         let result = {
-            ret: is.int32(ret) ? ret : app.retCodeEnum.success,
-            errcode: is.int32(errCode) ? errCode : app.errCodeEnum.success,
-            msg: is.string(msg) || is.number(msg) ? msg.toString() : "success",
-            data: is.nullOrUndefined(data) ? null : data
+            ret: type.int32(ret) ? ret : retCodeEnum.success,
+            errcode: type.int32(errCode) ? errCode : errCodeEnum.success,
+            msg: type.string(msg) || type.number(msg) ? msg.toString() : "success",
+            data: type.nullOrUndefined(data) ? null : data
         }
         return result
     }

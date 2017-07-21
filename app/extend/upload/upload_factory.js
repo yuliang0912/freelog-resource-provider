@@ -16,6 +16,10 @@ module.exports = uploadConfig => (function () {
         }
     }
 
+    const buildPathUrl = (resourceType, fileName) => {
+        return `resources/${resourceType}/${fileName}`.toLowerCase()
+    }
+
     return {
         /**
          * buffer形式上传
@@ -42,6 +46,3 @@ module.exports = uploadConfig => (function () {
     }
 })()
 
-const buildPathUrl = (resourceType, fileName) => {
-    return `resources/${resourceType}/${fileName}`
-}

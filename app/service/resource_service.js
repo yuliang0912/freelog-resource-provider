@@ -34,7 +34,7 @@ module.exports = app => {
          * @param condition
          * @returns {Promise.<void>}
          */
-        async exists(condition) {
+        exists(condition) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {
@@ -50,7 +50,7 @@ module.exports = app => {
          * @param resource
          * @returns {Promise.<*>}
          */
-        async createResource(resource) {
+        createResource(resource) {
             let {type, knex} = this.app
 
             if (!type.object(resource)) {
@@ -66,7 +66,7 @@ module.exports = app => {
          * @param condition 查询条件
          * @returns {Promise.<*>}
          */
-        async getResourceInfo(condition) {
+        getResourceInfo(condition) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {
@@ -81,7 +81,7 @@ module.exports = app => {
          * @param condition 资源查找条件
          * @returns {Promise.<*>}
          */
-        async getResourceList(condition, page, pageSize) {
+        getResourceList(condition, page, pageSize) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {
@@ -97,7 +97,7 @@ module.exports = app => {
          * @param condition
          * @returns {Promise.<*>}
          */
-        async getResourceSharePolicy(condition) {
+        getResourceSharePolicy(condition) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {
@@ -113,7 +113,7 @@ module.exports = app => {
          * @param condition
          * @returns {Promise.<*>}
          */
-        async updateResource(model, condition) {
+        updateResource(model, condition) {
             let {type, knex} = this.app
 
             if (!type.object(model)) {
@@ -129,7 +129,7 @@ module.exports = app => {
          * @param condition
          * @returns {Promise.<*>}
          */
-        async editSharePolicy(model, condition) {
+        editSharePolicy(model, condition) {
             let {type, knex} = this.app
 
             if (!type.object(model)) {

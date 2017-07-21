@@ -11,7 +11,7 @@ module.exports = options => async (ctx, next) => {
         }
         ctx.errors = []
         await next()
-        if (ctx.response.status === 404 && ctx.body === undefined) {
+        if (ctx.body === undefined && /^[2|3]{1}\d{2}$/.test(ctx.response.status)) {
             ctx.body = ctx.buildReturnObject(
                 retCodeEnum.success,
                 errCodeEnum.notReturnData, 'success', null)
