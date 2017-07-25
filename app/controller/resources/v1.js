@@ -5,7 +5,7 @@
 
 const sendToWormhole = require('stream-wormhole');
 const upload = require('../../extend/upload/upload_factory')
-//const fileBodyParse = require('../../extend/tools/file_body_parse')
+const fileBodyParse = require('../../extend/tools/file_body_parse')
 
 module.exports = app => {
     return class ResourcesController extends app.Controller {
@@ -19,7 +19,7 @@ module.exports = app => {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
             let pageSize = ctx.checkQuery("pageSize").default(1).gt(0).toInt().value
             let condition = {
-                userId: 1
+                userId: ctx.request.userId
             }
 
             await ctx.validate().service.resourceService
@@ -34,26 +34,44 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async show(ctx) {
+            let resourceIdMatch = new RegExp(`^([0-9a-zA-Z]{40})+(.${ctx.app.resourceAttribute.allAttributes.join('|.')}){0,1}$`)
+            let resourceMatch = ctx.checkParams("id").match(resourceIdMatch, 'id格式匹配错误').value
+            ctx.validate()
 
-            let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            let resourceId = resourceMatch.split('.')[0]
+            let attribute = resourceMatch.split('.')[1]
+            let resourceInfo = await ctx.validate().service.resourceService.getResourceInfo({resourceId}).bind(ctx).catch(ctx.error)
 
-            // await ctx.validate().service.resourceService
-            //     .getResourceInfo({resourceId}).bind(ctx)
-            //     .then(ctx.success)
-            //     .catch(ctx.error)
 
-            let resourceInfo = await ctx.validate().service.resourceService
-                .getResourceInfo({resourceId})
+            let test = await ctx.app.mongo.relation.find()
 
-            /**
-             * 资源实际展示示例
-             */
-            await ctx.curl(resourceInfo.resourceUrl).then(res => {
-                ctx.body = res.data
-                ctx.set('Content-Type', resourceInfo.mimeType)
-                // ctx.set('etag', file.headers['etag'])
-                // ctx.set('last-modified', file.headers['last-modified'])
-            })
+            console.log(test)
+
+
+            if (!attribute || !resourceInfo || resourceInfo.mimeType !== 'application/json') {
+                return ctx.success(resourceInfo)
+            }
+
+            let content = await ctx.curl(resourceInfo.resourceUrl)
+
+            ctx.success(JSON.parse(content.data.toString())[attribute])
+
+            // let resourceInfo = await ctx.validate().service.resourceService
+            //     .getResourceInfo({resourceId})
+            //
+            // if (!resourceInfo) {
+            //     ctx.error('未找到资源')
+            // }
+            //
+            // /**
+            //  * 资源实际展示示例
+            //  */
+            // await ctx.curl(resourceInfo.resourceUrl).then(res => {
+            //     ctx.body = res.data
+            //     ctx.set('Content-Type', resourceInfo.mimeType)
+            //     // ctx.set('etag', file.headers['etag'])
+            //     // ctx.set('last-modified', file.headers['last-modified'])
+            // })
         }
 
         /**
@@ -86,7 +104,6 @@ module.exports = app => {
             let meta = ctx.checkBody('meta').toJson().value
             let resourceName = ctx.checkBody('resourceName').default('').len(0, 100).value
             let resourceType = ctx.checkBody('resourceType').in(ctx.app.resourceType.ArrayList).value
-            let status = ctx.checkBody('status').default(1).in([1, 2, 3]).value
 
             if (!stream || !stream.filename) {
                 ctx.errors.push({file: 'Can\'t found upload file'})
@@ -99,14 +116,14 @@ module.exports = app => {
             let fileUploadAsync = upload(ctx.app.config.uploadConfig).putStream(stream, resourceType, fileName)
 
             const resourceInfo = await Promise.all([fileSha1Async, fileUploadAsync]).spread((fileMeta, uploadData) => {
-                console.log(uploadData)
                 return {
                     resourceId: fileMeta.sha1,
-                    resourceType, status,
+                    status: ctx.app.resourceStatus.NORMAL,
+                    resourceType,
                     meta: JSON.stringify(Object.assign(meta, fileMeta)),
                     resourceUrl: uploadData.url,
                     userId: ctx.request.userId,
-                    resourceName: resourceName === '' ? fileMeta.filename : resourceName,
+                    resourceName: resourceName === '' ? ctx.helper.stringExpand.cutString(fileMeta.sha1, 10) : resourceName,
                     mimeType: fileMeta.mimeType
                 }
             }).catch(err => {
@@ -132,10 +149,32 @@ module.exports = app => {
          *
          */
         async update(ctx) {
-            let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
-            ctx.validate()
 
-            ctx.error("资源不接受更新")
+            ctx.error('资源不接受更新操作')
+            //
+            // if (!ctx.is("multipart")) {
+            //     ctx.error('资源创建只能接受multipart类型的表单数据')
+            // }
+            //
+            // const stream = await ctx.getFileStream()
+            // ctx.request.body = stream.fields
+            //
+            // let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            // let meta = ctx.checkBody('meta').toJson().value
+            // let resourceName = ctx.checkBody('resourceName').default('').len(0, 100).value
+            // let status = ctx.checkBody('status').default(1).in([1, 2]).value
+            //
+            // ctx.validate()
+            //
+            // let resourceInfo = await ctx.service.resourceService.getResourceInfo({resourceId})
+            //
+            // if (!resourceInfo) {
+            //     ctx.error('未找到资源')
+            // }
+            //
+            // if (resourceInfo.status === ctx.app.resourceStatus.RELEASE) {
+            //
+            // }
         }
 
         /**

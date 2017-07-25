@@ -3,6 +3,7 @@
  */
 
 const koaValidate = require('koa-validate')
+const mongoDb = require('./app/models/db')
 
 module.exports = app => {
 
@@ -26,4 +27,6 @@ module.exports = app => {
     })
 
     global.Promise = require('bluebird')
+
+    mongoDb.connect(app)
 }

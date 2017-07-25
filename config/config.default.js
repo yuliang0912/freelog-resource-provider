@@ -35,6 +35,13 @@ module.exports = appInfo => {
         dbConfig: dbConfig,
 
         /**
+         * mongoDB配置
+         */
+        mongo: {
+            uri: "mongodb://localhost:27017/resource_relation"
+        },
+
+        /**
          * 上传文件相关配置
          */
         uploadConfig: {
@@ -55,10 +62,10 @@ module.exports = appInfo => {
             fieldNameSize: 100,
             fieldSize: '100kb',
             fields: 10,
-            fileSize: '10mb',
+            fileSize: '100mb',
             files: 10,
             fileExtensions: [],
-            whitelist: null,
+            whitelist: (fileName) => true,
         }
     }
 

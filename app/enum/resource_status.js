@@ -5,17 +5,12 @@
 
 module.exports = {
     /**
-     * 制作中
+     * 正常
      */
-    MAKING: 1,
-
-    /**
-     * 已发布
-     */
-    RELEASE: 2,
+    NORMAL: 1,
 
     /**
      * 已删除
      */
-    DELETE: 3
+    DELETE: 2
 }

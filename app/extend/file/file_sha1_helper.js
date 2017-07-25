@@ -14,9 +14,7 @@ module.exports = {
             let sha1sum = crypto.createHash('sha1')
             let meta = {
                 fileSize: 0,
-                fileName: fileStream.filename,
-                mimeType: fileStream.mimeType,
-                ext: getFileExt(fileStream.filename)
+                mimeType: fileStream.mimeType
             }
             fileStream.on('data', function (chunk) {
                 sha1sum.update(chunk)
@@ -31,9 +29,4 @@ module.exports = {
             })
         })
     }
-}
-
-const getFileExt = (str) => {
-    let reg = /\.[^\.]+$/.exec(str);
-    return reg ? reg[0] : ''
 }
