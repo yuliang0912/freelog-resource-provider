@@ -53,8 +53,7 @@ module.exports = {
      * @param data {object} 返回数据
      * @returns {{ret: number, errcode: number, msg: string}}
      */
-    buildReturnObject(ret, errCode, msg, data)
-    {
+    buildReturnObject(ret, errCode, msg, data){
         let {type, retCodeEnum, errCodeEnum} = this.app
         let result = {
             ret: type.int32(ret) ? ret : retCodeEnum.success,

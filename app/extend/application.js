@@ -9,7 +9,7 @@ const knexInstall = Symbol("application#knexInstall")
 const resourceType = require('../enum/resource_type')
 const resourceStatus = require('../enum/resource_status')
 const resourceAttribute = require('../enum/resource_attribute')
-const mongoModels = require('../models/index')
+//const mongoModels = require('../models/index')
 
 module.exports = (() => {
 
@@ -34,7 +34,6 @@ module.exports = (() => {
          */
         resourceType: resourceType,
 
-
         /**
          * 资源内部属性
          */
@@ -48,7 +47,7 @@ module.exports = (() => {
         /**
          * mongo数据模型
          */
-        mongo: mongoModels,
+        //mongo: mongoModels,
 
         /**
          * knex-DB操作

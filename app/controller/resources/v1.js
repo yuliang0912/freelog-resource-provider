@@ -42,12 +42,6 @@ module.exports = app => {
             let attribute = resourceMatch.split('.')[1]
             let resourceInfo = await ctx.validate().service.resourceService.getResourceInfo({resourceId}).bind(ctx).catch(ctx.error)
 
-
-            let test = await ctx.app.mongo.relation.find()
-
-            console.log(test)
-
-
             if (!attribute || !resourceInfo || resourceInfo.mimeType !== 'application/json') {
                 return ctx.success(resourceInfo)
             }
@@ -81,11 +75,10 @@ module.exports = app => {
          */
         async edit(ctx) {
             let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
-            ctx.validate()
 
-            await ctx.service.resourceService
-                .getResourceInfo({resourceId})
-                .then(data => ctx.success(data))
+            await ctx.validate().service.resourceService
+                .getResourceInfo({resourceId}).bind(ctx)
+                .then(ctx.success)
         }
 
         /**
@@ -102,14 +95,24 @@ module.exports = app => {
             ctx.request.body = stream.fields
 
             let meta = ctx.checkBody('meta').toJson().value
+            let parentId = ctx.checkBody('parentId').default('').value
             let resourceName = ctx.checkBody('resourceName').default('').len(0, 100).value
             let resourceType = ctx.checkBody('resourceType').in(ctx.app.resourceType.ArrayList).value
 
             if (!stream || !stream.filename) {
                 ctx.errors.push({file: 'Can\'t found upload file'})
             }
-
+            if (parentId !== '' && !/^[0-9a-zA-Z]{40}$/.test(parentId)) {
+                ctx.errors.push({parentId: 'parentId格式错误'})
+            }
             ctx.validate()
+
+            if (parentId) {
+                let parentResource = await ctx.service.resourceService.getResourceInfo({resourceId: parentId}).bind(ctx).catch(ctx.error)
+                if (!parentResource || parentResource.userId !== ctx.request.userId) {
+                    ctx.error('parentId错误,或者没有权限引用')
+                }
+            }
 
             let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
             let fileSha1Async = ctx.helper.fileSha1Helper.getFileMetaByStream(stream)
@@ -120,7 +123,7 @@ module.exports = app => {
                     resourceId: fileMeta.sha1,
                     status: ctx.app.resourceStatus.NORMAL,
                     resourceType,
-                    meta: JSON.stringify(Object.assign(meta, fileMeta)),
+                    meta: JSON.stringify(Object.assign(fileMeta, meta)),
                     resourceUrl: uploadData.url,
                     userId: ctx.request.userId,
                     resourceName: resourceName === '' ? ctx.helper.stringExpand.cutString(fileMeta.sha1, 10) : resourceName,
@@ -136,7 +139,9 @@ module.exports = app => {
             })
 
             await ctx.service.resourceService.createResource(resourceInfo).bind(ctx)
-                .then(data => {
+                .then(() => {
+                    return ctx.service.resourceTreeService.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId)
+                }).then(() => {
                     resourceInfo.meta = JSON.parse(resourceInfo.meta)
                     ctx.success(resourceInfo)
                 }).catch(ctx.error)
@@ -146,35 +151,9 @@ module.exports = app => {
          * 更新资源
          * @param ctx
          * @returns {Promise.<void>}
-         *
          */
         async update(ctx) {
-
             ctx.error('资源不接受更新操作')
-            //
-            // if (!ctx.is("multipart")) {
-            //     ctx.error('资源创建只能接受multipart类型的表单数据')
-            // }
-            //
-            // const stream = await ctx.getFileStream()
-            // ctx.request.body = stream.fields
-            //
-            // let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
-            // let meta = ctx.checkBody('meta').toJson().value
-            // let resourceName = ctx.checkBody('resourceName').default('').len(0, 100).value
-            // let status = ctx.checkBody('status').default(1).in([1, 2]).value
-            //
-            // ctx.validate()
-            //
-            // let resourceInfo = await ctx.service.resourceService.getResourceInfo({resourceId})
-            //
-            // if (!resourceInfo) {
-            //     ctx.error('未找到资源')
-            // }
-            //
-            // if (resourceInfo.status === ctx.app.resourceStatus.RELEASE) {
-            //
-            // }
         }
 
         /**
@@ -187,7 +166,7 @@ module.exports = app => {
             ctx.validate()
 
             let condition = {
-                resourceId, userId: 1
+                resourceId, userId: ctx.request.userId
             }
 
             await ctx.service.resourceService

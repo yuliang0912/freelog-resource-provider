@@ -6,12 +6,13 @@ const sizeOf = require('image-size')
 
 module.exports = fileBuffer => {
     try {
-        let imageFile = sizeOf(fileBuffer.buffer)
+        let imageFile = sizeOf(fileBuffer)
         return {
             width: imageFile.width,
             height: imageFile.height,
         }
     } catch (err) {
+        console.log(err)
         return {}
     }
 }

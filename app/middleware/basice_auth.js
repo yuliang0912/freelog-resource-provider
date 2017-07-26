@@ -3,7 +3,7 @@
  */
 
 module.exports = () => async (ctx, next) => {
-    if (ctx.app.env === 'local') {
+    if (ctx.app.config.env === 'local') {
         ctx.request.userId = 123456;
         await next()
         return;

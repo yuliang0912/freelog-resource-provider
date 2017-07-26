@@ -6,10 +6,12 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ResourceRelationSchema = new Schema({
-    resourceId: {type: Schema.Types.ObjectId, required: true},
-    children: {type: Array, default: []}, //子节点ID集合
+    resourceId: {type: String, required: true},
+    children: {type: [String], default: []}, //子节点ID集合
+    parentIds: {type: [String], default: []},  //父节点
+    userId: {type: Number},
     createDate: {type: Date, default: Date.now},
     updateDate: {type: Date, default: Date.now}
-});
+})
 
-module.exports = mongoose.model('resource_relation', ResourceRelationSchema);
+module.exports = mongoose.model('relation', ResourceRelationSchema)

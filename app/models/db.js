@@ -5,9 +5,6 @@
 const mongoose = require('mongoose')
 
 module.exports.connect = app => {
-
-    mongoose.connect(app.config.mongo.uri);
-
     // 连接成功
     mongoose.connection.on('connected', function () {
         console.log('Mongoose connection open to ' + app.config.mongo.uri);
@@ -21,6 +18,11 @@ module.exports.connect = app => {
     // 断开连接
     mongoose.connection.on('disconnected', function () {
         console.log('Mongoose connection disconnected');
+    })
+
+    return mongoose.connect(app.config.mongo.uri, {
+        useMongoClient: true,
+        poolSize: 5
     })
 }
 
