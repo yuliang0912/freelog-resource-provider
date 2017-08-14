@@ -15,7 +15,7 @@ const resourceAttributes = module.exports = {
         attributes: []
     },
     [resourceEnum.MARKDOWN]: {
-        attributes: []
+        attributes: ['md']
     },
     [resourceEnum.REVEAL_SLIDE]: {
         attributes: []
@@ -30,4 +30,5 @@ const resourceAttributes = module.exports = {
 
 module.exports.allAttributes =
     Array.prototype.concat(resourceAttributes[resourceEnum.PAGE_BUILD].attributes,
-        resourceAttributes[resourceEnum.WIDGET].attributes)
+        resourceAttributes[resourceEnum.WIDGET].attributes,
+        resourceAttributes[resourceEnum.MARKDOWN].attributes)

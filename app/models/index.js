@@ -3,7 +3,9 @@
  */
 
 const relation = require('./relation/relation.model')
+const resourcePolicy = require('./relation/policy.modal')
 
 module.exports = {
-    relation
+    relation,
+    resourcePolicy
 }

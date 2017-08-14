@@ -4,8 +4,6 @@
  */
 
 const sendToWormhole = require('stream-wormhole');
-const upload = require('../../extend/upload/upload_factory')
-const fileBodyParse = require('../../extend/tools/file_body_parse')
 
 module.exports = app => {
     return class ResourcesController extends app.Controller {
@@ -17,15 +15,24 @@ module.exports = app => {
          */
         async index(ctx) {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-            let pageSize = ctx.checkQuery("pageSize").default(1).gt(0).toInt().value
+            let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
             let condition = {
                 userId: ctx.request.userId
             }
 
-            await ctx.validate().service.resourceService
-                .getResourceList(condition, page, pageSize).bind(ctx)
-                .then(ctx.success)
+            let respositories = await ctx.validate().service.resourceService
+                .getRespositories(condition, page, pageSize).bind(ctx)
                 .catch(ctx.error)
+
+            if (respositories.length === 0) {
+                return ctx.success(respositories)
+            }
+
+            let lastVersionArray = respositories.map(t => t.lastVersion)
+
+            await ctx.service.resourceService
+                .getResourceByIdList(lastVersionArray).bind(ctx)
+                .then(ctx.success).catch(ctx.error)
         }
 
         /**
@@ -34,21 +41,39 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async show(ctx) {
-            let resourceIdMatch = new RegExp(`^([0-9a-zA-Z]{40})+(.${ctx.app.resourceAttribute.allAttributes.join('|.')}){0,1}$`)
+            let resourceIdMatch = new RegExp(`^([0-9a-zA-Z]{40})+(.${ctx.app.resourceAttribute.allAttributes.join('|.')})?$`)
             let resourceMatch = ctx.checkParams("id").match(resourceIdMatch, 'id格式匹配错误').value
             ctx.validate()
+
+            //etag 缓存后期再实现
+            // ctx.set('Last-Modified', '"W/123"')
+            // ctx.set('ETag', '"123"')
+            // console.log(ctx.header)
+            // console.log(ctx.response.header)
+            // if (ctx.fresh) {
+            //     ctx.status = 304;
+            //     return;
+            // }
 
             let resourceId = resourceMatch.split('.')[0]
             let attribute = resourceMatch.split('.')[1]
             let resourceInfo = await ctx.validate().service.resourceService.getResourceInfo({resourceId}).bind(ctx).catch(ctx.error)
 
-            if (!attribute || !resourceInfo || resourceInfo.mimeType !== 'application/json') {
+            if (!resourceInfo) {
+                ctx.error({msg: '未找到资源'})
+            }
+
+            Reflect.deleteProperty(resourceInfo, 'status')
+            if (!attribute || !resourceInfo) {
                 return ctx.success(resourceInfo)
             }
 
             let content = await ctx.curl(resourceInfo.resourceUrl)
-
-            ctx.success(JSON.parse(content.data.toString())[attribute])
+            if (resourceInfo.mimeType === 'application/json') {
+                ctx.success(JSON.parse(content.data.toString())[attribute])
+            } else {
+                ctx.success(content.data.toString())
+            }
 
             // let resourceInfo = await ctx.validate().service.resourceService
             //     .getResourceInfo({resourceId})
@@ -77,7 +102,7 @@ module.exports = app => {
             let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
 
             await ctx.validate().service.resourceService
-                .getResourceInfo({resourceId}).bind(ctx)
+                .getResourceInfo({resourceId, userId: ctx.request.userId}).bind(ctx)
                 .then(ctx.success)
         }
 
@@ -88,7 +113,7 @@ module.exports = app => {
          */
         async create(ctx) {
             if (!ctx.is("multipart")) {
-                ctx.error('资源创建只能接受multipart类型的表单数据')
+                ctx.error({msg: '资源创建只能接受multipart类型的表单数据'})
             }
 
             const stream = await ctx.getFileStream()
@@ -110,13 +135,13 @@ module.exports = app => {
             if (parentId) {
                 let parentResource = await ctx.service.resourceService.getResourceInfo({resourceId: parentId}).bind(ctx).catch(ctx.error)
                 if (!parentResource || parentResource.userId !== ctx.request.userId) {
-                    ctx.error('parentId错误,或者没有权限引用')
+                    ctx.error({msg: 'parentId错误,或者没有权限引用'})
                 }
             }
 
             let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
-            let fileSha1Async = ctx.helper.fileSha1Helper.getFileMetaByStream(stream)
-            let fileUploadAsync = upload(ctx.app.config.uploadConfig).putStream(stream, resourceType, fileName)
+            let fileSha1Async = ctx.helper.fileMetaHelper.getFileMetaByStream(stream)
+            let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
 
             const resourceInfo = await Promise.all([fileSha1Async, fileUploadAsync]).spread((fileMeta, uploadData) => {
                 return {
@@ -134,14 +159,15 @@ module.exports = app => {
                 ctx.error(err)
             })
 
-            await ctx.service.resourceService.exists({resourceId: resourceInfo.resourceId}).then(existsResource => {
-                existsResource && ctx.error('资源已经被创建,不能创建重复的资源')
+            await ctx.service.resourceService.getResourceInfo({resourceId: resourceInfo.resourceId}).then(resource => {
+                resource && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: resourceInfo.resourceId})
             })
 
-            await ctx.service.resourceService.createResource(resourceInfo).bind(ctx)
+            await ctx.service.resourceService.createResource(resourceInfo, parentId).bind(ctx)
                 .then(() => {
                     return ctx.service.resourceTreeService.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId)
-                }).then(() => {
+                })
+                .then(() => {
                     resourceInfo.meta = JSON.parse(resourceInfo.meta)
                     ctx.success(resourceInfo)
                 }).catch(ctx.error)
@@ -153,7 +179,7 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async update(ctx) {
-            ctx.error('资源不接受更新操作')
+            ctx.error({msg: '资源不接受更新操作'})
         }
 
         /**
@@ -162,17 +188,23 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async destroy(ctx) {
-            let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
-            ctx.validate()
 
-            let condition = {
+            ctx.error({msg: '资源不支持删除'})
+
+            /**
+             * 资源取消删除
+             let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+             ctx.validate()
+
+             let condition = {
                 resourceId, userId: ctx.request.userId
             }
 
-            await ctx.service.resourceService
-                .updateResource({status: ctx.app.resourceStatus.DELETE}, condition).bind(ctx)
-                .then(ctx.success)
-                .catch(ctx.error)
+             await ctx.service.resourceService
+             .updateResource({status: ctx.app.resourceStatus.DELETE}, condition).bind(ctx)
+             .then(ctx.success)
+             .catch(ctx.error)
+             */
         }
     }
 }

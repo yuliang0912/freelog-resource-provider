@@ -1,4 +1,8 @@
 'use strict';
 
-// had enabled by egg
-// exports.static = true;
+module.exports = {
+    freelogBase: {
+        enable: true,
+        package: "egg-freelog-base",
+    }
+}

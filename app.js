@@ -6,13 +6,13 @@ const koaValidate = require('koa-validate')
 const mongoDb = require('./app/models/db')
 
 module.exports = async (app) => {
-
     koaValidate(app)
 
     app.on('error', (err, ctx) => {
         if (!err || !ctx) {
             return
         }
+
         ctx.body = ctx.buildReturnObject(app.retCodeEnum.serverError,
             app.errCodeEnum.autoSnapError,
             err.message || err.toString())
@@ -27,6 +27,7 @@ module.exports = async (app) => {
     })
 
     global.Promise = require('bluebird')
+
 
     await mongoDb.connect(app)
 }

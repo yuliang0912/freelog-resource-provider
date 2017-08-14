@@ -5,7 +5,12 @@
 module.exports = app => {
     return class UserService extends app.Service {
 
-        async getUserInfo(condition) {
+        /**
+         * 获取用户信息
+         * @param condition
+         * @returns {Promise.<null>}
+         */
+        getUserInfo(condition) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {

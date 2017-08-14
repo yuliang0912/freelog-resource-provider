@@ -2,46 +2,23 @@
  * Created by yuliang on 2017/7/3.
  */
 
+const moment = require('moment')
+
 module.exports = app => {
     return class ResourceService extends app.Service {
-
-        /**
-         * 创建资源
-         * @param resource 资源信息
-         * @param sharePolicy 资源分享策略
-         * @returns {Promise.<*>}
-         */
-        // async createResource(resource, sharePolicy) {
-        //     let {type, knex} = this.app
-        //
-        //     if (!type.object(resource) || !type.object(sharePolicy)) {
-        //         return Promise.reject(new Error("resource or sharePolicy is not object"))
-        //     }
-        //
-        //     return knex.resource.transaction(trans => {
-        //         let task1 = knex.resource('resources').transacting(trans).insert(resource)
-        //         let task2 = knex.resource('resourceSharePolicy').transacting(trans).insert(sharePolicy)
-        //
-        //         return Promise.all([task1, task2]).then(trans.commit).catch(err => {
-        //             trans.rollback()
-        //             return err
-        //         })
-        //     })
-        // }
-
         /**
          * 资源是否存在
          * @param condition
          * @returns {Promise.<void>}
          */
-        exists(condition) {
+        count(condition) {
             let {type, knex} = this.app
 
             if (!type.object(condition)) {
-                return Promise.reject(new Error("resource is not object"))
+                return Promise.reject(new Error("condition is not object"))
             }
 
-            return knex.resource('resources').where(condition).select('resourceId').first()
+            return knex.resource('resources').where(condition).count('resourceId as count').first()
         }
 
 
@@ -50,14 +27,31 @@ module.exports = app => {
          * @param resource
          * @returns {Promise.<*>}
          */
-        createResource(resource) {
+        createResource(resource, parentId) {
             let {type, knex} = this.app
 
             if (!type.object(resource)) {
                 return Promise.reject(new Error("resource is not object"))
             }
 
-            return knex.resource('resources').insert(resource)
+            return knex.resource.transaction(trans => {
+                let task1 = knex.resource('resources').transacting(trans).insert(resource)
+                let task2 = knex.resource.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
+                 VALUES (:resourceId,:resourceName,:lastVersion,:userId,:status,:createDate) ON DUPLICATE KEY UPDATE lastVersion = :lastVersion`,
+                    {
+                        resourceId: parentId ? parentId : resource.resourceId,
+                        resourceName: resource.resourceName,
+                        lastVersion: resource.resourceId,
+                        userId: resource.userId,
+                        createDate: moment().toDate(),
+                        status: 1
+                    }).transacting(trans)
+
+                return Promise.all([task1, task2]).then(trans.commit).catch(err => {
+                    trans.rollback()
+                    return err
+                })
+            })
         }
 
 
@@ -88,24 +82,25 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return knex.resource('resources').where(condition).limit(pageSize).offset((page - 1) * pageSize).select()
+            return knex.resource('resources').where(condition)
+                .limit(pageSize).offset((page - 1) * pageSize)
+                .orderBy('createDate', 'desc')
+                .select()
         }
-
 
         /**
-         * 获取资源分享策略
-         * @param condition
-         * @returns {Promise.<*>}
+         * 根据主键ID集合批量获取资源
+         * @param resourceIdList
          */
-        getResourceSharePolicy(condition) {
-            let {type, knex} = this.app
+        getResourceByIdList(resourceIdList) {
 
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
+            if (!Array.isArray(resourceIdList) || resourceIdList.length < 1) {
+                return Promise.resolve([])
             }
 
-            return knex.resource('resources').where(condition).first()
+            return this.app.knex.resource('resources').where('resourceId', 'in', resourceIdList)
         }
+
 
         /**
          * 编辑资源
@@ -124,19 +119,20 @@ module.exports = app => {
         }
 
         /**
-         * 编辑资源分享策略
-         * @param model
+         * 获取资源仓储记录
          * @param condition
-         * @returns {Promise.<*>}
          */
-        editSharePolicy(model, condition) {
+        getRespositories(condition, page, pageSize) {
             let {type, knex} = this.app
 
-            if (!type.object(model)) {
-                return Promise.reject(new Error("model must be object"))
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
             }
 
-            return knex.resource('resourceSharePolicy').update(model).where(condition)
+            return knex.resource('respositories').where(condition)
+                .limit(pageSize).offset((page - 1) * pageSize)
+                .orderBy('createDate', 'desc')
+                .select()
         }
     }
 }

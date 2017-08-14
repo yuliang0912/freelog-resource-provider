@@ -23,11 +23,15 @@ module.exports = appInfo => {
             }
         },
 
-        // bodyParser: {
-        //     enable: false,
-        // },
+        ua: {
+            enable: true
+        },
 
-        middleware: ['errorHandler', 'basiceAuth'],
+        bodyParser: {
+            enable: true,
+        },
+
+        middleware: ['errorHandler', 'freelogServerAuth'],
 
         /**
          * DB-mysql相关配置
@@ -38,22 +42,23 @@ module.exports = appInfo => {
          * mongoDB配置
          */
         mongo: {
-            uri: "mongodb://localhost:27017/resource_relation"
+            uri: "mongodb://192.168.0.3:27017/resource_relation"
         },
 
         /**
          * 上传文件相关配置
          */
         uploadConfig: {
-            curr: "aliOss",
             aliOss: {
+                enable: true,
                 accessKeyId: "LTAIy8TOsSnNFfPb",
                 accessKeySecret: "Bt5yMbW89O7wMTVQsNUfvYfou5GPsL",
                 bucket: "freelog-shenzhen",
                 internal: false,
                 region: "oss-cn-shenzhen",
                 timeout: 180000
-            }
+            },
+            amzS3: {}
         },
 
         multipart: {
@@ -66,6 +71,11 @@ module.exports = appInfo => {
             files: 10,
             fileExtensions: [],
             whitelist: (fileName) => true,
+        },
+
+        freelogBase: {
+            retCodeEnum: {},
+            errCodeEnum: {}
         }
     }
 

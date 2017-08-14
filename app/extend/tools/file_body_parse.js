@@ -12,9 +12,6 @@ module.exports = function (ctx) {
         let busboy = new Busboy({headers: ctx.req.headers})
 
         busboy.on('file', async (fieldName, file, fileName, encoding, mimeType) => {
-
-            console.log(encoding)
-
             let fileSize = 0
             file.on("data", function (data) { //接收文件流放入缓冲区
                 fileSize += data.length

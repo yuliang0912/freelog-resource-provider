@@ -18,6 +18,7 @@ module.exports = () => async (ctx, next) => {
     if (!match) {
         notAuthorized(ctx)
     }
+
     let userPass = userPassRegExp.exec(new Buffer(match[1], 'base64').toString());
     if (!userPass) {
         notAuthorized(ctx)

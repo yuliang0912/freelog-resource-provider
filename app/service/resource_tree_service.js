@@ -14,6 +14,7 @@ module.exports = app => {
             if (!parentId) {
                 return mongoModels.relation.create({resourceId, userId})
             }
+
             return mongoModels.relation.findOneAndUpdate({resourceId: parentId}, {
                 $addToSet: {children: resourceId},
                 updateDate: Date.now(),
@@ -23,6 +24,15 @@ module.exports = app => {
                     parentIds: parentResource.parentIds.concat(parentId)
                 })
             }).catch(console.error)
+        }
+
+        /**
+         * 获取root节点
+         * @param userId
+         * @returns {*|Query|T}
+         */
+        rootResourceList(userId) {
+            return mongoModels.relation.find({userId, parentIds: {$size: 0}})
         }
     }
 }
