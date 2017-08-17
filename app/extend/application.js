@@ -1,9 +1,14 @@
 /**
  * Created by yuliang on 2017/6/30.
  */
+
+'use strict'
+
+
 const resourceType = require('../enum/resource_type')
 const resourceStatus = require('../enum/resource_status')
 const resourceAttribute = require('../enum/resource_attribute')
+
 
 module.exports = (() => {
 
@@ -11,17 +16,17 @@ module.exports = (() => {
         /**
          * 资源类型
          */
-        resourceType: resourceType,
+        resourceType,
 
         /**
          * 资源内部属性
          */
-        resourceAttribute: resourceAttribute,
+        resourceAttribute,
 
         /**
          * 资源状态
          */
-        resourceStatus: resourceStatus,
+        resourceStatus,
 
     }
 

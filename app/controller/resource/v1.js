@@ -112,10 +112,6 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async create(ctx) {
-            if (!ctx.is("multipart")) {
-                ctx.error({msg: '资源创建只能接受multipart类型的表单数据'})
-            }
-
             const stream = await ctx.getFileStream()
             ctx.request.body = stream.fields
 
@@ -130,7 +126,8 @@ module.exports = app => {
             if (parentId !== '' && !/^[0-9a-zA-Z]{40}$/.test(parentId)) {
                 ctx.errors.push({parentId: 'parentId格式错误'})
             }
-            ctx.validate()
+
+            ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
 
             if (parentId) {
                 let parentResource = await ctx.service.resourceService.getResourceInfo({resourceId: parentId}).bind(ctx).catch(ctx.error)
@@ -171,40 +168,6 @@ module.exports = app => {
                     resourceInfo.meta = JSON.parse(resourceInfo.meta)
                     ctx.success(resourceInfo)
                 }).catch(ctx.error)
-        }
-
-        /**
-         * 更新资源
-         * @param ctx
-         * @returns {Promise.<void>}
-         */
-        async update(ctx) {
-            ctx.error({msg: '资源不接受更新操作'})
-        }
-
-        /**
-         * 删除资源
-         * @param ctx
-         * @returns {Promise.<void>}
-         */
-        async destroy(ctx) {
-
-            ctx.error({msg: '资源不支持删除'})
-
-            /**
-             * 资源取消删除
-             let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
-             ctx.validate()
-
-             let condition = {
-                resourceId, userId: ctx.request.userId
-            }
-
-             await ctx.service.resourceService
-             .updateResource({status: ctx.app.resourceStatus.DELETE}, condition).bind(ctx)
-             .then(ctx.success)
-             .catch(ctx.error)
-             */
         }
     }
 }

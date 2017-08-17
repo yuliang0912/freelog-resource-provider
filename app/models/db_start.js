@@ -5,7 +5,7 @@
 const mongoose = require('mongoose')
 
 /**
- * 此处重置Promise为bluebird.
+ * 此处重置mongoose-Promise为bluebird.
  * mongoose内部使用的Promise/A+ 在处理reject时逻辑与bluebird不一致.导致框架异常
  */
 mongoose.Promise = require('bluebird')

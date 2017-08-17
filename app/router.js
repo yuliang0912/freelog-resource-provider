@@ -2,9 +2,22 @@
 
 module.exports = app => {
     /**
-     * 资源restful wiki: http://eggjs.org/zh-cn/basics/router.html
+     * restful wiki: http://eggjs.org/zh-cn/basics/router.html
      */
-    app.resources('/v1/resources', '/v1/resources', app.controller.resources.v1)
 
-    app.resources('/v1/policy', '/v1/policy', app.controller.policy.v1)
+    /**
+     * 资源本身相关API
+     */
+    app.resources('/v1/resources', '/v1/resources', app.controller.resource.v1)
+
+    /**
+     * 资源引用策略相关API
+     */
+    app.resources('/v1/policies', '/v1/policies', app.controller.policy.v1)
+
+    /**
+     * 组合资源的付费策略相关API
+     */
+    app.resources('/v1/auths', '/v1/auths', app.controller.auth.v1)
+
 }

@@ -12,11 +12,12 @@ module.exports = app => {
         /**
          * 创建资源授权引用策略
          */
-        createOrUpdateResourcePolicy(userId, resourceId, policySegment) {
+        createOrUpdateResourcePolicy(userId, resourceId, policySegment, policyId) {
 
             let policySegmentJson = yaml.safeLoad(policySegment)
 
             return mongoModels.resourcePolicy.findOneAndUpdate({resourceId: resourceId}, {
+                policyId,
                 policySegment: policySegmentJson,
                 policyDescription: policySegment,
                 updateDate: Date.now(),
@@ -25,7 +26,7 @@ module.exports = app => {
                     return Promise.resolve(true)
                 }
                 return mongoModels.resourcePolicy.create({
-                    resourceId, userId,
+                    resourceId, policyId, userId,
                     policySegment: policySegmentJson,
                     policyDescription: policySegment
                 })
@@ -38,7 +39,26 @@ module.exports = app => {
          * @returns return query,not executes
          */
         getResourcePolicy(condition) {
+
+            if (!this.app.type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
             return mongoModels.resourcePolicy.findOne(condition)
+        }
+
+        /**
+         * 删除资源引用策略
+         * @param condition
+         * @returns {*}
+         */
+        deleteResourcePolicy(condition) {
+
+            if (!this.app.type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
+            return mongoModels.resourcePolicy.deleteOne(condition).then()
         }
     }
 }
