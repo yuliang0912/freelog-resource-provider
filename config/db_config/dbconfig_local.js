@@ -19,7 +19,7 @@ module.exports = {
             timezone: '+08:00',
             bigNumberStrings: true,
             supportBigNumbers: true,
-            dateStrings: true,
+            //dateStrings: true,
             connectTimeout: 10000
         },
         pool: {
@@ -44,7 +44,7 @@ module.exports = {
             timezone: '+08:00',
             bigNumberStrings: true,
             supportBigNumbers: true,
-            dateStrings: true,
+            //dateStrings: true,
             connectTimeout: 10000
         },
         pool: {

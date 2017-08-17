@@ -12,9 +12,7 @@ const ResourceRelationSchema = new Schema({
     policyId: {type: String, required: true},
     policySegment: {type: Array, default: []}, //引用策略段
     policyDescription: {type: String, default: ''}, //引用策略描述语言原文
-    userId: {type: Number},
-    createDate: {type: Date, default: Date.now},
-    updateDate: {type: Date, default: Date.now}
-})
+    userId: {type: Number}
+}, {versionKey: false, timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}})
 
 module.exports = mongoose.model('resourcePolicy', ResourceRelationSchema)
