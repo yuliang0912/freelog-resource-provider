@@ -15,17 +15,20 @@ module.exports = app => {
          */
         async show(ctx) {
 
-            let resourceId = ctx.checkParams('id').match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            let policyId = ctx.checkParams('id').notEmpty().value
             let showType = ctx.checkQuery('showType').default('json').in(['json', 'yml']).value
 
-            await ctx.validate().service.resourcePolicyService.getResourcePolicy({resourceId})
-                .then(data => {
-                    ctx.success(data ? {
-                        resourceId: data.resourceId,
-                        policyId: data.policyId,
-                        policySegment: (showType === 'json' ? data.policySegment : data.policyDescription)
-                    } : null)
-                }).bind(ctx).catch(ctx.error)
+            await ctx.validate().service.resourcePolicyService.getResourcePolicy({
+                _id: policyId,
+                status: 0
+            }).then(data => {
+                ctx.success(data ? {
+                    policyId: data._id,
+                    resourceId: data.resourceId,
+                    serialNumber: data.serialNumber,
+                    policySegment: (showType === 'json' ? data.policySegment : data.policyDescription)
+                } : null)
+            }).bind(ctx).catch(ctx.error)
         }
 
         /**
@@ -39,12 +42,12 @@ module.exports = app => {
             //base64编码之后的yaml字符串
             let policySegment = ctx.checkBody('policySegment').notEmpty().isBase64().decodeBase64().value
 
-            let policyId = ctx.helper.uuid.v4()
+            //let policyDescriptionBuffer = new Buffer(policySegment, 'utf8')
 
             ctx.allowContentType({type: 'json'}).validate()
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(ctx.request.userId, resourceId, policySegment, policyId).bind(ctx)
-                .then(data => ctx.success(!!data)).catch(ctx.error)
+            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(ctx.request.userId, resourceId, policySegment).bind(ctx)
+                .then(data => ctx.success(data._id)).catch(ctx.error)
         }
 
         /**
@@ -53,24 +56,22 @@ module.exports = app => {
          */
         async update(ctx) {
 
-            let resourceId = ctx.checkParams('id').match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            let policyId = ctx.checkParams('id').notEmpty().value
             //base64编码之后的yaml字符串
             let policySegment = ctx.checkBody('policySegment').notEmpty().isBase64().decodeBase64().value
 
-            let policyId = ctx.helper.uuid.v4()
-
             ctx.allowContentType({type: 'json'}).validate()
 
-            let resourceInfo = await ctx.service.resourceService.getResourceInfo({
-                resourceId: resourceId,
+            let policy = await ctx.validate().service.resourcePolicyService.getResourcePolicy({
+                _id: policyId,
                 userId: ctx.request.userId
             })
 
-            if (!resourceInfo) {
-                ctx.error({msg: '资源不存在或资源用户匹配错误'})
+            if (!policy || policy.status !== 0) {
+                ctx.error({msg: "未找到需要更新的策略或者策略与用户不匹配"})
             }
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(ctx.request.userId, resourceId, policySegment, policyId)
+            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy.userId, policy.resourceId, policySegment)
                 .bind(ctx).then(data => ctx.success(!!data)).catch(ctx.error)
         }
 
@@ -81,20 +82,20 @@ module.exports = app => {
          */
         async destroy(ctx) {
 
-            let resourceId = ctx.checkParams('id').match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            let policyId = ctx.checkParams('id').notEmpty().value
             ctx.validate()
 
-            let resourceInfo = await ctx.service.resourceService.getResourceInfo({
-                resourceId: resourceId,
+            let policy = await ctx.validate().service.resourcePolicyService.getResourcePolicy({
+                _id: policyId,
                 userId: ctx.request.userId
             })
 
-            if (!resourceInfo) {
-                ctx.error({msg: '资源不存在或资源用户匹配错误'})
+            if (!policy) {
+                ctx.error({msg: "策略不存在或者策略与用户不匹配"})
             }
 
             //此处保持请求幂等性,返回无异常即为删除成功,故直接返回true
-            await ctx.service.resourcePolicyService.deleteResourcePolicy({resourceId}).bind(ctx)
+            await ctx.service.resourcePolicyService.deleteResourcePolicy({_id: policyId}).bind(ctx)
                 .then(data => ctx.success(true)).catch(ctx.error)
         }
     }

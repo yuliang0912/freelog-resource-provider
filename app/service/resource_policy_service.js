@@ -12,21 +12,21 @@ module.exports = app => {
         /**
          * 创建资源授权引用策略
          */
-        createOrUpdateResourcePolicy(userId, resourceId, policySegment, policyId) {
+        createOrUpdateResourcePolicy(userId, resourceId, policySegment) {
 
             let policySegmentJson = yaml.safeLoad(policySegment)
 
             return mongoModels.resourcePolicy.findOneAndUpdate({resourceId: resourceId}, {
-                policyId,
+                serialNumber: mongoModels.ObjectId,
                 policySegment: policySegmentJson,
                 policyDescription: policySegment,
-                updateDate: Date.now(),
-            }, {select: 'userId'}).then(isExists => {
-                if (isExists) {
-                    return Promise.resolve(true)
+            }, {select: '_id'}).then(policy => {
+                if (policy) {
+                    return Promise.resolve(policy)
                 }
                 return mongoModels.resourcePolicy.create({
-                    resourceId, policyId, userId,
+                    resourceId, userId,
+                    serialNumber: mongoModels.ObjectId,
                     policySegment: policySegmentJson,
                     policyDescription: policySegment
                 })
@@ -58,7 +58,26 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return mongoModels.resourcePolicy.deleteOne(condition).then()
+            return this.updateResourcePolicy({status: 1}, condition).then()
+        }
+
+        /**
+         * 更新消费策略
+         * @param model
+         * @param condition
+         * @returns {*}
+         */
+        updateResourcePolicy(model, condition) {
+
+            if (!this.app.type.object(model)) {
+                return Promise.reject(new Error("model must be object"))
+            }
+
+            if (!this.app.type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
+            return mongoModels.resourcePolicy.update(condition, model)
         }
     }
 }
