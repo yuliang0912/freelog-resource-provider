@@ -2,6 +2,7 @@
  * Created by yuliang on 2017/8/16.
  */
 
+'use strict'
 
 const mongoModels = require('../models/index')
 

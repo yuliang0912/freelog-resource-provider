@@ -99,7 +99,7 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async edit(ctx) {
-            let resourceId = ctx.checkParams("id").match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
+            let resourceId = ctx.checkParams("id").isResourceId().value
 
             await ctx.validate().service.resourceService
                 .getResourceInfo({resourceId, userId: ctx.request.userId}).bind(ctx)
@@ -118,7 +118,7 @@ module.exports = app => {
             let meta = ctx.checkBody('meta').toJson().value
             let parentId = ctx.checkBody('parentId').default('').value
             let resourceName = ctx.checkBody('resourceName').default('').len(0, 100).value
-            let resourceType = ctx.checkBody('resourceType').in(ctx.app.resourceType.ArrayList).value
+            let resourceType = ctx.checkBody('resourceType').in(ctx.app.resourceType.allResourceTypes).value
 
             if (!stream || !stream.filename) {
                 ctx.errors.push({file: 'Can\'t found upload file'})

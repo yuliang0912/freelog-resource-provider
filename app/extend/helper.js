@@ -2,11 +2,27 @@
  * Created by yuliang on 2017/6/30.
  */
 
-const fileMetaHelper = require('./file/file_meta_helper')
+'use strict'
+
 const uuid = require('node-uuid')
+const fileMetaHelper = require('./file/file_meta_helper')
+const polifyParseFactory = require('./helper/policy_parse_factory')
 
 module.exports = {
+
+    /**
+     * fileMeta获取
+     */
     fileMetaHelper: fileMetaHelper,
-    uuid: uuid
+
+    /**
+     * node-uuid
+     */
+    uuid: uuid,
+
+    /**
+     * 授权语言转换
+     */
+    policyParse: polifyParseFactory.parse
 }
 

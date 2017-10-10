@@ -19,6 +19,5 @@ module.exports = app => {
 
             ctx.validate().success(quotePolicies)
         }
-
     }
 }

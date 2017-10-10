@@ -42,7 +42,7 @@ module.exports = appInfo => {
          * mongoDB配置
          */
         mongo: {
-            uri: "mongodb://192.168.0.3:27017/resource_relation"
+            uri: "mongodb://192.168.0.3:27017/resource"
         },
 
         /**

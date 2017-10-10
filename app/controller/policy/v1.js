@@ -15,20 +15,13 @@ module.exports = app => {
          */
         async show(ctx) {
 
-            let policyId = ctx.checkParams('id').notEmpty().value
-            let showType = ctx.checkQuery('showType').default('json').in(['json', 'yml']).value
+            let policyId = ctx.checkParams('id').notEmpty().isMongoObjectId().value
+            //let showType = ctx.checkQuery('showType').default('json').in(['json', 'yml']).value
 
             await ctx.validate().service.resourcePolicyService.getResourcePolicy({
                 _id: policyId,
                 status: 0
-            }).then(data => {
-                ctx.success(data ? {
-                    policyId: data._id,
-                    resourceId: data.resourceId,
-                    serialNumber: data.serialNumber,
-                    policySegment: (showType === 'json' ? data.policySegment : data.policyDescription)
-                } : null)
-            }).bind(ctx).catch(ctx.error)
+            }).bind(ctx).then(ctx.success).catch(ctx.error)
         }
 
         /**
@@ -38,16 +31,20 @@ module.exports = app => {
          */
         async create(ctx) {
 
-            let resourceId = ctx.checkBody('resourceId').match(/^[0-9a-zA-Z]{40}$/, 'id格式错误').value
-            //base64编码之后的yaml字符串
-            let policySegment = ctx.checkBody('policySegment').notEmpty().isBase64().decodeBase64().value
-
-            //let policyDescriptionBuffer = new Buffer(policySegment, 'utf8')
+            let resourceId = ctx.checkBody('resourceId').isResourceId().value
+            let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后的字符串
+            let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
+            let expireDate = ctx.checkBody('expireDate').isDate().toDate().value
 
             ctx.allowContentType({type: 'json'}).validate()
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(ctx.request.userId, resourceId, policySegment).bind(ctx)
-                .then(data => ctx.success(data._id)).catch(ctx.error)
+            let policy = {
+                userId: ctx.request.userId,
+                resourceId, policyText, languageType, expireDate
+            }
+
+            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx)
+                .then(ctx.success).catch(ctx.error)
         }
 
         /**
@@ -55,10 +52,9 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async update(ctx) {
-
             let policyId = ctx.checkParams('id').notEmpty().value
-            //base64编码之后的yaml字符串
-            let policySegment = ctx.checkBody('policySegment').notEmpty().isBase64().decodeBase64().value
+            let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后授权语言字符串
+            let languageType = ctx.checkBody('languageType').default('yaml').in(['yaml', 'freelog-policy']).value
 
             ctx.allowContentType({type: 'json'}).validate()
 
@@ -71,8 +67,11 @@ module.exports = app => {
                 ctx.error({msg: "未找到需要更新的策略或者策略与用户不匹配"})
             }
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy.userId, policy.resourceId, policySegment)
-                .bind(ctx).then(data => ctx.success(!!data)).catch(ctx.error)
+            policy.policyText = policyText
+            policy.languageType = languageType
+
+            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx)
+                .then(data => ctx.success(!!data)).catch(ctx.error)
         }
 
         /**

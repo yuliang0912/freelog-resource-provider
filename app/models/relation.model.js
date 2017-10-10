@@ -12,4 +12,6 @@ const ResourceRelationSchema = new Schema({
     userId: {type: Number},
 }, {versionKey: false, timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}})
 
+ResourceRelationSchema.index({resourceId: 1});
+
 module.exports = mongoose.model('relation', ResourceRelationSchema)

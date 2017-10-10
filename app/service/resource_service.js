@@ -5,6 +5,7 @@
 const moment = require('moment')
 
 module.exports = app => {
+
     return class ResourceService extends app.Service {
         /**
          * 资源是否存在
