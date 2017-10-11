@@ -1,3 +1,3 @@
-# freelog-identity-provider
+# freelog-resource-provider
 
-飞致网络身份认证服务
+飞致网络资源API服务
