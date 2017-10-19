@@ -25,7 +25,7 @@ module.exports = app => {
                     return Promise.resolve(policy)
                 }
                 return mongoModels.resourcePolicy.create({
-                    resourceId, userId, policyText, languageType, expireDate,
+                    resourceId, userId, policyText, languageType,
                     serialNumber: mongoModels.ObjectId,
                     policy: policySegment,
                 })

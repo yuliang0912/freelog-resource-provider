@@ -135,5 +135,36 @@ module.exports = app => {
                 .orderBy('createDate', 'desc')
                 .select()
         }
+
+        /**
+         * 更新资源库
+         * @param model
+         * @param condition
+         * @returns {*}
+         */
+        updateRespository(model, condition) {
+            let {type, knex} = this.app
+
+            if (!type.object(model)) {
+                return Promise.reject(new Error("model must be object"))
+            }
+
+            return knex.resource('respositories').update(model).where(condition)
+        }
+
+        /**
+         * 获取数量
+         * @param condition
+         * @returns {*}
+         */
+        getCount(condition) {
+            let {type, knex} = this.app
+
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
+            return knex.resource('respositories').count("resourceId as count").first()
+        }
     }
 }

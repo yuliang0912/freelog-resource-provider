@@ -10,6 +10,9 @@ module.exports = app => {
      */
     app.resources('/v1/resources', '/v1/resources', app.controller.resource.v1)
 
+    //资源仓库
+    app.get('/v1/resources/warehouse', app.controller.resource.v1.warehouse)
+
     /**
      * 资源引用策略相关API
      */

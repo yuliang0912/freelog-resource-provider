@@ -19,7 +19,6 @@ const toObjectOptions = {
             userId: ret.userId,
             createDate: ret.createDate,
             updateDate: ret.updateDate,
-            expireDate: ret.expireDate,
             status: ret.status
         }
     }
@@ -33,7 +32,6 @@ const ResourcePolicySchema = new Schema({
     languageType: {type: String, required: true},
     userId: {type: Number, required: true},
     status: {type: Number, default: 0, required: true},
-    expireDate: {type: Date, required: true}, //合同过期时间
 }, {
     versionKey: false,
     timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

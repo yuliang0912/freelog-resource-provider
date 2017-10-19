@@ -9,6 +9,38 @@ module.exports = app => {
     return class ResourcesController extends app.Controller {
 
         /**
+         * 资源仓库
+         * @param ctx
+         * @returns {Promise.<void>}
+         */
+        async warehouse(ctx) {
+            let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
+            let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+
+            let respositories = []
+            let totalItem = await ctx.service.resourceService.getCount({status: 1}).then(data => parseInt(data.count))
+
+            if (totalItem > (page - 1) * pageSize) {
+                respositories = await ctx.validate().service.resourceService
+                    .getRespositories({status: 1}, page, pageSize).bind(ctx)
+                    .catch(ctx.error)
+            }
+
+
+            if (respositories.length === 0) {
+                return ctx.success({page, pageSize, totalItem, dataList: []})
+            }
+
+            let lastVersionArray = respositories.map(t => t.lastVersion)
+
+            let dataList = await ctx.service.resourceService
+                .getResourceByIdList(lastVersionArray).bind(ctx)
+                .catch(ctx.error)
+
+            ctx.success({page, pageSize, totalItem, dataList})
+        }
+
+        /**
          * 资源列表展示
          * @param ctx
          * @returns {Promise.<void>}
@@ -20,19 +52,27 @@ module.exports = app => {
                 userId: ctx.request.userId
             }
 
-            let respositories = await ctx.validate().service.resourceService
-                .getRespositories(condition, page, pageSize).bind(ctx)
-                .catch(ctx.error)
+            ctx.validate()
+
+            let respositories = []
+            let totalItem = await ctx.service.resourceService.getCount(condition).then(data => parseInt(data.count))
+
+            if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
+                respositories = await ctx.service.resourceService
+                    .getRespositories(condition, page, pageSize).bind(ctx)
+                    .catch(ctx.error)
+            }
 
             if (respositories.length === 0) {
-                return ctx.success(respositories)
+                ctx.success({page, pageSize, totalItem, dataList: []})
             }
 
             let lastVersionArray = respositories.map(t => t.lastVersion)
 
-            await ctx.service.resourceService
-                .getResourceByIdList(lastVersionArray).bind(ctx)
-                .then(ctx.success).catch(ctx.error)
+            let dataList = await ctx.service.resourceService
+                .getResourceByIdList(lastVersionArray).bind(ctx).catch(ctx.error)
+
+            ctx.success({page, pageSize, totalItem, dataList})
         }
 
         /**
@@ -117,7 +157,7 @@ module.exports = app => {
 
             let meta = ctx.checkBody('meta').toJson().value
             let parentId = ctx.checkBody('parentId').default('').value
-            let resourceName = ctx.checkBody('resourceName').default('').len(0, 100).value
+            let resourceName = ctx.checkBody('resourceName').default('').value
             let resourceType = ctx.checkBody('resourceType').in(ctx.app.resourceType.allResourceTypes).value
 
             if (!stream || !stream.filename) {
@@ -145,10 +185,12 @@ module.exports = app => {
                     resourceId: fileMeta.sha1,
                     status: ctx.app.resourceStatus.NORMAL,
                     resourceType,
-                    meta: JSON.stringify(Object.assign(fileMeta, meta)),
+                    meta: JSON.stringify(Object.assign(fileMeta, {systemMeta: meta})),
                     resourceUrl: uploadData.url,
                     userId: ctx.request.userId,
-                    resourceName: resourceName === '' ? ctx.helper.stringExpand.cutString(fileMeta.sha1, 10) : resourceName,
+                    resourceName: resourceName === '' ?
+                        ctx.helper.stringExpand.cutString(fileMeta.sha1, 10) :
+                        ctx.helper.stringExpand.cutString(resourceName, 100),
                     mimeType: fileMeta.mimeType
                 }
             }).catch(err => {

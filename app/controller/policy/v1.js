@@ -30,21 +30,27 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async create(ctx) {
-
             let resourceId = ctx.checkBody('resourceId').isResourceId().value
             let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后的字符串
             let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
-            let expireDate = ctx.checkBody('expireDate').isDate().toDate().value
 
             ctx.allowContentType({type: 'json'}).validate()
 
             let policy = {
                 userId: ctx.request.userId,
-                resourceId, policyText, languageType, expireDate
+                resourceId, policyText, languageType
             }
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx)
-                .then(ctx.success).catch(ctx.error)
+            await ctx.service.resourceService.getResourceInfo({
+                resourceId,
+                userId: policy.userId
+            }).then(resourceInfo => {
+                resourceInfo && ctx.error({msg: 'resourceId错误或者没有权限'})
+            })
+
+            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
+                return ctx.service.resourceService.updateResource({policyId: policy._id.toString()}, {resourceId}).then(() => policy)
+            }).then(ctx.success).catch(ctx.error)
         }
 
         /**
@@ -54,7 +60,7 @@ module.exports = app => {
         async update(ctx) {
             let policyId = ctx.checkParams('id').notEmpty().value
             let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后授权语言字符串
-            let languageType = ctx.checkBody('languageType').default('yaml').in(['yaml', 'freelog-policy']).value
+            let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['yaml', 'freelog_policy_lang']).value
 
             ctx.allowContentType({type: 'json'}).validate()
 
