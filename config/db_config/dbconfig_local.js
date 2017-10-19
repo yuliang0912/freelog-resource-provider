@@ -11,7 +11,7 @@ module.exports = {
     user: {
         client: 'mysql2',
         connection: {
-            host: '127.0.0.1',
+            host: '192.168.0.3',
             user: 'root',
             password: 'yuliang@@',
             database: 'user_info',
@@ -36,7 +36,7 @@ module.exports = {
     resource: {
         client: 'mysql2',
         connection: {
-            host: '127.0.0.1',
+            host: '192.168.0.3',
             user: 'root',
             password: 'yuliang@@',
             database: 'fr_resource',
