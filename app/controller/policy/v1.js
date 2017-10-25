@@ -45,11 +45,16 @@ module.exports = app => {
                 resourceId,
                 userId: policy.userId
             }).then(resourceInfo => {
-                resourceInfo && ctx.error({msg: 'resourceId错误或者没有权限'})
+                if (!resourceInfo) {
+                    ctx.error({msg: 'resourceId错误或者没有权限'})
+                }
             })
 
             await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
-                return ctx.service.resourceService.updateResource({policyId: policy._id.toString()}, {resourceId}).then(() => policy)
+                return ctx.service.resourceService.updateResource({
+                    policyId: policy._id.toString(),
+                    status: 2
+                }, {resourceId}).then(() => policy)
             }).then(ctx.success).catch(ctx.error)
         }
 

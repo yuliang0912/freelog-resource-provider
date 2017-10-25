@@ -16,27 +16,27 @@ module.exports = app => {
         async warehouse(ctx) {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
             let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+            let resourceType = ctx.checkQuery('resourceType').default('').value
 
-            let respositories = []
-            let totalItem = await ctx.service.resourceService.getCount({status: 1}).then(data => parseInt(data.count))
+            if (resourceType !== '' && !ctx.app.resourceType.allResourceTypes.some(item => item === resourceType)) {
+                ctx.errors.push({resourceType: `resourceType must be in ${ctx.app.resourceType.allResourceTypes.toString()}`})
+            }
+
+            ctx.validate()
+
+            let condition = {status: 2}
+            if (resourceType) {
+                condition.resourceType = resourceType
+            }
+
+            let dataList = []
+            let totalItem = await ctx.service.resourceService.getResourceCount(condition).then(data => parseInt(data.count))
 
             if (totalItem > (page - 1) * pageSize) {
-                respositories = await ctx.validate().service.resourceService
-                    .getRespositories({status: 1}, page, pageSize).bind(ctx)
+                dataList = await ctx.validate().service.resourceService
+                    .getResourceList(condition, page, pageSize).bind(ctx)
                     .catch(ctx.error)
             }
-
-
-            if (respositories.length === 0) {
-                return ctx.success({page, pageSize, totalItem, dataList: []})
-            }
-
-            let lastVersionArray = respositories.map(t => t.lastVersion)
-
-            let dataList = await ctx.service.resourceService
-                .getResourceByIdList(lastVersionArray).bind(ctx)
-                .catch(ctx.error)
-
             ctx.success({page, pageSize, totalItem, dataList})
         }
 
@@ -46,8 +46,9 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-            let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+            let page = ctx.checkQuery('page').default(1).gt(0).toInt().value
+            let pageSize = ctx.checkQuery('pageSize').default(10).gt(0).lt(101).toInt().value
+
             let condition = {
                 userId: ctx.request.userId
             }
@@ -158,7 +159,7 @@ module.exports = app => {
             let meta = ctx.checkBody('meta').toJson().value
             let parentId = ctx.checkBody('parentId').default('').value
             let resourceName = ctx.checkBody('resourceName').default('').value
-            let resourceType = ctx.checkBody('resourceType').in(ctx.app.resourceType.allResourceTypes).value
+            let resourceType = ctx.checkBody('resourceType').len(4, 20).value
 
             if (!stream || !stream.filename) {
                 ctx.errors.push({file: 'Can\'t found upload file'})
@@ -177,21 +178,25 @@ module.exports = app => {
             }
 
             let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
-            let fileSha1Async = ctx.helper.fileMetaHelper.getFileMetaByStream(stream)
+            let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta)
             let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
 
-            const resourceInfo = await Promise.all([fileSha1Async, fileUploadAsync]).spread((fileMeta, uploadData) => {
+            const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).spread((metaInfo, uploadData) => {
+                if (metaInfo.errors.length) {
+                    return Promise.reject(metaInfo.errors[0])
+                }
                 return {
-                    resourceId: fileMeta.sha1,
+                    resourceId: metaInfo.systemMeta.sha1,
                     status: ctx.app.resourceStatus.NORMAL,
-                    resourceType,
-                    meta: JSON.stringify(Object.assign(fileMeta, {systemMeta: meta})),
+                    resourceType: resourceType,
+                    meta: JSON.stringify(metaInfo.meta),
+                    systemMeta: JSON.stringify(metaInfo.systemMeta),
                     resourceUrl: uploadData.url,
                     userId: ctx.request.userId,
                     resourceName: resourceName === '' ?
-                        ctx.helper.stringExpand.cutString(fileMeta.sha1, 10) :
+                        ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
                         ctx.helper.stringExpand.cutString(resourceName, 100),
-                    mimeType: fileMeta.mimeType
+                    mimeType: metaInfo.systemMeta.mimeType
                 }
             }).catch(err => {
                 sendToWormhole(stream)
@@ -208,8 +213,58 @@ module.exports = app => {
                 })
                 .then(() => {
                     resourceInfo.meta = JSON.parse(resourceInfo.meta)
+                    resourceInfo.systemMeta = JSON.parse(resourceInfo.systemMeta)
                     ctx.success(resourceInfo)
                 }).catch(ctx.error)
+
+            if (resourceType === ctx.app.resourceType.WIDGET) {
+                await ctx.service.componentsService.create({
+                    widgetName: resourceInfo.systemMeta.widgetName,
+                    resourceId: resourceInfo.resourceId,
+                    userId: resourceInfo.userId
+                }).catch(console.error)
+            }
+        }
+
+
+        /**
+         * 更新资源
+         * @returns {Promise.<void>}
+         */
+        async update(ctx) {
+
+            let resourceId = ctx.checkParams("id").isResourceId().value
+            let meta = ctx.checkBody('meta').value
+            let resourceName = ctx.checkBody('resourceName').value
+
+            if (meta !== undefined && !ctx.app.type.object(meta)) {
+                ctx.errors.push({meta: 'meta必须是json对象'})
+            }
+            if (resourceName !== undefined && (resourceName.length < 4 || resourceName.length > 20)) {
+                ctx.errors.push({meta: 'resourceName长度必须在4-20字符之间'})
+            }
+            ctx.allowContentType({type: 'json'}).validate()
+
+            let model = {}
+            if (meta) {
+                model.meta = JSON.stringify(meta)
+            }
+            if (resourceName) {
+                model.resourceName = resourceName
+            }
+
+            if (!Object.keys(model).length) {
+                ctx.error({msg: '无可更新内容'})
+            }
+
+            await ctx.service.resourceService.getResourceInfo({
+                resourceId,
+                userId: ctx.request.userId
+            }).then(resourceInfo => {
+                !resourceInfo && ctx.error({msg: '未找到有效资源'})
+            }).then(() => {
+                return ctx.service.resourceService.updateResourceInfo(model, {resourceId})
+            }).bind(ctx).then(ctx.success).catch(ctx.error)
         }
     }
 }

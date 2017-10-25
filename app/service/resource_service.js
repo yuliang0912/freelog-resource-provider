@@ -19,7 +19,7 @@ module.exports = app => {
                 return Promise.reject(new Error("condition is not object"))
             }
 
-            return knex.resource('resources').where(condition).count('resourceId as count').first()
+            return knex.resource('resources').where(condition).count('* as count').first()
         }
 
 
@@ -46,7 +46,7 @@ module.exports = app => {
                         userId: resource.userId,
                         createDate: moment().toDate(),
                         status: 1
-                    }).transacting(trans)
+                    }).transacting(trans).then()
 
                 return Promise.all([task1, task2]).then(trans.commit).catch(err => {
                     trans.rollback()
@@ -153,6 +153,21 @@ module.exports = app => {
         }
 
         /**
+         * 获取资源数量
+         * @param condition
+         * @returns {*}
+         */
+        getResourceCount(condition) {
+            let {type, knex} = this.app
+
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
+            return knex.resource('resources').where(condition).count("resourceId as count").first()
+        }
+
+        /**
          * 获取数量
          * @param condition
          * @returns {*}
@@ -164,7 +179,28 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return knex.resource('respositories').count("resourceId as count").first()
+            return knex.resource('respositories').where(condition).count("resourceId as count").first()
+        }
+
+        /**
+         * 更新资源信息
+         * @param model
+         * @param condition
+         * @returns {Promise.<*>}
+         */
+        updateResourceInfo(model, condition) {
+
+            let {type, knex} = this.app
+
+            if (!type.object(model)) {
+                return Promise.reject(new Error("model must be object"))
+            }
+
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("condition must be object"))
+            }
+
+            return knex.resource('resources').where(condition).update(model)
         }
     }
 }

@@ -16,8 +16,8 @@ module.exports = async (app) => {
             err.message || err.toString())
     })
 
+    global.eggApp = app
     global.Promise = require('bluebird')
-
 
     await mongoDb.connect(app)
 }

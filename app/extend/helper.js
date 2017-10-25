@@ -5,15 +5,10 @@
 'use strict'
 
 const uuid = require('node-uuid')
-const fileMetaHelper = require('./file/file_meta_helper')
 const polifyParseFactory = require('./helper/policy_parse_factory')
+const resourceCheck = require('./helper/resource_check')
 
 module.exports = {
-
-    /**
-     * fileMeta获取
-     */
-    fileMetaHelper: fileMetaHelper,
 
     /**
      * node-uuid
@@ -23,6 +18,11 @@ module.exports = {
     /**
      * 授权语言转换
      */
-    policyParse: polifyParseFactory.parse
+    policyParse: polifyParseFactory.parse,
+
+    /**
+     * 资源检测
+     */
+    resourceCheck: resourceCheck
 }
 

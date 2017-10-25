@@ -5,7 +5,7 @@
 'use strict'
 
 const crypto = require('crypto')
-const freelogPolicyParse = require('./freelog_policy_parse')
+const freelogPolicyParse = require('./policy/freelog_policy_parse')
 
 module.exports = {
     /**
