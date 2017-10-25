@@ -3,6 +3,8 @@
  * 资源相关操作restful-controller
  */
 
+'use strict'
+
 const sendToWormhole = require('stream-wormhole');
 
 module.exports = app => {
@@ -17,10 +19,6 @@ module.exports = app => {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
             let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
             let resourceType = ctx.checkQuery('resourceType').default('').value
-
-            if (resourceType !== '' && !ctx.app.resourceType.allResourceTypes.some(item => item === resourceType)) {
-                ctx.errors.push({resourceType: `resourceType must be in ${ctx.app.resourceType.allResourceTypes.toString()}`})
-            }
 
             ctx.validate()
 

@@ -31,7 +31,7 @@ module.exports = appInfo => {
             enable: true,
         },
 
-        middleware: ['errorHandler',], // 'freelogServerAuth'
+        middleware: ['errorHandler', 'freelogServerAuth'], //
 
         /**
          * DB-mysql相关配置

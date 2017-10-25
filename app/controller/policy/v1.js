@@ -9,6 +9,42 @@ module.exports = app => {
     return class PolicyController extends app.Controller {
 
         /**
+         * 获取policyList
+         * @param ctx
+         * @returns {Promise.<void>}
+         */
+        async index(ctx) {
+            let policyIds = ctx.checkQuery('policyIds').value
+            let resourceIds = ctx.checkQuery('resourceIds').value
+
+            if (policyIds !== undefined && !/^[0-9a-f]{24}(,[0-9a-f]{24})*$/.test(policyIds)) {
+                ctx.errors.push({policyIds: 'policyIds格式错误'})
+            }
+            if (resourceIds !== undefined && !/^[0-9a-zA-Z]{40}(,[0-9a-zA-Z]{40})*$/.test(policyIds)) {
+                ctx.errors.push({resourceIds: 'resourceIds格式错误'})
+            }
+
+            ctx.validate()
+
+            let condition = {}
+            if (policyIds) {
+                condition._id = {
+                    $in: policyIds.split(',')
+                }
+            }
+            if (resourceIds) {
+                condition.resourceId = {
+                    $in: resourceIds.split(',')
+                }
+            }
+            if (!Object.keys(condition).length) {
+                ctx.error({msg: '最少需要一个可选查询条件'})
+            }
+
+            await ctx.service.resourcePolicyService.getPolicyList(condition).bind(ctx).then(ctx.success)
+        }
+
+        /**
          * 展示资源的引用策略
          * @param ctx
          * @returns {Promise.<void>}
