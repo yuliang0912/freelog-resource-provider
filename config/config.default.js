@@ -76,6 +76,10 @@ module.exports = appInfo => {
         freelogBase: {
             retCodeEnum: {},
             errCodeEnum: {}
+        },
+
+        logger: {
+            consoleLevel: 'DEBUG',
         }
     }
 

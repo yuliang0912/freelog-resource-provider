@@ -14,31 +14,12 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let policyIds = ctx.checkQuery('policyIds').value
-            let resourceIds = ctx.checkQuery('resourceIds').value
-
-            if (policyIds !== undefined && !/^[0-9a-f]{24}(,[0-9a-f]{24})*$/.test(policyIds)) {
-                ctx.errors.push({policyIds: 'policyIds格式错误'})
-            }
-            if (resourceIds !== undefined && !/^[0-9a-zA-Z]{40}(,[0-9a-zA-Z]{40})*$/.test(policyIds)) {
-                ctx.errors.push({resourceIds: 'resourceIds格式错误'})
-            }
+            let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().value
 
             ctx.validate()
 
-            let condition = {}
-            if (policyIds) {
-                condition._id = {
-                    $in: policyIds.split(',')
-                }
-            }
-            if (resourceIds) {
-                condition.resourceId = {
-                    $in: resourceIds.split(',')
-                }
-            }
-            if (!Object.keys(condition).length) {
-                ctx.error({msg: '最少需要一个可选查询条件'})
+            let condition = {
+                resourceId: {$in: resourceIds.split(',')}
             }
 
             await ctx.service.resourcePolicyService.getPolicyList(condition).bind(ctx).then(ctx.success)
@@ -50,13 +31,10 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async show(ctx) {
-
-            let policyId = ctx.checkParams('id').notEmpty().isMongoObjectId().value
-            //let showType = ctx.checkQuery('showType').default('json').in(['json', 'yml']).value
+            let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
 
             await ctx.validate().service.resourcePolicyService.getResourcePolicy({
-                _id: policyId,
-                status: 0
+                resourceId, status: 0
             }).bind(ctx).then(ctx.success).catch(ctx.error)
         }
 
@@ -81,16 +59,11 @@ module.exports = app => {
                 resourceId,
                 userId: policy.userId
             }).then(resourceInfo => {
-                if (!resourceInfo) {
-                    ctx.error({msg: 'resourceId错误或者没有权限'})
-                }
+                !resourceInfo && ctx.error({msg: 'resourceId错误或者没有权限'})
             })
 
             await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
-                return ctx.service.resourceService.updateResource({
-                    policyId: policy._id.toString(),
-                    status: 2
-                }, {resourceId}).then(() => policy)
+                return ctx.service.resourceService.updateResource({status: 2}, {resourceId}).then(() => policy)
             }).then(ctx.success).catch(ctx.error)
         }
 
@@ -99,14 +72,14 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async update(ctx) {
-            let policyId = ctx.checkParams('id').notEmpty().value
+            let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
             let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后授权语言字符串
             let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['yaml', 'freelog_policy_lang']).value
 
             ctx.allowContentType({type: 'json'}).validate()
 
             let policy = await ctx.validate().service.resourcePolicyService.getResourcePolicy({
-                _id: policyId,
+                resourceId,
                 userId: ctx.request.userId
             })
 
@@ -128,11 +101,10 @@ module.exports = app => {
          */
         async destroy(ctx) {
 
-            let policyId = ctx.checkParams('id').notEmpty().value
-            ctx.validate()
+            let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
 
             let policy = await ctx.validate().service.resourcePolicyService.getResourcePolicy({
-                _id: policyId,
+                resourceId,
                 userId: ctx.request.userId
             })
 
@@ -141,7 +113,7 @@ module.exports = app => {
             }
 
             //此处保持请求幂等性,返回无异常即为删除成功,故直接返回true
-            await ctx.service.resourcePolicyService.deleteResourcePolicy({_id: policyId}).bind(ctx)
+            await ctx.service.resourcePolicyService.deleteResourcePolicy({resourceId}).bind(ctx)
                 .then(data => ctx.success(true)).catch(ctx.error)
         }
     }

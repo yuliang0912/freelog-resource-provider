@@ -38,8 +38,7 @@ module.exports = {
         }).map(item => {
             return {
                 resourceId: item.resourceId,
-                resourceName: item.resourceName,
-                policyId: item.policyId
+                resourceName: item.resourceName
             }
         })
 

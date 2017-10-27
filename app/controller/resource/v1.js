@@ -18,7 +18,11 @@ module.exports = app => {
         async warehouse(ctx) {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
             let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-            let resourceType = ctx.checkQuery('resourceType').default('').value
+            let resourceType = ctx.checkQuery('resourceType').default('').toLow().value
+
+            if (resourceType !== '' && !ctx.helper.commonRegex.resourceType.test(resourceType)) {
+                ctx.errors.push({resourceType: 'resourceType is error format'})
+            }
 
             ctx.validate()
 
@@ -102,7 +106,6 @@ module.exports = app => {
                 ctx.error({msg: '未找到资源'})
             }
 
-            Reflect.deleteProperty(resourceInfo, 'status')
             if (!attribute || !resourceInfo) {
                 return ctx.success(resourceInfo)
             }
@@ -157,12 +160,13 @@ module.exports = app => {
             let meta = ctx.checkBody('meta').toJson().value
             let parentId = ctx.checkBody('parentId').default('').value
             let resourceName = ctx.checkBody('resourceName').default('').value
-            let resourceType = ctx.checkBody('resourceType').len(4, 20).value
+            let resourceType = ctx.checkBody('resourceType').isResourceType().value
 
             if (!stream || !stream.filename) {
                 ctx.errors.push({file: 'Can\'t found upload file'})
             }
-            if (parentId !== '' && !/^[0-9a-zA-Z]{40}$/.test(parentId)) {
+
+            if (parentId !== '' && !ctx.helper.commonRegex.resourceId.test(parentId)) {
                 ctx.errors.push({parentId: 'parentId格式错误'})
             }
 

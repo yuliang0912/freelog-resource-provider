@@ -11,6 +11,10 @@ module.exports = (policyText) => {
     let policySegment = freelogPolicyCompiler.compile(policyText)
 
     if (policySegment.errorMsg) {
+
+        eggApp.logger.error('freelog_policy_compiler error:' + policySegment.errorMsg)
+        eggApp.logger.error('freelog_policy_compiler policyText:' + policyText)
+
         throw new Error(policySegment.errorMsg)
     }
     let policy = policySegment.policy_segments.map(item => {

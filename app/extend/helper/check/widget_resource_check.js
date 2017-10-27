@@ -4,6 +4,7 @@
 
 'use strict'
 
+const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 const componentsProvider = require('../../../data-provider/components-provider')
 
 module.exports = {
@@ -24,7 +25,7 @@ module.exports = {
 
         let widgetName = meta.widgetName
 
-        if (!/^freelog-[a-z0-9._-]{4,15}-[a-z0-9._-]{4,64}$/.test(widgetName)) {
+        if (!commonRegex.widgetName.test(widgetName)) {
             return {
                 errors: [new Error("widgetName命名不符合规范")]
             }
@@ -41,9 +42,7 @@ module.exports = {
         Reflect.deleteProperty(meta, 'widgetName')
 
         return {
-            systemMeta: {
-                widgetName
-            }
+            systemMeta: {widgetName}
         }
     }
 }
