@@ -13,7 +13,7 @@ RUN npm install
 #ENV
 #VOLUME ['/opt/logs','/opt/logs/db','/opt/logs/koa','/opt/logs/track']
 
-ENV NODE_ENV production
+ENV EGG_SERVER_ENV prod
 ENV PORT 7001
 
 EXPOSE 7001

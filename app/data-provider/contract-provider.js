@@ -1,5 +1,5 @@
 /**
- * Created by yuliang on 2017/8/16.
+ * Created by yuliang on 2017/11/6.
  */
 
 'use strict'
@@ -7,8 +7,10 @@
 const mongoModels = require('../models/index')
 
 module.exports = app => {
-    return class ContractService extends app.Service {
 
+    const {type} = app
+
+    return {
         /**
          * 创建合约
          * @param model
@@ -16,12 +18,12 @@ module.exports = app => {
          */
         createContract(model) {
 
-            if (!this.app.type.object(model)) {
+            if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
             }
 
             return mongoModels.contract.create(model).then()
-        }
+        },
 
         /**
          * 查询合约
@@ -30,7 +32,7 @@ module.exports = app => {
          */
         getContract(condition) {
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 

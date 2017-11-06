@@ -8,6 +8,9 @@
 const sendToWormhole = require('stream-wormhole');
 
 module.exports = app => {
+
+    const dataProvider = app.dataProvider
+
     return class ResourcesController extends app.Controller {
 
         /**
@@ -18,11 +21,7 @@ module.exports = app => {
         async warehouse(ctx) {
             let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
             let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-            let resourceType = ctx.checkQuery('resourceType').default('').toLow().value
-
-            if (resourceType !== '' && !ctx.helper.commonRegex.resourceType.test(resourceType)) {
-                ctx.errors.push({resourceType: 'resourceType is error format'})
-            }
+            let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
 
             ctx.validate()
 
@@ -32,13 +31,14 @@ module.exports = app => {
             }
 
             let dataList = []
-            let totalItem = await ctx.service.resourceService.getResourceCount(condition).then(data => parseInt(data.count))
+            let totalItem = await dataProvider.resourceProvider.getResourceCount(condition).then(data => parseInt(data.count))
 
             if (totalItem > (page - 1) * pageSize) {
-                dataList = await ctx.validate().service.resourceService
+                dataList = await dataProvider.resourceProvider
                     .getResourceList(condition, page, pageSize).bind(ctx)
                     .catch(ctx.error)
             }
+
             ctx.success({page, pageSize, totalItem, dataList})
         }
 
@@ -48,8 +48,8 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let page = ctx.checkQuery('page').default(1).gt(0).toInt().value
-            let pageSize = ctx.checkQuery('pageSize').default(10).gt(0).lt(101).toInt().value
+            let page = ctx.checkQuery('page').optional().gt(0).toInt().default(1).value
+            let pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
 
             let condition = {
                 userId: ctx.request.userId
@@ -58,10 +58,10 @@ module.exports = app => {
             ctx.validate()
 
             let respositories = []
-            let totalItem = await ctx.service.resourceService.getCount(condition).then(data => parseInt(data.count))
+            let totalItem = await dataProvider.resourceProvider.getCount(condition).then(data => parseInt(data.count))
 
             if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-                respositories = await ctx.service.resourceService
+                respositories = await dataProvider.resourceProvider
                     .getRespositories(condition, page, pageSize).bind(ctx)
                     .catch(ctx.error)
             }
@@ -72,7 +72,7 @@ module.exports = app => {
 
             let lastVersionArray = respositories.map(t => t.lastVersion)
 
-            let dataList = await ctx.service.resourceService
+            let dataList = await dataProvider.resourceProvider
                 .getResourceByIdList(lastVersionArray).bind(ctx).catch(ctx.error)
 
             ctx.success({page, pageSize, totalItem, dataList})
@@ -100,7 +100,7 @@ module.exports = app => {
 
             let resourceId = resourceMatch.split('.')[0]
             let attribute = resourceMatch.split('.')[1]
-            let resourceInfo = await ctx.validate().service.resourceService.getResourceInfo({resourceId}).bind(ctx).catch(ctx.error)
+            let resourceInfo = await dataProvider.resourceProvider.getResourceInfo({resourceId}).bind(ctx).catch(ctx.error)
 
             if (!resourceInfo) {
                 ctx.error({msg: '未找到资源'})
@@ -143,7 +143,9 @@ module.exports = app => {
         async edit(ctx) {
             let resourceId = ctx.checkParams("id").isResourceId().value
 
-            await ctx.validate().service.resourceService
+            ctx.validate()
+
+            await dataProvider.resourceProvider
                 .getResourceInfo({resourceId, userId: ctx.request.userId}).bind(ctx)
                 .then(ctx.success)
         }
@@ -173,7 +175,7 @@ module.exports = app => {
             ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
 
             if (parentId) {
-                let parentResource = await ctx.service.resourceService.getResourceInfo({resourceId: parentId}).bind(ctx).catch(ctx.error)
+                let parentResource = await dataProvider.resourceProvider.getResourceInfo({resourceId: parentId}).bind(ctx).catch(ctx.error)
                 if (!parentResource || parentResource.userId !== ctx.request.userId) {
                     ctx.error({msg: 'parentId错误,或者没有权限引用'})
                 }
@@ -205,13 +207,13 @@ module.exports = app => {
                 ctx.error(err)
             })
 
-            await ctx.service.resourceService.getResourceInfo({resourceId: resourceInfo.resourceId}).then(resource => {
+            await dataProvider.resourceProvider.getResourceInfo({resourceId: resourceInfo.resourceId}).then(resource => {
                 resource && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: resourceInfo.resourceId})
             })
 
-            await ctx.service.resourceService.createResource(resourceInfo, parentId).bind(ctx)
+            await dataProvider.resourceProvider.createResource(resourceInfo, parentId).bind(ctx)
                 .then(() => {
-                    return ctx.service.resourceTreeService.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId)
+                    return dataProvider.resourceTreeProvider.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId)
                 })
                 .then(() => {
                     resourceInfo.meta = JSON.parse(resourceInfo.meta)
@@ -220,7 +222,7 @@ module.exports = app => {
                 }).catch(ctx.error)
 
             if (resourceType === ctx.app.resourceType.WIDGET) {
-                await ctx.service.componentsService.create({
+                await dataProvider.componentsProvider.create({
                     widgetName: resourceInfo.systemMeta.widgetName,
                     resourceId: resourceInfo.resourceId,
                     userId: resourceInfo.userId
@@ -237,14 +239,12 @@ module.exports = app => {
 
             let resourceId = ctx.checkParams("id").isResourceId().value
             let meta = ctx.checkBody('meta').value
-            let resourceName = ctx.checkBody('resourceName').value
+            let resourceName = ctx.checkBody('resourceName').optional().len(4, 20).value
 
             if (meta !== undefined && !ctx.app.type.object(meta)) {
                 ctx.errors.push({meta: 'meta必须是json对象'})
             }
-            if (resourceName !== undefined && (resourceName.length < 4 || resourceName.length > 20)) {
-                ctx.errors.push({meta: 'resourceName长度必须在4-20字符之间'})
-            }
+
             ctx.allowContentType({type: 'json'}).validate()
 
             let model = {}
@@ -259,13 +259,13 @@ module.exports = app => {
                 ctx.error({msg: '无可更新内容'})
             }
 
-            await ctx.service.resourceService.getResourceInfo({
+            await dataProvider.resourceProvider.getResourceInfo({
                 resourceId,
                 userId: ctx.request.userId
             }).then(resourceInfo => {
                 !resourceInfo && ctx.error({msg: '未找到有效资源'})
             }).then(() => {
-                return ctx.service.resourceService.updateResourceInfo(model, {resourceId})
+                return dataProvider.resourceProvider.updateResourceInfo(model, {resourceId})
             }).bind(ctx).then(ctx.success).catch(ctx.error)
         }
     }

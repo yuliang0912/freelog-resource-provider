@@ -7,6 +7,20 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const toObjectOptions = {
+    transform: function (doc, ret, options) {
+        return {
+            resourceId: ret.resourceId,
+            serialNumber: ret.serialNumber,
+            policy: ret.policy,
+            policyText: ret.policyText,
+            languageType: ret.languageType,
+            userId: ret.userId,
+            status: ret.status
+        }
+    }
+}
+
 const ResourcePolicySchema = new Schema({
     resourceId: {type: String, required: true},
     serialNumber: {type: String, required: true}, //序列号,用于校验前端与后端是否一致
@@ -17,7 +31,9 @@ const ResourcePolicySchema = new Schema({
     status: {type: Number, default: 0, required: true},
 }, {
     versionKey: false,
-    timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
+    timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
+    toJSON: toObjectOptions,
+    toObject: toObjectOptions
 })
 
 ResourcePolicySchema.index({resourceId: 1, userId: 1});

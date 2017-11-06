@@ -5,7 +5,6 @@
 'use strict'
 
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
-const componentsProvider = require('../../../data-provider/components-provider')
 
 module.exports = {
 
@@ -31,7 +30,7 @@ module.exports = {
             }
         }
 
-        let isExists = await componentsProvider.count({widgetName}).then(data => parseInt(data.count))
+        let isExists = await eggApp.dataProvider.componentsProvider.count({widgetName}).then(data => parseInt(data.count))
 
         if (isExists) {
             return {

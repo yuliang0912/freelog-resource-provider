@@ -1,20 +1,23 @@
-﻿/**
- * Created by yuliang on 2017/8/11.
+/**
+ * Created by yuliang on 2017/11/6.
  */
 
-const yaml = require('js-yaml')
+
 const mongoModels = require('../models/index')
-const freelogPolicyCompiler = require('freelog_policy_compiler')
+const policyParse = require('../extend/helper/policy_parse_factory')
 
 module.exports = app => {
-    return class ResourcePolicyService extends app.Service {
+
+    const type = app.type
+
+    return {
 
         /**
          * 创建资源授权引用策略
          */
         createOrUpdateResourcePolicy({userId, resourceId, policyText, languageType, expireDate}) {
 
-            let policySegment = this.ctx.helper.policyParse(policyText, languageType)
+            let policySegment = policyParse.parse(policyText, languageType)
 
             return mongoModels.resourcePolicy.findOneAndUpdate({resourceId: resourceId}, {
                 policyText, languageType, expireDate,
@@ -30,7 +33,7 @@ module.exports = app => {
                     policy: policySegment,
                 })
             })
-        }
+        },
 
         /**
          * 查询资源引用策略
@@ -39,12 +42,12 @@ module.exports = app => {
          */
         getResourcePolicy(condition) {
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             return mongoModels.resourcePolicy.findOne(condition).exec()
-        }
+        },
 
         /**
          * 删除资源引用策略
@@ -53,12 +56,12 @@ module.exports = app => {
          */
         deleteResourcePolicy(condition) {
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            return this.updateResourcePolicy({status: 1}, condition).then()
-        }
+            return mongoModels.resourcePolicy.update(condition, model).then()
+        },
 
         /**
          * 更新消费策略
@@ -68,16 +71,16 @@ module.exports = app => {
          */
         updateResourcePolicy(model, condition) {
 
-            if (!this.app.type.object(model)) {
+            if (!type.object(model)) {
                 return Promise.reject(new Error("model must be object"))
             }
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 
             return mongoModels.resourcePolicy.update(condition, model)
-        }
+        },
 
         /**
          * 根据policyId集合获取policy
@@ -85,7 +88,7 @@ module.exports = app => {
          */
         getPolicyList(condition) {
 
-            if (!this.app.type.object(condition)) {
+            if (!type.object(condition)) {
                 return Promise.reject(new Error("condition must be object"))
             }
 

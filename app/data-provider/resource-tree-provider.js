@@ -1,11 +1,13 @@
 /**
- * Created by yuliang on 2017/7/25.
+ * Created by yuliang on 2017/11/6.
  */
+
+'use strict'
 
 const mongoModels = require('../models/index')
 
 module.exports = app => {
-    return class ResourceTreeService extends app.Service {
+    return {
 
         /**
          * 创建资源关系
@@ -24,7 +26,7 @@ module.exports = app => {
                     parentIds: parentResource.parentIds.concat(parentId)
                 })
             }).catch(console.error)
-        }
+        },
 
         /**
          * 获取root节点

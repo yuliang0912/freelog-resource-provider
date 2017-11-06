@@ -6,6 +6,9 @@
 'use strict'
 
 module.exports = app => {
+
+    const dataProvider = app.dataProvider
+
     return class PolicyController extends app.Controller {
 
         /**
@@ -14,15 +17,16 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async index(ctx) {
-            let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().value
+
+            let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
 
             ctx.validate()
 
             let condition = {
-                resourceId: {$in: resourceIds.split(',')}
+                resourceId: {$in: resourceIds}
             }
 
-            await ctx.service.resourcePolicyService.getPolicyList(condition).bind(ctx).then(ctx.success)
+            await dataProvider.resourcePolicyProvider.getPolicyList(condition).bind(ctx).then(ctx.success)
         }
 
         /**
@@ -31,9 +35,11 @@ module.exports = app => {
          * @returns {Promise.<void>}
          */
         async show(ctx) {
-            let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
 
-            await ctx.validate().service.resourcePolicyService.getResourcePolicy({
+            let resourceId = ctx.checkParams('id').exist().isResourceId().value
+            ctx.validate()
+
+            await dataProvider.resourcePolicyProvider.getResourcePolicy({
                 resourceId, status: 0
             }).bind(ctx).then(ctx.success).catch(ctx.error)
         }
@@ -55,15 +61,15 @@ module.exports = app => {
                 resourceId, policyText, languageType
             }
 
-            await ctx.service.resourceService.getResourceInfo({
+            await dataProvider.resourceProvider.getResourceInfo({
                 resourceId,
                 userId: policy.userId
             }).then(resourceInfo => {
                 !resourceInfo && ctx.error({msg: 'resourceId错误或者没有权限'})
             })
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
-                return ctx.service.resourceService.updateResource({status: 2}, {resourceId}).then(() => policy)
+            await dataProvider.resourcePolicyProvider.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
+                return dataProvider.resourceProvider.updateResource({status: 2}, {resourceId}).then(() => policy)
             }).then(ctx.success).catch(ctx.error)
         }
 
@@ -78,7 +84,7 @@ module.exports = app => {
 
             ctx.allowContentType({type: 'json'}).validate()
 
-            let policy = await ctx.validate().service.resourcePolicyService.getResourcePolicy({
+            let policy = await dataProvider.resourcePolicyProvider.getResourcePolicy({
                 resourceId,
                 userId: ctx.request.userId
             })
@@ -90,7 +96,7 @@ module.exports = app => {
             policy.policyText = policyText
             policy.languageType = languageType
 
-            await ctx.service.resourcePolicyService.createOrUpdateResourcePolicy(policy).bind(ctx)
+            await dataProvider.resourcePolicyProvider.createOrUpdateResourcePolicy(policy).bind(ctx)
                 .then(data => ctx.success(!!data)).catch(ctx.error)
         }
 
@@ -103,7 +109,9 @@ module.exports = app => {
 
             let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
 
-            let policy = await ctx.validate().service.resourcePolicyService.getResourcePolicy({
+            ctx.validate()
+
+            let policy = await dataProvider.resourcePolicyProvider.getResourcePolicy({
                 resourceId,
                 userId: ctx.request.userId
             })
@@ -113,7 +121,7 @@ module.exports = app => {
             }
 
             //此处保持请求幂等性,返回无异常即为删除成功,故直接返回true
-            await ctx.service.resourcePolicyService.deleteResourcePolicy({resourceId}).bind(ctx)
+            await dataProvider.resourcePolicyProvider.deleteResourcePolicy({resourceId}).bind(ctx)
                 .then(data => ctx.success(true)).catch(ctx.error)
         }
     }
