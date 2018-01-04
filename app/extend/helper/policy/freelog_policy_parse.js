@@ -18,14 +18,14 @@ module.exports = (policyText) => {
         throw new Error(policySegment.errorMsg)
     }
     let policy = policySegment.policy_segments.map(item => {
-        console.log(item.state_transition_table)
         return {
             segmentId: '',
+            segmentText: item.segmentText,
             users: item.users,
             fsmDescription: item.state_transition_table,
             activatedStates: item.activatedStates,
             initialState: item.initialState,
-            teminateState: item.teminateState
+            terminateState: item.terminateState
         }
     })
 

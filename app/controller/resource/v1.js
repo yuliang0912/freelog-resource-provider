@@ -185,7 +185,7 @@ module.exports = app => {
             let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta)
             let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
 
-            const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).spread((metaInfo, uploadData) => {
+            const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
                 if (metaInfo.errors.length) {
                     return Promise.reject(metaInfo.errors[0])
                 }
@@ -230,7 +230,6 @@ module.exports = app => {
             }
         }
 
-
         /**
          * 更新资源
          * @returns {Promise.<void>}
@@ -267,6 +266,81 @@ module.exports = app => {
             }).then(() => {
                 return dataProvider.resourceProvider.updateResourceInfo(model, {resourceId})
             }).bind(ctx).then(ctx.success).catch(ctx.error)
+        }
+
+        /**
+         * 获取资源列表
+         * @returns {Promise.<void>}
+         */
+        async list(ctx) {
+
+            let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
+
+            ctx.validate()
+
+            await dataProvider.resourceProvider.getResourceByIdList(resourceIds)
+                .bind(ctx).then(ctx.success).catch(ctx.error)
+        }
+
+        /**
+         * 更新资源内容(开发阶段使用)
+         * @param ctx
+         * @returns {Promise.<void>}
+         */
+        async updateResourceContext(ctx) {
+
+            let stream = await ctx.getFileStream()
+            ctx.request.body = stream.fields
+
+            let meta = ctx.checkBody('meta').toJson().value
+            let resourceId = ctx.checkParams("resourceId").isResourceId().value
+
+            if (!stream || !stream.filename) {
+                ctx.errors.push({file: 'Can\'t found upload file'})
+            }
+
+            ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
+
+            let resourceInfo = await dataProvider.resourceProvider.getResourceInfo({resourceId})
+
+            if (!resourceInfo) {
+                ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
+            }
+
+            let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
+            let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceInfo.resourceName, resourceInfo.resourceType, meta)
+            let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), stream)
+
+            const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
+                if (metaInfo.errors.length) {
+                    return Promise.reject(metaInfo.errors[0])
+                }
+                return {
+                    meta: JSON.stringify(metaInfo.meta),
+                    systemMeta: JSON.stringify(metaInfo.systemMeta),
+                    resourceUrl: uploadData.url,
+                    mimeType: metaInfo.systemMeta.mimeType
+                }
+            }).catch(err => {
+                sendToWormhole(stream)
+                ctx.error(err)
+            })
+
+            await dataProvider.resourceProvider.updateResourceInfo(updateResourceInfo, {resourceId}).then(() => {
+                resourceInfo.meta = JSON.parse(updateResourceInfo.meta)
+                resourceInfo.systemMeta = JSON.parse(updateResourceInfo.systemMeta)
+                resourceInfo.resourceUrl = updateResourceInfo.resourceUrl
+                resourceInfo.mimeType = updateResourceInfo.mimeType
+                ctx.success(resourceInfo)
+            }).catch(err => ctx.error(err))
+
+            if (resourceInfo.resourceType === ctx.app.resourceType.WIDGET) {
+                await dataProvider.componentsProvider.create({
+                    widgetName: resourceInfo.systemMeta.widgetName,
+                    resourceId: resourceInfo.resourceId,
+                    userId: resourceInfo.userId
+                }).catch(console.error)
+            }
         }
     }
 }

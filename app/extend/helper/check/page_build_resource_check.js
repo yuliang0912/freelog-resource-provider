@@ -7,7 +7,6 @@
 const lodash = require('lodash')
 const chreeio = require('cheerio')
 const resourceType = require('egg-freelog-base/app/enum/resource_type')
-const resourceProvider = require('../../../data-provider/resource-provider')
 
 /**
  * pb资源检测
@@ -32,7 +31,7 @@ module.exports = {
             return {errors: [new Error("PageBuild资源最少需要包含一个widget")]}
         }
 
-        let widgetResources = await resourceProvider.getResourceByIds(widgets).where({
+        let widgetResources = await eggApp.dataProvider.resourceProvider.getResourceByIds(widgets).where({
             status: 2,
             resourceType: resourceType.WIDGET
         }).map(item => {

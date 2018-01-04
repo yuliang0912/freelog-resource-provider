@@ -37,6 +37,7 @@ module.exports = {
      * @param meta
      */
     resourceFileCheck(fileStream, resourceName, resourceType, meta){
+
         let chunks = []
         let sha1sum = crypto.createHash('sha1')
         let metaInfo = {
@@ -59,7 +60,7 @@ module.exports = {
             fileStream.on('end', async function () {
                 metaInfo.systemMeta.sha1 = sha1sum.digest('hex')
                 if (Reflect.has(resourceTypeCheckMap, resourceType)) {
-                    let checkMeta = await resourceTypeCheckMap[resourceType].checkFile(resourceName, meta, Buffer.concat(chunks), fileStream.mimeType)
+                    let checkMeta = await resourceTypeCheckMap[resourceType].checkFile(resourceName, meta, Buffer.concat(chunks), fileStream.mimeType).catch(reject)
                     lodash.defaultsDeep(metaInfo, checkMeta)
                 }
                 resolve(metaInfo)

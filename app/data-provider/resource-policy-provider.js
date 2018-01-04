@@ -92,7 +92,7 @@ module.exports = app => {
                 return Promise.reject(new Error("condition must be object"))
             }
 
-            let projection = '_id serialNumber userId resourceId policy createDate updateDate status'
+            let projection = 'serialNumber userId resourceId policy languageType policyText createDate updateDate status'
 
             return mongoModels.resourcePolicy.find(condition, projection).exec()
         }

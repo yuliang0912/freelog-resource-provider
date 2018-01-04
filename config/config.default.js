@@ -1,6 +1,6 @@
 'use strict';
 
-const dbConfig = require('./db_config/dbconfig_local')
+const fs = require('fs')
 
 module.exports = appInfo => {
 
@@ -36,13 +36,63 @@ module.exports = appInfo => {
         /**
          * DB-mysql相关配置
          */
-        dbConfig: dbConfig,
+        dbConfig: {
+            /**
+             * 用户相关DB配置
+             */
+            user: {
+                client: 'mysql2',
+                connection: {
+                    host: '192.168.0.99',
+                    user: 'root',
+                    password: 'yuliang@@',
+                    database: 'user_info',
+                    charset: 'utf8',
+                    timezone: '+08:00',
+                    bigNumberStrings: true,
+                    supportBigNumbers: true,
+                    dateStrings: true,
+                    connectTimeout: 10000
+                },
+                pool: {
+                    maxConnections: 50,
+                    minConnections: 2,
+                },
+                acquireConnectionTimeout: 10000,
+                debug: true
+            },
+
+            /**
+             * 资源相关DB配置
+             */
+            resource: {
+                client: 'mysql2',
+                connection: {
+                    host: '192.168.0.99',
+                    user: 'root',
+                    password: 'yuliang@@',
+                    database: 'fr_resource',
+                    charset: 'utf8',
+                    timezone: '+08:00',
+                    bigNumberStrings: true,
+                    supportBigNumbers: true,
+                    dateStrings: true,
+                    connectTimeout: 10000
+                },
+                pool: {
+                    maxConnections: 50,
+                    minConnections: 2,
+                },
+                acquireConnectionTimeout: 10000,
+                debug: true
+            }
+        },
 
         /**
          * mongoDB配置
          */
         mongo: {
-            uri: "mongodb://192.168.0.3:27017/resource"
+            uri: "mongodb://192.168.0.99:27017/resource"
         },
 
         /**
@@ -80,6 +130,16 @@ module.exports = appInfo => {
 
         logger: {
             consoleLevel: 'DEBUG',
+        },
+
+        notfound: {
+            pageUrl: '/public/404.html',
+        },
+
+        RasSha256Key: {
+            resourceAuth: {
+                publicKey: fs.readFileSync('config/auth_key/resource_auth_public_key.pem').toString()
+            }
         }
     }
 

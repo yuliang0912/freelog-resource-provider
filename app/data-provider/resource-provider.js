@@ -4,6 +4,8 @@
 
 'use strict'
 
+const moment = require('moment')
+
 module.exports = app => {
 
     let {type, knex} = app
