@@ -39,7 +39,7 @@ module.exports = app => {
                 ctx.error({msg: '未能找到资源'})
             }
 
-            let objectKey = resourceInfo.resourceUrl.replace('http://freelog-shenzhen.oss-cn-shenzhen.aliyuncs.com', '')
+            let objectKey = resourceInfo.resourceUrl.replace(/^http:\/\/freelog-shenzhen.oss-cn-shenzhen(-internal){0,1}.aliyuncs.com/, '')
 
             //默认60秒有效期
             resourceInfo.resourceUrl = client.signatureUrl(objectKey, Object.assign(response, {expires: 60}));
