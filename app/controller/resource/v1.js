@@ -161,7 +161,7 @@ module.exports = app => {
 
             let meta = ctx.checkBody('meta').toJson().value
             let parentId = ctx.checkBody('parentId').default('').value
-            let resourceName = ctx.checkBody('resourceName').default('').value
+            let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
             let resourceType = ctx.checkBody('resourceType').isResourceType().value
 
             if (!stream || !stream.filename) {
@@ -197,9 +197,9 @@ module.exports = app => {
                     systemMeta: JSON.stringify(metaInfo.systemMeta),
                     resourceUrl: uploadData.url,
                     userId: ctx.request.userId,
-                    resourceName: resourceName === '' ?
+                    resourceName: resourceName === undefined ?
                         ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
-                        ctx.helper.stringExpand.cutString(resourceName, 100),
+                        ctx.helper.stringExpand.cutString(resourceName, 80),
                     mimeType: metaInfo.systemMeta.mimeType
                 }
             }).catch(err => {
@@ -238,7 +238,7 @@ module.exports = app => {
 
             let resourceId = ctx.checkParams("id").isResourceId().value
             let meta = ctx.checkBody('meta').value
-            let resourceName = ctx.checkBody('resourceName').optional().len(4, 20).value
+            let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
 
             if (meta !== undefined && !ctx.app.type.object(meta)) {
                 ctx.errors.push({meta: 'meta必须是json对象'})
