@@ -3,29 +3,32 @@
   "version": "1.0.0",
   "description": "飞致网络资源相关服务",
   "private": true,
+  "egg": {
+    "framework": "egg-freelog-base"
+  },
   "dependencies": {
-    "ali-oss": "^4.11.2",
+    "ali-oss": "^4.11.4",
     "bluebird": "^3.5.1",
     "busboy": "^0.2.14",
     "cheerio": "^1.0.0-rc.2",
     "crypto": "^1.0.1",
-    "egg": "^1.12.0",
-    "egg-freelog-base": "^1.1.18",
-    "freelog_policy_compiler": "0.0.21",
-    "image-size": "^0.6.0",
+    "egg": "^2.2.1",
+    "egg-freelog-base": "^1.1.31",
+    "freelog_policy_compiler": "^0.1.4",
+    "image-size": "^0.6.2",
     "is-type-of": "^1.0.0",
     "js-yaml": "^3.10.0",
     "knex": "^0.13.0",
     "koa-body": "^2.5.0",
     "lodash": "^4.17.4",
-    "moment": "^2.19.4",
-    "mongoose": "^4.13.7",
+    "moment": "^2.20.1",
+    "mongoose": "^4.13.9",
     "mysql2": "^1.5.1",
-    "node-uuid": "^1.4.8",
-    "stream-wormhole": "^1.0.3"
+    "stream-wormhole": "^1.0.3",
+    "uuid": "^3.2.1"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "scripts": {
     "start": "node index.js",
@@ -37,7 +40,7 @@
     "autod": "autod"
   },
   "ci": {
-    "version": "6, 8"
+    "version": "8, 9"
   },
   "repository": {
     "type": "git",

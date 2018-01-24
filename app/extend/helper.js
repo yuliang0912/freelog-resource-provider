@@ -4,7 +4,7 @@
 
 'use strict'
 
-const uuid = require('node-uuid')
+const uuid = require('uuid')
 const polifyParseFactory = require('./helper/policy_parse_factory')
 const resourceCheck = require('./helper/resource_check')
 

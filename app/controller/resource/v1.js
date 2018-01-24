@@ -72,8 +72,7 @@ module.exports = app => {
 
             let lastVersionArray = respositories.map(t => t.lastVersion)
 
-            let dataList = await dataProvider.resourceProvider
-                .getResourceByIdList(lastVersionArray).bind(ctx).catch(ctx.error)
+            let dataList = await dataProvider.resourceProvider.getResourceByIdList(lastVersionArray)
 
             ctx.success({page, pageSize, totalItem, dataList})
         }

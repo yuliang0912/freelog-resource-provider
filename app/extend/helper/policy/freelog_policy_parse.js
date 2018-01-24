@@ -4,7 +4,7 @@
 
 'use strict'
 
-const uuid = require('node-uuid')
+const uuid = require('uuid')
 const freelogPolicyCompiler = require('freelog_policy_compiler')
 
 module.exports = (policyText) => {
