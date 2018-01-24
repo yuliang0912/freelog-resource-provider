@@ -14,8 +14,6 @@ module.exports = (policyText) => {
         throw new Error(policySegment.errorMsg)
     }
 
-    console.log(JSON.stringify(policySegment))
-
     let policy = policySegment.policy_segments.map(item => {
         return {
             segmentId: '',
