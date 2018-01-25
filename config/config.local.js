@@ -14,7 +14,7 @@ module.exports = appInfo => {
          * 本地开发环境身份信息
          */
         localIdentity: {
-            "userId": 10024,
+            "userId": 10022,
             "userName": "",
             "nickname": "philyoung",
             "email": "",

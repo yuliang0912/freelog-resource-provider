@@ -17,6 +17,7 @@ module.exports = app => {
          */
         createOrUpdateResourcePolicy({userId, resourceId, policyText, languageType, expireDate}) {
 
+
             let policySegment = policyParse.parse(policyText, languageType)
 
             return mongoModels.resourcePolicy.findOneAndUpdate({resourceId: resourceId}, {

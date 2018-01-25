@@ -8,10 +8,11 @@ const uuid = require('uuid')
 const freelogPolicyCompiler = require('freelog_policy_compiler')
 
 module.exports = (policyText) => {
+
     let policySegment = freelogPolicyCompiler.compile(policyText)
 
     if (policySegment.errorMsg) {
-        throw new Error(policySegment.errorMsg)
+        throw new Error("resource-policy-error:" + policySegment.errorMsg)
     }
 
     let policy = policySegment.policy_segments.map(item => {
@@ -28,7 +29,7 @@ module.exports = (policyText) => {
 
     policy.forEach(subPolicy => {
         subPolicy.fsmDescription.forEach(item => {
-            setEventId(item.event)
+            item.event && setEventId(item.event)
         })
     })
 
