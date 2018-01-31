@@ -16,8 +16,20 @@ module.exports = app => {
          * 获取数量
          * @param condition
          */
-        count(condition){
+        count(condition) {
             return knex.resource('components').where(condition).count("* as count").first()
+        },
+
+        /**
+         * 查找一条
+         * @param condition
+         * @returns {Promise<never>}
+         */
+        findOne(condition) {
+            if (!type.object(condition)) {
+                return Promise.reject(new Error("condition is not object"))
+            }
+            return knex.resource('components').where(condition).orderBy("createDate", "desc").first()
         },
 
         /**

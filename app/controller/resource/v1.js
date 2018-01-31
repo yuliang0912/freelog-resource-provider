@@ -181,7 +181,7 @@ module.exports = app => {
             }
 
             let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
-            let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta)
+            let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta, ctx.request.userId)
             let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
 
             const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
@@ -223,6 +223,7 @@ module.exports = app => {
             if (resourceType === ctx.app.resourceType.WIDGET) {
                 await dataProvider.componentsProvider.create({
                     widgetName: resourceInfo.systemMeta.widgetName,
+                    version: resourceInfo.systemMeta.version,
                     resourceId: resourceInfo.resourceId,
                     userId: resourceInfo.userId
                 }).catch(console.error)
@@ -336,6 +337,7 @@ module.exports = app => {
             if (resourceInfo.resourceType === ctx.app.resourceType.WIDGET) {
                 await dataProvider.componentsProvider.create({
                     widgetName: resourceInfo.systemMeta.widgetName,
+                    version: resourceInfo.systemMeta.version,
                     resourceId: resourceInfo.resourceId,
                     userId: resourceInfo.userId
                 }).catch(console.error)

@@ -18,7 +18,7 @@ module.exports = {
      * @param meta
      * @param chunks
      */
-    async checkFile(resourceName, meta, fileBuffer, mimeType){
+    async checkFile({fileBuffer, mimeType}) {
 
         if (!/^image\/(bmp|cur|ico|psd|tiff|webp|svg|dds|jpg|png|gif|jpeg)$/i.test(mimeType)) {
             return {
