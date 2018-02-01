@@ -1,5 +1,7 @@
 'use strict'
 
+const globalInfo = require('egg-freelog-base/globalInfo')
+
 module.exports = appInfo => {
     return {
         /**
@@ -10,7 +12,7 @@ module.exports = appInfo => {
              * 资源相关DB配置
              */
             resource: {
-                client: 'mysql2',
+                client: 'mysql',
                 connection: {
                     host: 'rm-wz9wj9435a0428942.mysql.rds.aliyuncs.com',
                     user: 'freelog',
@@ -21,13 +23,20 @@ module.exports = appInfo => {
                     bigNumberStrings: true,
                     supportBigNumbers: true,
                     dateStrings: true,
-                    connectTimeout: 10000
+                    connectTimeout: 1500
                 },
                 pool: {
-                    maxConnections: 50,
-                    minConnections: 2,
+                    max: 10, min: 2,
+                    afterCreate: (conn, done) => {
+                        conn.on('error', err => {
+                            console.log(`mysql connection error : ${err.toString()}`)
+                            err.fatal && globalInfo.app.knex.resource.client.pool.destroy(conn)
+                        })
+                        done()
+                    }
                 },
-                acquireConnectionTimeout: 10000,
+                acquireConnectionTimeout: 500, //每次查询等待的超时时间(从连接池拿可用的connection的超时时间)
+                //idleTimeoutMillis: 3000, //连接空闲移除连接池的时间
                 debug: false
             }
         },
