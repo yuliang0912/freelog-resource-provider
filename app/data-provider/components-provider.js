@@ -5,47 +5,36 @@
 'use strict'
 
 const moment = require('moment')
+const KnexBaseOperation = require('egg-freelog-database/lib/database/knex-base-operation')
 
-module.exports = app => {
+module.exports = class ComponentsProvider extends KnexBaseOperation {
 
-    let {type, knex} = app
+    constructor(app) {
+        super(app.knex.resource('components'), 'widgetName')
+        this.app = app
+    }
 
-    return {
+    /**
+     * 查找一条
+     * @param condition
+     * @returns {Promise<never>}
+     */
+    findOne(condition) {
+        return super.findOne(condition).orderBy("createDate", "desc")
+    }
 
-        /**
-         * 获取数量
-         * @param condition
-         */
-        count(condition) {
-            return knex.resource('components').where(condition).count("* as count").first()
-        },
+    /**
+     * 创建web components
+     * @param model
+     * @returns {*}
+     */
+    create(model) {
 
-        /**
-         * 查找一条
-         * @param condition
-         * @returns {Promise<never>}
-         */
-        findOne(condition) {
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition is not object"))
-            }
-            return knex.resource('components').where(condition).orderBy("createDate", "desc").first()
-        },
-
-        /**
-         * 创建web components
-         * @param model
-         * @returns {*}
-         */
-        create(model) {
-
-            if (!type.object(model)) {
-                return Promise.reject(new Error("model is not object"))
-            }
-
-            model.createDate = moment().toDate()
-
-            return knex.resource('components').insert(model)
+        if (!super.type.object(model)) {
+            return Promise.reject(new Error("model is not object"))
         }
+        model.createDate = moment().toDate()
+
+        return super.create(model)
     }
 }

@@ -3,126 +3,120 @@
  * 资源对外引用策略相关restful API
  */
 
-'use strict'
+'use strict';
 
-module.exports = app => {
+const Controller = require('egg').Controller;
 
-    const dataProvider = app.dataProvider
+module.exports = class PolicyController extends Controller {
 
-    return class PolicyController extends app.Controller {
+    /**
+     * 获取policyList
+     * @param ctx
+     * @returns {Promise.<void>}
+     */
+    async index(ctx) {
 
-        /**
-         * 获取policyList
-         * @param ctx
-         * @returns {Promise.<void>}
-         */
-        async index(ctx) {
+        let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
 
-            let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
+        ctx.validate()
 
-            ctx.validate()
-
-            let condition = {
-                resourceId: {$in: resourceIds}
-            }
-
-            await dataProvider.resourcePolicyProvider.getPolicyList(condition).bind(ctx).then(ctx.success)
+        let condition = {
+            resourceId: {$in: resourceIds}
         }
 
-        /**
-         * 展示资源的引用策略
-         * @param ctx
-         * @returns {Promise.<void>}
-         */
-        async show(ctx) {
+        await ctx.dal.resourcePolicyProvider.getPolicyList(condition).bind(ctx).then(ctx.success)
+    }
 
-            let resourceId = ctx.checkParams('id').exist().isResourceId().value
-            ctx.validate()
+    /**
+     * 展示资源的引用策略
+     * @param ctx
+     * @returns {Promise.<void>}
+     */
+    async show(ctx) {
 
-            await dataProvider.resourcePolicyProvider.getResourcePolicy({
-                resourceId, status: 0
-            }).bind(ctx).then(ctx.success).catch(ctx.error)
+        let resourceId = ctx.checkParams('id').exist().isResourceId().value
+        ctx.validate()
+
+        await ctx.dal.resourcePolicyProvider.getResourcePolicy({
+            resourceId, status: 0
+        }).bind(ctx).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
+     * 创建资源的引用策略
+     * @param ctx
+     * @returns {Promise.<void>}
+     */
+    async create(ctx) {
+        let resourceId = ctx.checkBody('resourceId').isResourceId().value
+        let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后的字符串
+        let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
+
+        ctx.allowContentType({type: 'json'}).validate()
+
+        let policy = {
+            userId: ctx.request.userId,
+            resourceId, policyText, languageType
         }
 
-        /**
-         * 创建资源的引用策略
-         * @param ctx
-         * @returns {Promise.<void>}
-         */
-        async create(ctx) {
-            let resourceId = ctx.checkBody('resourceId').isResourceId().value
-            let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后的字符串
-            let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
+        await ctx.dal.resourceProvider.getResourceInfo({
+            resourceId, userId: policy.userId
+        }).then(resourceInfo => {
+            !resourceInfo && ctx.error({msg: 'resourceId错误或者没有权限'})
+        })
 
-            ctx.allowContentType({type: 'json'}).validate()
+        await ctx.dal.resourcePolicyProvider.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
+            return ctx.dal.resourceProvider.updateResourceInfo({status: 2}, {resourceId}).then(() => policy)
+        }).then(ctx.success).catch(ctx.error)
+    }
 
-            let policy = {
-                userId: ctx.request.userId,
-                resourceId, policyText, languageType
-            }
+    /**
+     * 更新资源的引用策略
+     * @returns {Promise.<void>}
+     */
+    async update(ctx) {
+        let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
+        let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后授权语言字符串
+        let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['yaml', 'freelog_policy_lang']).value
 
-            await dataProvider.resourceProvider.getResourceInfo({
-                resourceId,
-                userId: policy.userId
-            }).then(resourceInfo => {
-                !resourceInfo && ctx.error({msg: 'resourceId错误或者没有权限'})
-            })
+        ctx.allowContentType({type: 'json'}).validate()
 
-            await dataProvider.resourcePolicyProvider.createOrUpdateResourcePolicy(policy).bind(ctx).then(policy => {
-                return dataProvider.resourceProvider.updateResource({status: 2}, {resourceId}).then(() => policy)
-            }).then(ctx.success).catch(ctx.error)
+        let policy = await ctx.dal.resourcePolicyProvider.getResourcePolicy({
+            resourceId, userId: ctx.request.userId
+        })
+
+        if (!policy || policy.status !== 0) {
+            ctx.error({msg: "未找到需要更新的策略或者策略与用户不匹配"})
         }
 
-        /**
-         * 更新资源的引用策略
-         * @returns {Promise.<void>}
-         */
-        async update(ctx) {
-            let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
-            let policyText = ctx.checkBody('policyText').notEmpty().isBase64().decodeBase64().value //base64编码之后授权语言字符串
-            let languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['yaml', 'freelog_policy_lang']).value
+        policy.policyText = policyText
+        policy.languageType = languageType
 
-            ctx.allowContentType({type: 'json'}).validate()
+        await ctx.dal.resourcePolicyProvider.createOrUpdateResourcePolicy(policy).bind(ctx)
+            .then(data => ctx.success(!!data)).catch(ctx.error)
+    }
 
-            let policy = await dataProvider.resourcePolicyProvider.getResourcePolicy({
-                resourceId,
-                userId: ctx.request.userId
-            })
+    /**
+     * 删除资源引用策略
+     * @param ctx
+     * @returns {Promise.<void>}
+     */
+    async destroy(ctx) {
 
-            if (!policy || policy.status !== 0) {
-                ctx.error({msg: "未找到需要更新的策略或者策略与用户不匹配"})
-            }
+        let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
 
-            policy.policyText = policyText
-            policy.languageType = languageType
+        ctx.validate()
 
-            await dataProvider.resourcePolicyProvider.createOrUpdateResourcePolicy(policy).bind(ctx)
-                .then(data => ctx.success(!!data)).catch(ctx.error)
+        let policy = await ctx.dal.resourcePolicyProvider.getResourcePolicy({
+            resourceId, userId: ctx.request.userId
+        })
+
+        if (!policy) {
+            ctx.error({msg: "策略不存在或者策略与用户不匹配"})
         }
 
-        /**
-         * 删除资源引用策略
-         * @param ctx
-         * @returns {Promise.<void>}
-         */
-        async destroy(ctx) {
-
-            let resourceId = ctx.checkParams('id').notEmpty().isResourceId().value
-
-            ctx.validate()
-
-            let policy = await dataProvider.resourcePolicyProvider.getResourcePolicy({
-                resourceId,
-                userId: ctx.request.userId
-            })
-
-            if (!policy) {
-                ctx.error({msg: "策略不存在或者策略与用户不匹配"})
-            }
-
-            //此处保持请求幂等性,返回无异常即为删除成功,故直接返回true
-            await dataProvider.resourcePolicyProvider.deleteResourcePolicy({resourceId}).bind(ctx)
-                .then(data => ctx.success(true)).catch(ctx.error)
-        }
+        //此处保持请求幂等性,返回无异常即为删除成功,故直接返回true
+        await ctx.dal.resourcePolicyProvider.deleteResourcePolicy({resourceId}).bind(ctx)
+            .then(data => ctx.success(true)).catch(ctx.error)
     }
 }

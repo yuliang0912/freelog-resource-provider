@@ -20,7 +20,7 @@ module.exports = {
      * @param meta
      * @param chunks
      */
-    async checkFile({resourceName, meta, fileBuffer}){
+    async checkFile({resourceName, meta, fileBuffer}) {
 
         let $ = chreeio.load(fileBuffer.toString())
         let widgets = $('[data-widget-src]').map((index, element) => {
@@ -31,7 +31,7 @@ module.exports = {
             return {errors: [new Error("PageBuild资源最少需要包含一个widget")]}
         }
 
-        let widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIds(widgets).where({
+        let widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIdList(widgets).where({
             status: 2,
             resourceType: resourceType.WIDGET
         }).map(item => {

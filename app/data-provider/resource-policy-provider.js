@@ -2,100 +2,78 @@
  * Created by yuliang on 2017/11/6.
  */
 
+'use strict'
 
-const mongoModels = require('../models/index')
 const policyParse = require('../extend/helper/policy_parse_factory')
+const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
-module.exports = app => {
+module.exports = class ResourceTreeProvider extends MongoBaseOperation {
 
-    const type = app.type
+    constructor(app) {
+        super(app.model.ResourcePolicy)
+        this.app = app
+        this.resourcePolicy = app.model.ResourcePolicy
+    }
 
-    return {
+    /**
+     * 创建资源授权引用策略
+     */
+    createOrUpdateResourcePolicy({userId, resourceId, policyText, languageType, expireDate}) {
 
-        /**
-         * 创建资源授权引用策略
-         */
-        createOrUpdateResourcePolicy({userId, resourceId, policyText, languageType, expireDate}) {
+        let policySegment = policyParse.parse(policyText, languageType)
 
-
-            let policySegment = policyParse.parse(policyText, languageType)
-
-            return mongoModels.resourcePolicy.findOneAndUpdate({resourceId: resourceId}, {
-                policyText, languageType, expireDate,
-                serialNumber: mongoModels.ObjectId,
-                policy: policySegment
-            }).then(policy => {
-                if (policy) {
-                    return Promise.resolve(policy)
-                }
-                return mongoModels.resourcePolicy.create({
-                    resourceId, userId, policyText, languageType,
-                    serialNumber: mongoModels.ObjectId,
-                    policy: policySegment,
-                })
+        return this.resourcePolicy.findOneAndUpdate({resourceId: resourceId}, {
+            policyText, languageType, expireDate,
+            serialNumber: this.app.mongoose.getNewObjectId(),
+            policy: policySegment
+        }).then(policy => {
+            if (policy) {
+                return super.findOne({resourceId: resourceId})
+            }
+            return super.create({
+                resourceId, userId, policyText, languageType,
+                serialNumber: this.app.mongoose.getNewObjectId(),
+                policy: policySegment,
             })
-        },
+        })
+    }
 
-        /**
-         * 查询资源引用策略
-         * @param resourceId
-         * @returns return query,not executes
-         */
-        getResourcePolicy(condition) {
+    /**
+     * 查询资源引用策略
+     * @param resourceId
+     * @returns return query,not executes
+     */
+    getResourcePolicy(condition) {
+        return super.findOne(condition)
+    }
 
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
+    /**
+     * 删除资源引用策略
+     * @param condition
+     * @returns {*}
+     */
+    deleteResourcePolicy(condition) {
+        return super.update(condition, {status: 1})
+    }
 
-            return mongoModels.resourcePolicy.findOne(condition).exec()
-        },
+    /**
+     * 更新消费策略
+     * @param model
+     * @param condition
+     * @returns {*}
+     */
+    updateResourcePolicy(model, condition) {
+        return super.update(condition, model)
+    }
 
-        /**
-         * 删除资源引用策略
-         * @param condition
-         * @returns {*}
-         */
-        deleteResourcePolicy(condition) {
+    /**
+     * 根据policyId集合获取policy
+     * @param policyIds
+     */
+    getPolicyList(condition) {
 
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
+        let projection = 'serialNumber userId resourceId policy languageType policyText createDate updateDate status'
 
-            return mongoModels.resourcePolicy.update(condition, model).then()
-        },
-
-        /**
-         * 更新消费策略
-         * @param model
-         * @param condition
-         * @returns {*}
-         */
-        updateResourcePolicy(model, condition) {
-
-            if (!type.object(model)) {
-                return Promise.reject(new Error("model must be object"))
-            }
-
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
-
-            return mongoModels.resourcePolicy.update(condition, model)
-        },
-
-        /**
-         * 根据policyId集合获取policy
-         * @param policyIds
-         */
-        getPolicyList(condition) {
-
-            if (!type.object(condition)) {
-                return Promise.reject(new Error("condition must be object"))
-            }
-
-            let projection = 'serialNumber userId resourceId policy languageType policyText createDate updateDate status'
-
-            return mongoModels.resourcePolicy.find(condition, projection).exec()
-        }
+        return super.find(condition, projection)
     }
 }

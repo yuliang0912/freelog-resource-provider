@@ -70,11 +70,8 @@ module.exports = {
         }
     },
 
-    /**
-     * mongoDB配置
-     */
-    mongo: {
-        uri: "mongodb://192.168.0.99:27017/resource"
+    mongoose: {
+        url: "mongodb://192.168.0.99:27017/resource"
     },
 
     /**

@@ -6,7 +6,7 @@
 
 module.exports = app => {
 
-    const { router, controller } = app;
+    const {router, controller} = app;
 
     //资源仓库
     router.get('/v1/resources/warehouse', controller.resource.v1.warehouse)
@@ -27,9 +27,4 @@ module.exports = app => {
      * 资源引用策略相关API
      */
     router.resources('/v1/policies', '/v1/policies', controller.policy.v1)
-
-    /**
-     * 组合资源的付费策略相关API
-     */
-    router.resources('/v1/auths', '/v1/auths', controller.auth.v1)
 }

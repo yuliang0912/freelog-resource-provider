@@ -2,6 +2,7 @@
  * Created by yuliang on 2017/7/4.
  */
 
+'use strict'
 
 module.exports = {
     /**

@@ -44,8 +44,8 @@ module.exports = appInfo => {
         /**
          * mongoDB配置
          */
-        mongo: {
-            uri: "mongodb://root:Ff233109@dds-wz9b5420c30a27941546-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9b5420c30a27942267-pub.mongodb.rds.aliyuncs.com:3717/resource?replicaSet=mgset-5016983"
+        mongoose: {
+            url: "mongodb://root:Ff233109@dds-wz9b5420c30a27941546-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9b5420c30a27942267-pub.mongodb.rds.aliyuncs.com:3717/resource?replicaSet=mgset-5016983"
         },
 
         /**
