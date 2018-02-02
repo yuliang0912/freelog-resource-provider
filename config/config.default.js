@@ -42,7 +42,7 @@ module.exports = {
          * 资源相关DB配置
          */
         resource: {
-            client: 'mysql2',
+            client: 'mysql',
             connection: {
                 host: '192.168.0.99',
                 user: 'root',
@@ -52,7 +52,13 @@ module.exports = {
                 timezone: '+08:00',
                 bigNumberStrings: true,
                 supportBigNumbers: true,
-                connectTimeout: 1500
+                connectTimeout: 1500,
+                typeCast: (field, next) => {
+                    if (field.type === 'JSON') {
+                        return JSON.parse(field.string())
+                    }
+                    return next()
+                }
             },
             pool: {
                 max: 10, min: 2,
