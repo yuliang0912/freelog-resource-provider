@@ -42,7 +42,7 @@ module.exports = {
          * 资源相关DB配置
          */
         resource: {
-            client: 'mysql',
+            client: 'mysql2',
             connection: {
                 host: '192.168.0.99',
                 user: 'root',

@@ -129,20 +129,6 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
 
         return this.resourceKnex('respositories').update(model).where(condition)
     }
-
-    /**
-     * 获取数量
-     * @param condition
-     * @returns {*}
-     */
-    getCount(condition) {
-
-        if (!super.type.object(condition)) {
-            return Promise.reject(new Error("condition must be object"))
-        }
-
-        return this.resourceKnex('respositories').where(condition).count("resourceId as count").first()
-    }
 }
 
 // module.exports = app => {
