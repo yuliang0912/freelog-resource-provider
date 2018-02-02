@@ -12,7 +12,7 @@ module.exports = appInfo => {
              * 资源相关DB配置
              */
             resource: {
-                client: 'mysql',
+                client: 'mysql2',
                 connection: {
                     host: 'rm-wz9wj9435a0428942.mysql.rds.aliyuncs.com',
                     user: 'freelog',
