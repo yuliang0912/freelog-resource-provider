@@ -2,7 +2,7 @@
 
 module.exports = appInfo => {
     return {
-        dbConfig: {
+        knex: {
             //资源相关DB配置
             resource: {
                 connection: {

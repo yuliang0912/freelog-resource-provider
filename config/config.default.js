@@ -37,7 +37,7 @@ module.exports = {
     /**
      * DB-mysql相关配置
      */
-    dbConfig: {
+    knex: {
         /**
          * 资源相关DB配置
          */
