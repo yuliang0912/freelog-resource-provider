@@ -4,7 +4,6 @@
 
 'use strict'
 
-
 const MongoBaseOperation = require('egg-freelog-database/lib/database/mongo-base-operation')
 
 module.exports = class ResourceTreeProvider extends MongoBaseOperation {
@@ -40,9 +39,5 @@ module.exports = class ResourceTreeProvider extends MongoBaseOperation {
      */
     rootResourceList(userId) {
         return super.find({userId, parentIds: {$size: 0}})
-    }
-
-    findResourceTree(condition) {
-        return super.findOne(condition)
     }
 }

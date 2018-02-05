@@ -129,6 +129,44 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
 
         return this.resourceKnex('respositories').update(model).where(condition)
     }
+
+    /**
+     * 分页搜索资源库
+     * @param condition
+     * @param keyWords
+     * @param page
+     * @param pageSize
+     */
+    searchPageList(condition, keyWords, page, pageSize) {
+        let baseQuery = super.queryChain
+        if (condition) {
+            baseQuery.where(condition)
+        }
+        if (keyWords) {
+            baseQuery.where(function () {
+                let like = this.where('resourceName', 'like', `%${keyWords}%`)
+                    .orWhere('resourceId', 'like', `%${keyWords}%`)
+                if (!condition.resourceType) {
+                    like.orWhere('resourceType', 'like', `${keyWords}%`)
+                }
+                return like
+            })
+        }
+        let countTask = baseQuery.clone().count("* as count").first()
+        let listTask = baseQuery.clone().select().orderBy("createDate", "desc")
+        if (pageSize) {
+            listTask.limit(pageSize)
+        }
+        if (page && pageSize) {
+            listTask.offset((page - 1) * pageSize)
+        }
+        return Promise.all([countTask, listTask]).then(([count, list]) => {
+            return {
+                totalItem: count.count ? parseInt(count.count) : 0,
+                dataList: list
+            }
+        })
+    }
 }
 
 // module.exports = app => {

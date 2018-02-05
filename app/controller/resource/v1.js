@@ -18,6 +18,7 @@ module.exports = class ResourcesController extends Controller {
         let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
         let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
+        let keyWords = ctx.checkQuery("keyWords").optional().decodeURIComponent().value
 
         ctx.validate()
 
@@ -26,16 +27,9 @@ module.exports = class ResourcesController extends Controller {
             condition.resourceType = resourceType
         }
 
-        let dataList = []
-        let totalItem = await ctx.dal.resourceProvider.getResourceCount(condition)
-
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await ctx.dal.resourceProvider
-                .getResourceList(condition, page, pageSize).bind(ctx)
-                .catch(ctx.error)
-        }
-
-        ctx.success({page, pageSize, totalItem, dataList})
+        await  ctx.dal.resourceProvider.searchPageList(condition, keyWords, page, pageSize).then(({totalItem, dataList}) => {
+            ctx.success({page, pageSize, totalItem, dataList})
+        })
     }
 
     /**
