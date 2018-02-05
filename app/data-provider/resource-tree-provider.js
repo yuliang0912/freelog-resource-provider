@@ -41,4 +41,8 @@ module.exports = class ResourceTreeProvider extends MongoBaseOperation {
     rootResourceList(userId) {
         return super.find({userId, parentIds: {$size: 0}})
     }
+
+    findResourceTree(condition) {
+        return super.findOne(condition)
+    }
 }

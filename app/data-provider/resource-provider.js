@@ -30,7 +30,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
             return Promise.resolve([])
         }
 
-        return super.queryChain.whereIn('resourceId', resourceIds).select()
+        return super.queryChain.whereIn('resourceId', resourceIds).orderBy('createDate', 'desc').select()
     }
 
     /**

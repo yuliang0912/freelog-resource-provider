@@ -34,6 +34,6 @@ module.exports = app => {
     })
 
     ResourcePolicySchema.index({resourceId: 1, userId: 1});
-
+    
     return mongoose.model('policy', ResourcePolicySchema)
 }
