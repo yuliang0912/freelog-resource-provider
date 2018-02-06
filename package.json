@@ -13,7 +13,7 @@
     "egg": "^2.3.0",
     "egg-freelog-base": "^1.1.33",
     "egg-freelog-database": "^1.0.3",
-    "freelog_policy_compiler": "^0.1.17",
+    "freelog_policy_compiler": "^0.1.18",
     "image-size": "^0.6.2",
     "is-type-of": "^1.0.0",
     "js-yaml": "^3.10.0",
