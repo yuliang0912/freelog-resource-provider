@@ -9,8 +9,8 @@ module.exports = {
         //资源相关DB配置
         resource: {
             connection: {
-                host: 'rm-wz9wj9435a0428942.mysql.rds.aliyuncs.com',
-                user: 'freelog',
+                host: 'rm-wz93t7g809kthrub7.mysql.rds.aliyuncs.com',
+                user: 'freelog_test',
                 password: 'Ff@233109',
                 database: 'fr_resource',
             },
@@ -22,7 +22,7 @@ module.exports = {
      * mongoDB配置
      */
     mongoose: {
-        url: "mongodb://root:Ff233109@dds-wz9b5420c30a27941546-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9b5420c30a27942267-pub.mongodb.rds.aliyuncs.com:3717/resource?replicaSet=mgset-5016983"
+        url: "mongodb://172.18.215.229:27017/resource"
     },
 
     /**

@@ -24,6 +24,6 @@ module.exports = appInfo => {
             "status": 1,
             "createDate": "2017-10-25T12:27:32.000Z",
             "updateDate": "2017-11-01T16:24:20.000Z"
-        }
+        },
     }
 }
