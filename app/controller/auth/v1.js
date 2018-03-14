@@ -27,7 +27,7 @@ module.exports = class ResourceAuthController extends Controller {
         let jwt = ctx.checkHeader('authorization').exist().notEmpty().value
         let response = ctx.checkHeader('response').optional().toJson().default({}).value
 
-        ctx.validate()
+        ctx.validate(false)
 
         let authResult = this.resourceAuthJwt.verifyJwt(jwt.replace(/^bearer /i, ""))
 
