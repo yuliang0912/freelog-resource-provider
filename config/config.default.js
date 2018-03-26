@@ -58,17 +58,10 @@ module.exports = {
                         return JSON.parse(field.string())
                     }
                     return next()
-                }
+                },
             },
             pool: {
-                max: 10, min: 2,
-                afterCreate: (conn, done) => {
-                    conn.on('error', err => {
-                        console.log(`mysql connection error : ${err.toString()}`)
-                        err.fatal && globalInfo.app.knex.resource.client.pool.destroy(conn)
-                    })
-                    done()
-                }
+                max: 10, min: 2
             },
             acquireConnectionTimeout: 500, //每次查询等待的超时时间(从连接池拿可用的connection的超时时间)
             //idleTimeoutMillis: 3000, //连接空闲移除连接池的时间

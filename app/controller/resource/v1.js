@@ -75,7 +75,7 @@ module.exports = class ResourcesController extends Controller {
     async show(ctx) {
         let resourceIdMatch = new RegExp(`^([0-9a-zA-Z]{40})+(.${ctx.app.resourceAttribute.allAttributes.join('|.')})?$`)
         let resourceMatch = ctx.checkParams("id").match(resourceIdMatch, 'id格式匹配错误').value
-        ctx.validate()
+        ctx.validate(false)
 
         //etag 缓存后期再实现
         // ctx.set('Last-Modified', '"W/123"')
