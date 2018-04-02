@@ -85,7 +85,14 @@ class ResourceService extends Service {
 
         let dependencies = resourceInfo.systemMeta.dependencies || []
 
-        return this.buildDependencyTree(dependencies)
+        return this.buildDependencyTree(dependencies).then(dependencies => {
+            return {
+                resourceId: resourceInfo.resourceId,
+                resourceName: resourceInfo.resourceName,
+                resourceType: resourceInfo.resourceType,
+                dependencies: dependencies
+            }
+        })
     }
 
     /**
