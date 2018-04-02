@@ -170,54 +170,7 @@ module.exports = class ResourcesController extends Controller {
             }
         }
 
-        let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
-        let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta, ctx.request.userId)
-        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
-
-        const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
-            if (metaInfo.errors.length) {
-                return Promise.reject(metaInfo.errors[0])
-            }
-            return {
-                resourceId: metaInfo.systemMeta.sha1,
-                status: ctx.app.resourceStatus.NORMAL,
-                resourceType: resourceType,
-                meta: JSON.stringify(metaInfo.meta),
-                systemMeta: JSON.stringify(metaInfo.systemMeta),
-                resourceUrl: uploadData.url,
-                userId: ctx.request.userId,
-                resourceName: resourceName === undefined ?
-                    ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
-                    ctx.helper.stringExpand.cutString(resourceName, 80),
-                mimeType: metaInfo.systemMeta.mimeType
-            }
-        }).catch(err => {
-            sendToWormhole(stream)
-            ctx.error(err)
-        })
-
-        await ctx.dal.resourceProvider.getResourceInfo({resourceId: resourceInfo.resourceId}).then(resource => {
-            resource && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: resourceInfo.resourceId})
-        })
-
-        await ctx.dal.resourceProvider.createResource(resourceInfo, parentId).bind(ctx)
-            .then(() => {
-                return ctx.dal.resourceTreeProvider.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId)
-            })
-            .then(() => {
-                resourceInfo.meta = JSON.parse(resourceInfo.meta)
-                resourceInfo.systemMeta = JSON.parse(resourceInfo.systemMeta)
-                ctx.success(resourceInfo)
-            }).catch(ctx.error)
-
-        if (resourceType === ctx.app.resourceType.WIDGET) {
-            await ctx.dal.componentsProvider.create({
-                widgetName: resourceInfo.systemMeta.widgetName,
-                version: resourceInfo.systemMeta.version,
-                resourceId: resourceInfo.resourceId,
-                userId: resourceInfo.userId
-            }).catch(console.error)
-        }
+        await ctx.service.resourceService.createResource({resourceName, resourceType, parentId, meta, stream})
     }
 
     /**
@@ -332,5 +285,18 @@ module.exports = class ResourcesController extends Controller {
                 userId: resourceInfo.userId
             }).catch(console.error)
         }
+    }
+
+
+    /**
+     * 获取资源依赖树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async getResourceDependencyTree(ctx) {
+        let resourceId = ctx.checkParams("resourceId").isResourceId().value
+        ctx.validate()
+        let tree = await ctx.service.resourceService.getResourceDependencyTree(resourceId)
+        ctx.success(tree)
     }
 }

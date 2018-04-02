@@ -6,7 +6,8 @@
 
 const uuid = require('uuid')
 const polifyParseFactory = require('./helper/policy_parse_factory')
-const resourceCheck = require('./helper/resource_check')
+const resourceCheck = require('./helper/resource_file_check')
+const resourceDependencyCheck = require('./helper/resource_dependencies_check')
 
 module.exports = {
 
@@ -21,8 +22,13 @@ module.exports = {
     policyParse: polifyParseFactory.parse,
 
     /**
-     * 资源检测
+     * 资源文件检测
      */
-    resourceCheck: resourceCheck
+    resourceCheck: resourceCheck,
+
+    /**
+     * 资源依赖检查
+     */
+    resourceDependencyCheck: resourceDependencyCheck
 }
 

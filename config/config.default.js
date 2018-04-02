@@ -114,6 +114,8 @@ module.exports = {
         pageUrl: '/public/404.html',
     },
 
+    gatewayUrl: "http://api.freelog.com",
+
     RasSha256Key: {
         resourceAuth: {
             publicKey: fs.readFileSync('config/auth_key/resource_auth_public_key.pem').toString()

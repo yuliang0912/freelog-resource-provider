@@ -18,13 +18,24 @@ module.exports = app => {
 
     router.get('/v1/resources/auth/getResource', controller.auth.v1.getResource)
 
+    //管理申明合约
+    router.put('/v1/resources/authSchemes/manageDependStatementContracts/:authSchemeId', controller.authScheme.v1.manageDependStatementContracts)
+    //获取资源依赖树
+    router.get('/v1/resources/getResourceDependencyTree/:resourceId', controller.resource.v1.getResourceDependencyTree)
+
     /**
      * 资源本身相关API
      */
     router.resources('/v1/resources', '/v1/resources', controller.resource.v1)
+    router.resources('/v2/resources', '/v2/resources', controller.resource.v2)
 
     /**
      * 资源引用策略相关API
      */
     router.resources('/v1/policies', '/v1/policies', controller.policy.v1)
+
+    /**
+     * 资源授权方案(授权点)
+     */
+    router.resources('/v1/resource/authSchemes', '/v1/resource/authSchemes', controller.authScheme.v1)
 }

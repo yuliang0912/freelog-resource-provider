@@ -31,23 +31,33 @@ module.exports = {
             return {errors: [new Error("PageBuild资源最少需要包含一个widget")]}
         }
 
+        let diffDependencies = lodash.difference(widgets, meta.dependencies || [])
+        if (diffDependencies.length) {
+            return {
+                errors: diffResource.map(item => new Error(`widgetId:${item}没有在声明列表中`))
+            }
+        }
+
         let widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIdList(widgets).where({
             status: 2,
             resourceType: resourceType.WIDGET
         }).map(item => {
             return {
                 resourceId: item.resourceId,
-                resourceName: item.resourceName
+                resourceName: item.resourceName,
             }
         })
 
         let diffResource = lodash.difference(widgets, widgetResources.map(item => item.resourceId))
 
-        return diffResource.length ? {
-            errors: diffResource.map(item => {
-                return new Error(`widgetId:${item} is not widget resource`)
-            })
-        } : {
+        if (diffResource.length) {
+            return {
+                errors: diffResource.map(item => {
+                    return new Error(`widgetId:${item} is not widget resource`)
+                })
+            }
+        }
+        return {
             systemMeta: {widgets: widgetResources}
         }
     }

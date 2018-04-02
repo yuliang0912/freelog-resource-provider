@@ -70,9 +70,7 @@ module.exports = {
                 }
                 resolve(metaInfo)
             })
-            fileStream.on('error', function (err) {
-                reject(err)
-            })
+            fileStream.on('error', reject)
         })
     }
 }

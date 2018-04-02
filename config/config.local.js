@@ -14,7 +14,7 @@ module.exports = appInfo => {
          * 本地开发环境身份信息
          */
         localIdentity: {
-            "userId": 10022,
+            "userId": 10026,
             "userName": "",
             "nickname": "philyoung",
             "email": "",
@@ -25,5 +25,7 @@ module.exports = appInfo => {
             "createDate": "2017-10-25T12:27:32.000Z",
             "updateDate": "2017-11-01T16:24:20.000Z"
         },
+
+        gatewayUrl: "http://127.0.0.1:7008",
     }
 }
