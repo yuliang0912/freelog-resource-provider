@@ -16,6 +16,7 @@ module.exports = app => {
                 languageType: ret.languageType,
                 dependCount: ret.dependCount,
                 dependStatements: ret.dependStatements,
+                bubbleResources: ret.bubbleResources,
                 statementState: ret.statementState,
                 statementCoverageRate: ret.statementCoverageRate,
                 contractCoverageRate: ret.contractCoverageRate,
@@ -27,13 +28,26 @@ module.exports = app => {
         }
     }
 
-    const dependStatementSchema = new mongoose.Schema({
-        resourceOneId: {type: String, required: true}, //tree上的A点
-        resourceTwoId: {type: String, required: true},//tree上的B点
-        deep: {type: Number, required: true, min: 1, max: 100}, //A点与B点在tree的层级,以A点位基准
+    const dependContractSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true}, //tree上的A点
         contractId: {type: String, default: ''}  //A与B点之间的执行合约ID
     }, {_id: false})
 
+    const dependStatementSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true}, //tree上的A点
+        deep: {type: Number, required: true, min: 1, max: 100}, //A点与B点在tree的层级,以A点位基准
+        dependencies: [dependContractSchema],
+    }, {_id: false})
+
+    const resourceIdSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true}, //tree上的A点
+    }, {_id: false})
+
+    const bubbleResourcesSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true}, //tree上的A点
+        deep: {type: Number, required: true, min: 1, max: 100}, //A点与B点在tree的层级,以A点位基准
+        dependencies: [resourceIdSchema],
+    }, {_id: false})
 
     const AuthSchemeSchema = new mongoose.Schema({
         authSchemeName: {type: String, required: true},
@@ -44,6 +58,7 @@ module.exports = app => {
         policyText: {type: String, required: true}, //引用策略描述语言原文
         languageType: {type: String, default: 'freelog_policy', required: true},
         dependStatements: [dependStatementSchema],//授权点中包含的依赖声明
+        bubbleResources: [bubbleResourcesSchema], //授权点上抛的资源(冒泡给上层)
         statementCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //授权依赖声明覆盖率
         contractCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //指定执行合约覆盖率
         userId: {type: Number, required: true},

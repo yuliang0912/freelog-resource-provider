@@ -17,7 +17,7 @@ module.exports = class PolicyController extends Controller {
      */
     async index(ctx) {
 
-        let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
+        let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 20).value
 
         ctx.validate()
 
@@ -72,6 +72,10 @@ module.exports = class PolicyController extends Controller {
         if (!resourceInfo) {
             ctx.error({msg: 'resourceId错误或者没有权限'})
         }
+
+        await ctx.dal.authSchemeProvider.count({resourceId}).then(count => {
+            count >= 10 && ctx.error({msg: '同一个资源授权点最多只能创建10个'})
+        })
 
         await ctx.service.authSchemeService.createAuthScheme({
             authSchemeName,

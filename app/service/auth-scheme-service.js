@@ -17,21 +17,17 @@ class AuthSchemeService extends Service {
 
         let {app, ctx} = this;
         let policySegments = policyParse.parse(policyText, languageType)
-        let resourceDependencies = await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies || [])
-
-        await this._checkStatementResource({dependStatements, resourceInfo, resourceDependencies})
 
         let authScheme = {
             authSchemeName, languageType, policyText, dependStatements,
             resourceId: resourceInfo.resourceId,
-            dependCount: this._getTreeNodeCount(resourceDependencies),
             serialNumber: app.mongoose.getNewObjectId(),
             policy: policySegments,
             userId: ctx.request.userId
         }
 
-        //计算覆盖率与覆盖状态
-        this._calculateCoverageRate({authScheme})
+        //校验数据与构建model
+        await this._checkStatementAndBuild({authScheme, resourceInfo, dependStatements})
 
         return ctx.dal.authSchemeProvider.create(authScheme)
     }
@@ -44,9 +40,6 @@ class AuthSchemeService extends Service {
 
         let {ctx} = this
         let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
-        let resourceDependencies = await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies || [])
-
-        await this._checkStatementResource({dependStatements, resourceInfo, resourceDependencies})
 
         let model = {
             serialNumber: this.app.mongoose.getNewObjectId(),
@@ -58,14 +51,21 @@ class AuthSchemeService extends Service {
         if (policyText) {
             model.policy = policyParse.parse(policyText, authScheme.languageType)
         }
+
         //如果不改动:undifined  设置为空:[],所以不是undifined时.需要重新计算覆盖率
         if (Array.isArray(dependStatements)) {
+
             authScheme.dependStatements = dependStatements
-            this._calculateCoverageRate({authScheme})
+
+            //校验数据与构建model
+            await this._checkStatementAndBuild({authScheme, resourceInfo, dependStatements})
+
             model.dependStatements = dependStatements
             model.contractCoverageRate = authScheme.contractCoverageRate
             model.statementCoverageRate = authScheme.statementCoverageRate
             model.statementState = authScheme.statementState
+            model.bubbleResources = authScheme.bubbleResources
+            model.dependCount = authScheme.dependCount
         }
 
         return ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
@@ -77,20 +77,20 @@ class AuthSchemeService extends Service {
      */
     async manageDependStatementContract({authScheme, dependStatements}) {
 
-        let effectiveStatements = []  //筛选有效申明
-        authScheme.dependStatements.forEach(item => {
-            dependStatements.forEach(param => {
-                if (param.resourceOneId === item.resourceOneId && param.resourceTwoId === item.resourceTwoId && param.deep === item.deep) {
-                    item.contractId = param.contractId || ""
-                    effectiveStatements.push(param)
-                }
-            })
+        let {ctx, app} = this
+        let effectiveStatements = dependStatements.filter(param => {
+            let depend = authScheme.dependStatements.find(item => param.resourceOneId === item.resourceOneId && param.resourceTwoId === item.resourceTwoId && param.deep === item.deep)
+            if (depend) {
+                depend.contractId = param.contractId || ""
+            }
+            return depend ? true : false
         })
 
         if (effectiveStatements.length !== dependStatements.length) {
-            this.ctx.error({
+            ctx.error({
                 msg: "参数dependStatements数据校验失败,授权点声明的依赖与传入参数不匹配",
-                errCode: ctx.app.errCodeEnum.paramValidateError
+                data: {effectiveStatements},
+                errCode: app.errCodeEnum.paramValidateError
             })
         }
 
@@ -104,7 +104,46 @@ class AuthSchemeService extends Service {
             statementState: authScheme.statementState
         }
 
-        return this.ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
+        return ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
+    }
+
+    /**
+     * 检查声明数据与计算授权点属性
+     * @private
+     */
+    async _checkStatementAndBuild({authScheme, resourceInfo, dependStatements}) {
+
+        this._checkRepeatedStatements({dependStatements})
+
+        let {ctx} = this
+        let resourceDependencies = await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies || [])
+        let resourceDependencyKeys = this._getTreeNodes(resourceDependencies, resourceInfo.resourceId)
+
+        this._checkStatementResource({dependStatements, resourceDependencies, resourceDependencyKeys})
+        await this._checkStatementContract({dependStatements})
+
+        authScheme.bubbleResources = resourceDependencyKeys.reduce((accumulator, current) => {
+            if (!dependStatements.some(treeNodeComparer(current))) {
+                let base = accumulator.find(item => item.resourceId === current.resourceOneId && item.deep === current.deep)
+                if (!base) {
+                    base = {
+                        resourceId: current.resourceOneId,
+                        deep: current.deep,
+                        dependencies: [{resourceId: current.resourceTwoId}]
+                    }
+                    accumulator.push(base)
+                } else {
+                    base.dependencies.push({resourceId: current.resourceTwoId})
+                }
+            }
+            return accumulator
+        }, [])
+
+        authScheme.dependCount = resourceDependencyKeys.length
+
+        this._calculateCoverageRate({authScheme})
+
+        return authScheme
     }
 
     /**
@@ -129,9 +168,14 @@ class AuthSchemeService extends Service {
             return authScheme
         }
 
-        let signContractCount = authScheme.dependStatements.filter(t => commonRegex.mongoObjectId.test(t.contractId)).length
-        authScheme.statementCoverageRate = (authScheme.dependStatements.length / authScheme.dependCount).toFixed(4) * 100
-        authScheme.contractCoverageRate = (signContractCount / authScheme.dependStatements.length).toFixed(4) * 100
+        let statistics = authScheme.dependStatements.reduce((accumulator, current) => {
+            accumulator.dependCount += current.dependencies.length
+            accumulator.signContractCount += current.dependencies.filter(item => commonRegex.mongoObjectId.test(item.contractId)).length
+            return accumulator
+        }, {signContractCount: 0, dependCount: 0})
+
+        authScheme.statementCoverageRate = (statistics.dependCount / authScheme.dependCount).toFixed(4) * 100
+        authScheme.contractCoverageRate = (statistics.signContractCount / statistics.dependCount).toFixed(4) * 100
         authScheme.statementState = authScheme.statementCoverageRate === 0 ? 1 : authScheme.statementCoverageRate === 100 ? 2 : 3
 
         return authScheme
@@ -141,43 +185,53 @@ class AuthSchemeService extends Service {
      * 检查申明的资源是否是依赖的资源树上的节点
      * @param dependStatements
      * @param resourceDependencies
-     * @returns {Promise<void>}
+     * @param resourceDependencyKeys
+     * @returns {boolean}
+     * @private
      */
-    _checkStatementResource({resourceInfo, dependStatements, resourceDependencies}) {
+    _checkStatementResource({dependStatements, resourceDependencies, resourceDependencyKeys}) {
 
         if (!dependStatements || !dependStatements.length) {
             return true
         }
 
-        this._checkRepeatedStatements({dependStatements})
+        let {ctx} = this
 
         //如果有声明依赖,但是资源本身没有依赖关系,则属于无效声明
         if (!resourceDependencies.length) {
-            this.ctx.error({msg: '声明依赖数据错误', data: {dependStatements, resourceDependencies}})
+            ctx.error({msg: '声明依赖数据错误', data: {dependStatements, resourceDependencies}})
         }
 
-        let resourceDependencyKeys = this._getTreeNodeKey(resourceDependencies, resourceInfo.resourceId)
-
         dependStatements.forEach(item => {
-            let checkResult = resourceDependencyKeys.some(node => node === `deep_${item.deep}_${item.resourceOneId}_${item.resourceTwoId}`)
-            !checkResult && this.ctx.error({msg: '声明依赖的资源不存在于资源的依赖树中', data: {item, resourceDependencies}})
+            item.dependencies.forEach(m => {
+                if (!resourceDependencyKeys.some(depend => depend.deep === item.deep && depend.resourceOneId === item.resourceId && depend.resourceTwoId === m.resourceId)) {
+                    ctx.error({msg: '声明依赖的资源不存在于资源的依赖树中', data: {item, member: m, resourceDependencyKeys}})
+                }
+            })
         })
-
-        return this._checkStatementContract({dependStatements})
+        return true
     }
 
 
     /**
      * 检查重复的依赖申明
      * @param dependStatements
-     * @returns {Promise<boolean>}
+     * @returns {boolean}
      * @private
      */
     _checkRepeatedStatements({dependStatements}) {
-        let distinctDependStatements = [...new Set(dependStatements.map(item => `${item.deep}_${item.resourceOneId}_${item.resourceTwoId}`))]
+        if (!Array.isArray(dependStatements)) {
+            return true
+        }
+        let distinctDependStatements = [...new Set(dependStatements.map(item => `${item.deep}_${item.resourceId}`))]
         if (distinctDependStatements.length !== dependStatements.length) {
             this.ctx.error({msg: '声明依赖数据错误,不允许出现重复的节点', data: {dependStatements}})
         }
+        dependStatements.forEach(item => {
+            if ([...new Set(item.dependencies.map(m => m.resourceId))].length !== item.dependencies.length) {
+                this.ctx.error({msg: '声明依赖数据错误,不允许出现重复的节点', data: {item}})
+            }
+        })
         return true
     }
 
@@ -187,17 +241,21 @@ class AuthSchemeService extends Service {
      * @returns {Promise<void>}
      */
     async _checkStatementContract({dependStatements}) {
-        let hasContractStatements = dependStatements.filter(item => commonRegex.mongoObjectId.test(item.contractId))
+
+        let hasContractStatements = dependStatements.reduce((accumulator, current) => {
+            return [...accumulator, ...current.dependencies.filter(item => commonRegex.mongoObjectId.test(item.contractId))]
+        }, [])
+
         if (!hasContractStatements.length) {
             return true
         }
 
         let {ctx, config} = this
-        let contractUrl = `${config.gatewayUrl}${config.env === 'local' ? '' : '/api/'}/v1/contracts/contractRecords?resourceIds=${hasContractStatements.map(item => item.resourceTwoId).toString()}&contractIds=${hasContractStatements.map(item => item.contractId).toString()}&partyTwo=${ctx.request.userId}&contractType=1`
+        let contractUrl = `${config.gatewayUrl}${config.env === 'local' ? '' : '/api/'}/v1/contracts/contractRecords?resourceIds=${hasContractStatements.map(item => item.resourceId).toString()}&contractIds=${hasContractStatements.map(item => item.contractId).toString()}&partyTwo=${ctx.request.userId}&contractType=1`
         let contractRecords = await ctx.curlIntranetApi(contractUrl)
 
         hasContractStatements.forEach(item => {
-            let checkResult = contractRecords.some(contract => item.contractId == contract.contractId && item.resourceTwoId === contract.resourceId)
+            let checkResult = contractRecords.some(contract => item.contractId == contract.contractId && item.resourceId === contract.resourceId)
             !checkResult && ctx.error({msg: "声明依赖中绑定的合同校验失败", data: item})
         })
 
@@ -229,22 +287,24 @@ class AuthSchemeService extends Service {
      * @param index
      * @private
      */
-    _getTreeNodeKey(treeList, resourceOneId, keyList = [], index = 0) {
+    _getTreeNodes(treeList, resourceOneId, keyList = [], index = 0) {
         if (!Array.isArray(treeList) || !treeList.length) {
             return keyList
         }
         index++;
-        let mapResult = treeList.map(item => {
-            return `deep_${index}_${resourceOneId}_${item.resourceId}`
-        })
-        keyList = keyList.concat(mapResult)
-        treeList.forEach(item => {
-            keyList = this._getTreeNodeKey(item.dependencies || [], item.resourceId, keyList, index)
-        })
+        treeList.reduce((accumulator, current) => {
+            keyList.push({deep: index, resourceOneId, resourceTwoId: current.resourceId})
+            return keyList.concat(this._getTreeNodes(current.dependencies || [], current.resourceId, keyList, index))
+        }, keyList)
         return keyList
     }
 }
 
+const treeNodeComparer = (target) => {
+    return item => item.deep === target.deep
+        && item.resourceId === target.resourceOneId
+        && item.dependencies.some(m => m.resourceId === target.resourceTwoId)
+}
 
 module.exports = AuthSchemeService
 

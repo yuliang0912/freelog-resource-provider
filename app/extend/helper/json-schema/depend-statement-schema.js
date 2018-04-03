@@ -10,16 +10,30 @@ const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
 let jsonSchemaValidator = new JsonSchemaValidator();
 
+
+let treeNodeSchema = {
+    id: "/treeNodeSchema",
+    type: "object",
+    properties: {
+        resourceId: {type: "string", format: 'resourceId'},
+        contractId: {type: "string", format: 'mongoObjectId'},
+    }
+}
+
 let dependStatementSchema = {
     id: "/dependStatementSchema",
     type: "object",
     properties: {
-        resourceOneId: {type: "string", format: 'resourceId'},
-        resourceTwoId: {type: "string", format: 'resourceId'},
+        resourceId: {type: "string", format: 'resourceId'},
         deep: {type: "integer", minimum: 1, maximum: 100, required: true},
-        contractId: {type: "string", format: 'mongoObjectId'},
+        dependencies: {
+            type: "array",
+            uniqueItems: true,
+            items: {$ref: "/treeNodeSchema"}
+        }
     }
 }
+
 
 let dependStatementArraySchema = {
     id: "/dependStatementArraySchema",
@@ -46,11 +60,13 @@ JsonSchemaValidator.prototype.customFormats.mongoObjectId = function (input) {
     return input === undefined || input === "" || commonRegex.mongoObjectId.test(input)
 }
 
+jsonSchemaValidator.addSchema(treeNodeSchema, '/treeNodeSchema')
 jsonSchemaValidator.addSchema(dependStatementSchema, '/dependStatementSchema')
 jsonSchemaValidator.addSchema(dependStatementArraySchema, '/dependStatementArraySchema')
 
 module.exports = {
     jsonSchemaValidator,
+    treeNodeSchema,
     dependStatementSchema,
     dependStatementArraySchema
 }
