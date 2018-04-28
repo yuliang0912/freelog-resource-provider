@@ -190,9 +190,16 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.allowContentType({type: 'json'}).validate()
 
+        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
+        if (!resourceInfo) {
+            ctx.error({msg: '未找到有效资源'})
+        }
+
         let model = {}
         if (meta) {
             model.meta = JSON.stringify(meta)
+            let dependencies = await ctx.helper.resourceDependencyCheck.check({meta})
+            model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
         }
         if (resourceName) {
             model.resourceName = resourceName
@@ -202,14 +209,7 @@ module.exports = class ResourcesController extends Controller {
             ctx.error({msg: '无可更新内容'})
         }
 
-        await ctx.dal.resourceProvider.getResourceInfo({
-            resourceId,
-            userId: ctx.request.userId
-        }).then(resourceInfo => {
-            !resourceInfo && ctx.error({msg: '未找到有效资源'})
-        }).then(() => {
-            return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId})
-        }).bind(ctx).then(ctx.success).catch(ctx.error)
+        return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId}).bind(ctx).then(ctx.success).catch(ctx.error)
     }
 
     /**
