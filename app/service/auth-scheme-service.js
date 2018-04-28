@@ -59,6 +59,7 @@ class AuthSchemeService extends Service {
         if (policyText) {
             model.serialNumber = this.app.mongoose.getNewObjectId()
             model.policy = policyParse.parse(policyText, authScheme.languageType)
+            model.policyText = policyText
         }
 
         if (Array.isArray(dutyStatements)) {
