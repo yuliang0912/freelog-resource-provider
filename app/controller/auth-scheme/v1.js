@@ -62,11 +62,12 @@ module.exports = class PolicyController extends Controller {
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
         const policyText = ctx.checkBody('policyText').optional().isBase64().decodeBase64().value //base64编码之后的字符串
         const languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
-        const dutyStatements = ctx.checkBody('dutyStatements').isArray().len(0, 100).value
-        const isPublish = ctx.checkBody('isPublish').default(0).in([0, 1]).value
+        let dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
+        const isPublish = ctx.checkBody('isPublish').optional().default(0).in([0, 1]).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
+        dutyStatements = dutyStatements || []
         const result = statementSchema.jsonSchemaValidator.validate(dutyStatements, statementSchema.statementArraySchema)
         result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
 
