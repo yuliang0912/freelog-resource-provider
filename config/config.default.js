@@ -44,7 +44,7 @@ module.exports = {
         resource: {
             client: 'mysql',
             connection: {
-                host: '192.168.0.99',
+                host: '192.168.2.239',
                 user: 'root',
                 password: 'yuliang@@',
                 database: 'fr_resource',
@@ -70,7 +70,7 @@ module.exports = {
     },
 
     mongoose: {
-        url: "mongodb://192.168.0.99:27017/resource"
+        url: "mongodb://192.168.2.239:27017/resource"
     },
 
     /**

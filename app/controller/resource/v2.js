@@ -38,18 +38,6 @@ class ResourcesController extends Controller {
 
         await ctx.service.resourceService.createResource({resourceName, resourceType, parentId, meta, stream})
     }
-
-    /**
-     * 获取资源依赖树
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async getResourceDependencyTree(ctx) {
-        let resourceId = ctx.checkParams("resourceId").isResourceId().value
-        ctx.validate()
-        let tree = await ctx.service.resourceService.getResourceDependencyTree(resourceId)
-        ctx.success(tree)
-    }
 }
 
 module.exports = ResourcesController

@@ -7,5 +7,4 @@ module.exports = class ResourceTreeProvider extends MongoBaseOperation {
     constructor(app) {
         super(app.model.AuthScheme)
     }
-
 }

@@ -145,6 +145,7 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async create(ctx) {
+
         const stream = await ctx.getFileStream()
         ctx.request.body = stream.fields
 

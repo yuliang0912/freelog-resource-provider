@@ -19,7 +19,7 @@ module.exports = app => {
     router.get('/v1/resources/auth/getResource', controller.auth.v1.getResource)
 
     //管理申明合约
-    router.put('/v1/resources/authSchemes/manageDependStatementContracts/:authSchemeId', controller.authScheme.v1.manageDependStatementContracts)
+    router.put('/v1/resources/authSchemes/batchSignContracts/:authSchemeId', controller.authScheme.v1.batchSignContracts)
     //获取资源依赖树
     router.get('/v1/resources/getResourceDependencyTree/:resourceId', controller.resource.v1.getResourceDependencyTree)
 

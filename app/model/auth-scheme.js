@@ -10,43 +10,26 @@ module.exports = app => {
                 authSchemeId: ret._id.toString(),
                 authSchemeName: ret.authSchemeName,
                 resourceId: ret.resourceId,
-                userId: ret.userId,
+                dependCount: ret.dependCount,
+                statementState: ret.statementState,
                 policy: ret.policy,
                 policyText: ret.policyText,
                 languageType: ret.languageType,
-                dependCount: ret.dependCount,
-                dependStatements: ret.dependStatements,
-                bubbleResources: ret.bubbleResources,
-                statementState: ret.statementState,
+                bubbleResourceIds: ret.bubbleResourceIds,
+                dutyStatements: ret.dutyStatements,
                 statementCoverageRate: ret.statementCoverageRate,
                 contractCoverageRate: ret.contractCoverageRate,
-                serialNumber: ret.serialNumber,
-                createDate: ret.createDate,
-                updateDate: ret.updateDate,
+                userId: ret.userId,
+                serialNumber: ret.userId,
                 status: ret.status
             }
         }
     }
 
-    const dependContractSchema = new mongoose.Schema({
-        resourceId: {type: String, required: true}, //tree上的A点
-        contractId: {type: String, default: ''}  //A与B点之间的执行合约ID
-    }, {_id: false})
-
-    const dependStatementSchema = new mongoose.Schema({
-        resourceId: {type: String, required: true}, //tree上的A点
-        deep: {type: Number, required: true, min: 1, max: 100}, //A点与B点在tree的层级,以A点位基准
-        dependencies: [dependContractSchema],
-    }, {_id: false})
-
-    const resourceIdSchema = new mongoose.Schema({
-        resourceId: {type: String, required: true}, //tree上的A点
-    }, {_id: false})
-
-    const bubbleResourcesSchema = new mongoose.Schema({
-        resourceId: {type: String, required: true}, //tree上的A点
-        deep: {type: Number, required: true, min: 1, max: 100}, //A点与B点在tree的层级,以A点位基准
-        dependencies: [resourceIdSchema],
+    const statementAuthSchemeSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true},
+        authSchemeId: {type: String, required: true},
+        policySegmentId: {type: String, required: true},
     }, {_id: false})
 
     const AuthSchemeSchema = new mongoose.Schema({
@@ -55,15 +38,15 @@ module.exports = app => {
         dependCount: {type: Number, required: true}, //资源引用总数量
         statementState: {type: Number, default: 1, required: true}, //授权点类型 1:全部上抛(默认)  2:全包含  3:部分上抛
         policy: {type: Array, default: []}, //引用策略段
-        policyText: {type: String, required: true}, //引用策略描述语言原文
+        policyText: {type: String, default: ''}, //引用策略描述语言原文
         languageType: {type: String, default: 'freelog_policy', required: true},
-        dependStatements: [dependStatementSchema],//授权点中包含的依赖声明
-        bubbleResources: [bubbleResourcesSchema], //授权点上抛的资源(冒泡给上层)
+        bubbleResourceIds: {type: [String], default: []}, //授权点上抛的资源(冒泡给上层)
+        dutyStatements: [statementAuthSchemeSchema], //声明解决的资源
         statementCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //授权依赖声明覆盖率
         contractCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //指定执行合约覆盖率
         userId: {type: Number, required: true},
         serialNumber: {type: String, required: true}, //序列号,用于校验前端与后端是否一致
-        status: {type: Number, default: 0, required: true}, // 0:初始状态 1:上架  2:下架
+        status: {type: Number, default: 0, required: true}, // 0:初始状态 1:已发布  2:已下架
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
