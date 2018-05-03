@@ -135,7 +135,7 @@ module.exports = class PolicyController extends Controller {
      */
     async batchSignContracts(ctx) {
 
-        const authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
+        const authSchemeId = ctx.checkParams('authSchemeId').isMongoObjectId('id格式错误').value
         ctx.validate()
 
         const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
@@ -149,11 +149,10 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: "授权方案中不存在声明信息"})
         }
 
-        const body = authScheme.dutyStatements.map(x => new {
-            targetId: x.authSchemeId,
-            segmentId: x.policySegmentId,
-            serialNumber: x.serialNumber,
-            partyTwo: authSchemeId
+        await ctx.service.authSchemeService.batchSignContracts({
+            authScheme: authScheme.toObject()
+        }).then(data => {
+            ctx.success(data)
         })
     }
 }

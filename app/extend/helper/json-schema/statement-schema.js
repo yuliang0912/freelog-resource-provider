@@ -21,6 +21,7 @@ const schema = {
                 resourceId: {type: "string", format: 'resourceId'},
                 authSchemeId: {type: "string", format: 'mongoObjectId'},
                 policySegmentId: {type: "string", format: 'md5'},
+                serialNumber: {type: "string", format: 'mongoObjectId'}
             }
         }
 

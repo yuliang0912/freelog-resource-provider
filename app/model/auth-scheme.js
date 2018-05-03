@@ -15,12 +15,13 @@ module.exports = app => {
                 policy: ret.policy,
                 policyText: ret.policyText,
                 languageType: ret.languageType,
-                bubbleResourceIds: ret.bubbleResourceIds,
+                bubbleResources: ret.bubbleResources,
                 dutyStatements: ret.dutyStatements,
                 statementCoverageRate: ret.statementCoverageRate,
+                associatedContracts: ret.associatedContracts,
                 contractCoverageRate: ret.contractCoverageRate,
                 userId: ret.userId,
-                serialNumber: ret.userId,
+                serialNumber: ret.serialNumber,
                 status: ret.status
             }
         }
@@ -28,8 +29,20 @@ module.exports = app => {
 
     const statementAuthSchemeSchema = new mongoose.Schema({
         resourceId: {type: String, required: true},
+        resourceName: {type: String, required: true},
         authSchemeId: {type: String, required: true},
         policySegmentId: {type: String, required: true},
+        serialNumber: {type: String, required: true}
+    }, {_id: false})
+
+    const resourceInfoSchema = new mongoose.Schema({
+        resourceId: {type: String, required: true},
+        resourceName: {type: String, required: true}
+    }, {_id: false})
+
+    const associatedContractSchema = new mongoose.Schema({
+        authSchemeId: {type: String, required: true},
+        contractId: {type: String, required: true}
     }, {_id: false})
 
     const AuthSchemeSchema = new mongoose.Schema({
@@ -40,8 +53,9 @@ module.exports = app => {
         policy: {type: Array, default: []}, //引用策略段
         policyText: {type: String, default: ''}, //引用策略描述语言原文
         languageType: {type: String, default: 'freelog_policy', required: true},
-        bubbleResourceIds: {type: [String], default: []}, //授权点上抛的资源(冒泡给上层)
+        bubbleResources: [resourceInfoSchema], //授权点上抛的资源(冒泡给上层)
         dutyStatements: [statementAuthSchemeSchema], //声明解决的资源
+        associatedContracts: [associatedContractSchema], //关联的合同
         statementCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //授权依赖声明覆盖率
         contractCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //指定执行合约覆盖率
         userId: {type: Number, required: true},

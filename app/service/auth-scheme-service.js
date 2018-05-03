@@ -53,11 +53,11 @@ class AuthSchemeService extends Service {
      */
     async updateAuthScheme({authScheme, authSchemeName, policyText, dutyStatements}) {
 
-        const {ctx} = this
+        const {ctx, app} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
         if (policyText) {
-            model.serialNumber = this.app.mongoose.getNewObjectId()
+            model.serialNumber = app.mongoose.getNewObjectId()
             model.policy = policyParse.parse(policyText, authScheme.languageType)
             model.policyText = policyText
         }
@@ -71,6 +71,47 @@ class AuthSchemeService extends Service {
         }
 
         return ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
+    }
+
+    /**
+     * 授权点批量签约
+     * @returns {Promise<void>}
+     */
+    async batchSignContracts({authScheme}) {
+
+        if (authScheme.status !== 0) {
+            ctx.error({msg: '只有初始状态的授权方案才能发布', data: {currentStatus: authScheme.status}})
+        }
+        if (!authScheme.policy.length) {
+            ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
+        }
+
+        const {ctx, app} = this
+        const body = {
+            signObjects: authScheme.dutyStatements.map(x => new Object({
+                targetId: x.authSchemeId,
+                segmentId: x.policySegmentId,
+                serialNumber: x.serialNumber
+            })),
+            partyTwo: authScheme.authSchemeId
+        }
+
+
+        let contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`, {
+            method: 'post',
+            contentType: 'json',
+            data: body,
+            dataType: 'json'
+        })
+
+        const associatedContracts = contracts.map(x => new Object({
+            authSchemeId: x.targetId,
+            contractId: x.contractId
+        }))
+
+        await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {associatedContracts, status: 1})
+
+        return contracts
     }
 
     /**
@@ -142,6 +183,7 @@ class AuthSchemeService extends Service {
                 //父级存在并且父级的依赖也存在,则表示依赖链完整
                 let parent = statementMaps.get(item.resourceId)
                 statementMaps.get(node.resourceId).validate = !!(parent && parent.validate)
+                statementMaps.get(node.resourceId).resourceName = node.resourceName
                 recursion(item.dependencies, statementMaps)
             }))
         }
@@ -180,6 +222,12 @@ class AuthSchemeService extends Service {
         const authSchemeInfoMaps = new Map(authSchemeInfos.map(item => [item._id.toString(), item]))
         const validateFailedStatements = dutyStatements.filter(statement => {
             let authScheme = statement.authSchemeInfo = authSchemeInfoMaps.get(statement.authSchemeId)
+            if (statement.serialNumber !== authScheme.serialNumber) {
+                ctx.error({
+                    msg: 'dutyStatements数据中授权策略发生改变,请确认序列号.',
+                    data: {statement}
+                })
+            }
             return !authScheme || authScheme.resourceId !== statement.resourceId
                 || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId)
         })
@@ -192,25 +240,24 @@ class AuthSchemeService extends Service {
 
         const statistics = authSchemeInfos.reduce((acc, current) => {
             acc.dependCount += current.dependCount
-            acc.mergedBubbleResourceIds = [...acc.mergedBubbleResourceIds, ...current.bubbleResourceIds]
+            acc.mergedBubbleResources = [...acc.mergedBubbleResources, ...current.bubbleResources]
             return acc
-        }, {mergedBubbleResourceIds: [], dependCount: 0})
+        }, {mergedBubbleResources: [], dependCount: 0})
 
 
         //上抛的资源为依赖的以及声明解决的资源上抛的合集 然后去除自己解决掉的
-        const allBubbleResourceIds = this._distinctAndExclude(statistics.mergedBubbleResourceIds.concat(resourceInfo.systemMeta.dependencies.map(x => x.resourceId)))
-        const invalidStatements = lodash.difference(dutyStatements.map(item => item.resourceId), allBubbleResourceIds)
+        const allBubbleResources = this._sortedUniqResoure(statistics.mergedBubbleResources.concat(resourceInfo.systemMeta.dependencies))
+        const invalidStatements = lodash.differenceWith(dutyStatements, allBubbleResources, this._isEqualResource)
         if (invalidStatements.length) {
             ctx.error({
                 msg: 'dutyStatements数据校验失败,存在无效的声明',
                 data: {
-                    invalidStatements,
-                    mergedBubbleResources: this._distinctAndExclude(statistics.mergedBubbleResourceIds)
+                    invalidStatements, mergedBubbleResources
                 }
             })
         }
 
-        authScheme.bubbleResourceIds = lodash.difference(allBubbleResourceIds, dutyStatements.map(item => item.resourceId))
+        authScheme.bubbleResources = lodash.differenceWith(allBubbleResources, dutyStatements, this._isEqualResource)
 
         resourceInfo.dependCount - statistics.dependCount
 
@@ -238,9 +285,6 @@ class AuthSchemeService extends Service {
         }
 
         let totalDependCount = lodash.sumBy(authSchemeInfos, m => m.dependCount)
-
-        //authScheme.bubbleResourceIds
-
 
         authScheme.statementCoverageRate = (statistics.dependCount / authScheme.dependCount).toFixed(4) * 100
         authScheme.contractCoverageRate = (statistics.signContractCount / statistics.dependCount).toFixed(4) * 100
@@ -281,6 +325,26 @@ class AuthSchemeService extends Service {
         return totalItem
     }
 
+    /**
+     * 比较两个带有资源ID实体是否同属一个资源对象
+     * @param resourceA
+     * @param resourceB
+     * @returns {boolean}
+     * @private
+     */
+    _isEqualResource(resourceA, resourceB) {
+        return resourceA.resourceId === resourceB.resourceId
+    }
+
+    /**
+     * 去重
+     * @param resources
+     * @returns {*}
+     * @private
+     */
+    _sortedUniqResoure(resources) {
+        return lodash.sortedUniqBy(resources, x => x.resourceId)
+    }
 
 }
 
