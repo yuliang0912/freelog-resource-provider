@@ -48,7 +48,8 @@ module.exports = app => {
     const AuthSchemeSchema = new mongoose.Schema({
         authSchemeName: {type: String, required: true},
         resourceId: {type: String, required: true},
-        dependCount: {type: Number, required: true}, //资源引用总数量
+        dependCount: {type: Number, required: true}, //资源引用总数量(包含所有叶集节点)
+        dependResources: {type: [String], default: []}, //依赖的资源(第一层依赖)
         statementState: {type: Number, default: 1, required: true}, //授权点类型 1:全部上抛(默认)  2:全包含  3:部分上抛
         policy: {type: Array, default: []}, //引用策略段
         policyText: {type: String, default: ''}, //引用策略描述语言原文

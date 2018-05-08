@@ -63,11 +63,9 @@ class AuthSchemeService extends Service {
         }
 
         if (Array.isArray(dutyStatements)) {
-            if (dutyStatements.length) {
-                const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
-                model.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
-            }
-            model.dutyStatements = dutyStatements
+            const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+            model.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
+            model.bubbleResources = authScheme.bubbleResources
         }
 
         return ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
@@ -95,7 +93,6 @@ class AuthSchemeService extends Service {
             })),
             partyTwo: authScheme.authSchemeId
         }
-
 
         let contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`, {
             method: 'post',
@@ -126,6 +123,10 @@ class AuthSchemeService extends Service {
         const {ctx} = this
 
         if (!dutyStatements.length) {
+            authScheme.bubbleResources = (resourceInfo.systemMeta.dependencies || []).map(x => new Object({
+                resourceId: x.resourceId,
+                resourceName: x.resourceName
+            }))
             return []
         }
 

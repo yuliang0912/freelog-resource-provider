@@ -6,6 +6,7 @@
 
 const lodash = require('lodash')
 const crypto = require('crypto')
+const fileType = require('file-type');
 const resourceType = require('egg-freelog-base/app/enum/resource_type')
 
 const resourceTypeCheckMap = {
@@ -50,6 +51,9 @@ module.exports = {
         }
 
         return new Promise((resolve, reject) => {
+            fileStream.once('data', chunk => {
+                metaInfo.systemMeta = Object.assign(metaInfo.systemMeta, fileType(chunk))
+            })
             fileStream.on('data', function (chunk) {
                 sha1sum.update(chunk)
                 metaInfo.systemMeta.fileSize += chunk.length
@@ -60,11 +64,12 @@ module.exports = {
             fileStream.on('end', async function () {
                 metaInfo.systemMeta.sha1 = sha1sum.digest('hex')
                 if (Reflect.has(resourceTypeCheckMap, resourceType)) {
+                    let fileBuffer = Buffer.concat(chunks)
                     let checkMeta = await resourceTypeCheckMap[resourceType].checkFile(
                         {
-                            userId, resourceName, meta,
-                            mimeType: fileStream.mimeType,
-                            fileBuffer: Buffer.concat(chunks)
+                            userId, resourceName, meta, fileBuffer,
+                            mimeType: metaInfo.systemMeta.mime,
+                            ext: metaInfo.systemMeta.ext,
                         }).catch(reject)
                     lodash.defaultsDeep(metaInfo, checkMeta)
                 }

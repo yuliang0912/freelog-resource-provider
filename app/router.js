@@ -33,5 +33,4 @@ module.exports = app => {
      * 资源本身相关API
      */
     router.resources('/v1/resources', '/v1/resources', controller.resource.v1)
-    router.resources('/v2/resources', '/v2/resources', controller.resource.v2)
 }

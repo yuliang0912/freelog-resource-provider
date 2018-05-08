@@ -19,6 +19,7 @@ class ResourceService extends Service {
         let {ctx, app} = this
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
 
+
         let dependencyCheck = ctx.helper.resourceDependencyCheck.check({meta})
         let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta, ctx.request.userId)
         let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
