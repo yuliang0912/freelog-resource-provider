@@ -56,7 +56,7 @@ module.exports = {
             return true
         }
 
-        const subDependencies = globalInfo.app.dal.resourceProvider.getResourceByIdList(dependencies).reduce((acc, item) => {
+        const subDependencies = await globalInfo.app.dal.resourceProvider.getResourceByIdList(dependencies).reduce((acc, item) => {
             if (!Array.isArray(item.systemMeta.dependencies) || !item.systemMeta.dependencies.length) {
                 return acc
             }

@@ -3,6 +3,8 @@
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 
+const fileCheck = new (require('../file-check/index'))
+
 class ResourceService extends Service {
 
     /**
@@ -20,6 +22,7 @@ class ResourceService extends Service {
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
 
 
+        //fileCheck.main({fileStream: stream})
         let dependencyCheck = ctx.helper.resourceDependencyCheck.check({meta})
         let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta, ctx.request.userId)
         let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
