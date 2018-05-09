@@ -25,6 +25,10 @@ module.exports = class FileGeneralCheck {
 
         const asyncHandler = this.patrun({resourceType})
 
+        if (!asyncHandler) {
+            return
+        }
+
         return asyncHandler({fileStream})
     }
 

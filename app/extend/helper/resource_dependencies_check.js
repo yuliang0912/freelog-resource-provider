@@ -14,7 +14,7 @@ module.exports = {
     async check({meta, resourceId}) {
 
         if (!Array.isArray(meta.dependencies) || !meta.dependencies.length) {
-            return Promise.resolve({dependencies: []})
+            return {dependencies: []}
         }
 
         meta.dependencies = [...new Set(meta.dependencies)] //去重
@@ -33,10 +33,10 @@ module.exports = {
         let checkResult = await this.checkCircleDependency(resourceId, meta.dependencies, allSubDependencies)
 
         if (checkResult) {
-            return Promise.resolve("依赖中存在循环引用")
+            return Promise.reject("依赖中存在循环引用")
         }
 
-        return Promise.resolve({dependencies: resourceList, allSubDependencies})
+        return {dependencies: resourceList, allSubDependencies}
     },
 
 
