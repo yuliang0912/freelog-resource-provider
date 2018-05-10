@@ -14,7 +14,7 @@ module.exports = class PageBuildFileCheck {
      * @param fileStream
      * @returns {Promise<any>}
      */
-    async check({fileStream}) {
+    async check({fileStream, meta}) {
 
         return new Promise((resolve, reject) => {
             let chunks = []
@@ -24,9 +24,8 @@ module.exports = class PageBuildFileCheck {
                 resolve(Buffer.concat(chunks))
             }).on('error', reject)
         }).then(fileBuffer => {
-            return this._checkFileContentAndGetWidgets(fileBuffer)
+            return this._checkFileContentAndGetWidgets(fileBuffer, meta)
         })
-
     }
 
     /**
@@ -35,7 +34,7 @@ module.exports = class PageBuildFileCheck {
      * @returns {Promise<*>}
      * @private
      */
-    async _checkFileContentAndGetWidgets(fileBuffer) {
+    async _checkFileContentAndGetWidgets(fileBuffer, meta) {
 
         const $ = chreeio.load(fileBuffer.toString())
         const widgets = $('[data-widget-src]').map((index, element) => $(element).attr('data-widget-src')).get()
@@ -44,11 +43,9 @@ module.exports = class PageBuildFileCheck {
             throw new Error("PageBuild资源最少需要包含一个widget")
         }
 
-        // let diffDependencies = lodash.difference(widgets, meta.dependencies || [])
+        // const diffDependencies = lodash.difference(widgets, meta.dependencies || [])
         // if (diffDependencies.length) {
-        //     return {
-        //         errors: diffResource.map(item => new Error(`widgetId:${item}没有在声明列表中`))
-        //     }
+        //     throw new Error(`widgetIds:${diffResource.toString()}没有在声明列表中`)
         // }
 
         const widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIdList(widgets).where({
@@ -59,11 +56,11 @@ module.exports = class PageBuildFileCheck {
             resourceName: item.resourceName,
         }))
 
-        let diffResource = lodash.difference(widgets, widgetResources.map(item => item.resourceId))
+        const diffResource = lodash.difference(widgets, widgetResources.map(item => item.resourceId))
         if (diffResource.length) {
             throw new Error(`widgetIds:${diffResource.toString()} is not widget resource`)
         }
 
-        return widgetResources
+        return {widgets: widgetResources}
     }
 }

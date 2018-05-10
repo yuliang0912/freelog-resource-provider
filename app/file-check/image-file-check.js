@@ -1,6 +1,8 @@
 'use strict'
 
 const sizeOf = require('image-size')
+const mime = require('mime')
+//目前针对其他类型的文件检测的不准确,调整为根据后缀名来检测.不在读取文件信息中的mimetype
 const fileType = require('file-type')
 
 module.exports = class ImageFileCheck {
@@ -20,10 +22,9 @@ module.exports = class ImageFileCheck {
                 resolve(Buffer.concat(chunks))
             }).on('error', reject)
         }).then(fileBuffer => {
-            const fileType = this.getFileType(fileBuffer)
-            this.checkMimeType(fileType.mime)
+            this.checkMimeType(fileStream.filename)
             const imageFile = sizeOf(fileBuffer)
-            return {fileType, width: imageFile.width, height: imageFile.height}
+            return {width: imageFile.width, height: imageFile.height}
         })
     }
 
@@ -32,7 +33,11 @@ module.exports = class ImageFileCheck {
      * @param mimeType
      * @returns {Error}
      */
-    checkMimeType(mimeType) {
+    checkMimeType(fileName) {
+
+        const fileExt = fileName.substr(fileName.lastIndexOf('.') + 1)
+        const mimeType = mime.getType(fileExt)
+
         if (!/^image\/(bmp|cur|ico|psd|tiff|webp|svg|dds|jpg|png|gif|jpeg)$/i.test(mimeType)) {
             throw new Error("当前资源不是系统所支持的图片格式")
         }

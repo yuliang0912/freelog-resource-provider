@@ -8,12 +8,11 @@ module.exports = class WidgetFileCheck {
 
     /**
      * 检查插件资源(命名全局唯一,版本检测)
-     * @param resourceName
      * @param meta
      * @param userId
      * @returns {Promise<void>}
      */
-    async check({resourceName, meta, userId}) {
+    async check({meta, userId}) {
 
         if (!Reflect.has(meta, 'widgetName')) {
             throw new Error("meta中必须包含widgetName属性")

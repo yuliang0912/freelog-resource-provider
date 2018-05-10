@@ -5,8 +5,8 @@
 'use strict'
 
 const uuid = require('uuid')
+const fileCheck = new (require('../file-check/index'))
 const polifyParseFactory = require('./helper/policy_parse_factory')
-const resourceCheck = require('./helper/resource_file_check')
 const resourceDependencyCheck = require('./helper/resource_dependencies_check')
 
 module.exports = {
@@ -22,9 +22,13 @@ module.exports = {
     policyParse: polifyParseFactory.parse,
 
     /**
-     * 资源文件检测
+     * 文件检查
+     * @param args
+     * @returns {*}
      */
-    resourceCheck: resourceCheck,
+    resourceFileCheck(...args) {
+        return fileCheck.main(...args)
+    },
 
     /**
      * 资源依赖检查

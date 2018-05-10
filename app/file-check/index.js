@@ -1,5 +1,6 @@
 'use strict'
 
+const mime = require('mime')
 const crypto = require('crypto')
 const Patrun = require('patrun')
 const pbFileCheck = new (require('./pb-file-check'))
@@ -10,7 +11,7 @@ const resourceTypes = require('egg-freelog-base/app/enum/resource_type')
 module.exports = class FileGeneralCheck {
 
     constructor() {
-        this.patrun = this._registerCheckHanlder()
+        this.handlerPatrun = this._registerCheckHanlder()
     }
 
     /**
@@ -23,13 +24,13 @@ module.exports = class FileGeneralCheck {
      */
     main({fileStream, resourceName, resourceType, meta, userId}) {
 
-        const asyncHandler = this.patrun({resourceType})
+        const checkHandlerFn = this.handlerPatrun.find({resourceType})
 
-        if (!asyncHandler) {
-            return
+        if (!checkHandlerFn) {
+            return Promise.resolve({systemMeta: {}})
         }
 
-        return asyncHandler({fileStream})
+        return checkHandlerFn({fileStream, resourceName, resourceType, meta, userId})
     }
 
     /**
@@ -41,15 +42,34 @@ module.exports = class FileGeneralCheck {
 
         const patrun = Patrun()
 
-        patrun.add({resourceType: resourceTypes.IMAGE}, async ({fileStream}) => {
-
-            const task1 = this._getFileSha1AndFileSize({fileStream})
-            const task2 = imageFileCheck.check({fileStream})
-
-            return await Promise.all([task1, task2]).then(([result1, result2]) => {
-                return {systemMeta: Object.assign(result1, result2)}
+        const checkBuild = (checkHandler, ...args) => {
+            const task1 = this._getFileBaseInfo(...args)
+            const task2 = checkHandler ? checkHandler.check(...args) : undefined
+            return Promise.all([task1, task2]).then(([fileBaseInfo, checkInfo]) => {
+                return {systemMeta: Object.assign({dependencies: []}, fileBaseInfo, checkInfo)}
             })
-        })
+        }
+
+        /**
+         * 默认计算文件大小和sha1值
+         */
+        patrun.add({}, (...args) => checkBuild(null, ...args))
+
+        /**
+         * IMAGE检查处理者
+         */
+        patrun.add({resourceType: resourceTypes.IMAGE}, (...args) => checkBuild(imageFileCheck, ...args))
+
+        /**
+         * PB文件检测
+         */
+        patrun.add({resourceType: resourceTypes.PAGE_BUILD}, (...args) => checkBuild(pbFileCheck, ...args))
+
+        /**
+         * WIDGET文件检测
+         */
+        patrun.add({resourceType: resourceTypes.WIDGET}, (...args) => checkBuild(widgetFileCheck, ...args))
+
 
         return patrun
     }
@@ -59,18 +79,18 @@ module.exports = class FileGeneralCheck {
      * @param fileStream
      * @returns {Promise<any>}
      */
-    _getFileSha1AndFileSize({fileStream}) {
+    _getFileBaseInfo({fileStream}) {
 
         let fileSize = 0
         const sha1sum = crypto.createHash('sha1')
+        const mimeType = mime.getType(fileStream.filename)
 
         return new Promise((resolve, reject) => {
             fileStream.on('data', chunk => {
                 sha1sum.update(chunk)
                 fileSize += chunk.length
             }).on('end', async function () {
-                const sha1 = sha1sum.digest('hex')
-                resolve({sha1, fileSize})
+                resolve({sha1: sha1sum.digest('hex'), fileSize, mimeType})
             }).on('error', reject)
         })
     }

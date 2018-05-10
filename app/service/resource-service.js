@@ -13,39 +13,32 @@ class ResourceService extends Service {
      * @param resourceType
      * @param parentId
      * @param meta
-     * @param stream
+     * @param fileStream
      * @returns {Promise<void>}
      */
-    async createResource({resourceName, resourceType, parentId, meta, stream}) {
+    async createResource({resourceName, resourceType, parentId, meta, fileStream}) {
 
         let {ctx, app} = this
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
 
-
-        //fileCheck.main({fileStream: stream})
         let dependencyCheck = ctx.helper.resourceDependencyCheck.check({meta})
-        let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceName, resourceType, meta, ctx.request.userId)
-        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), stream)
+        let fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType, meta, userId: ctx.request.userId})
+        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), fileStream)
 
-        const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync, dependencyCheck]).then(([metaInfo, uploadData, dependencies]) => {
-            if (metaInfo.errors.length) {
-                return Promise.reject(metaInfo.errors[0])
-            }
-            return {
-                resourceId: metaInfo.systemMeta.sha1,
-                status: app.resourceStatus.NORMAL,
-                resourceType: resourceType,
-                meta: JSON.stringify(metaInfo.meta),
-                systemMeta: JSON.stringify(Object.assign(metaInfo.systemMeta, dependencies)),
-                resourceUrl: uploadData.url,
-                userId: ctx.request.userId,
-                resourceName: resourceName === undefined ?
-                    ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
-                    ctx.helper.stringExpand.cutString(resourceName, 80),
-                mimeType: metaInfo.systemMeta.mimeType
-            }
-        }).catch(err => {
-            sendToWormhole(stream)
+        const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync, dependencyCheck]).then(([metaInfo, uploadData, dependencies]) => new Object({
+            resourceId: metaInfo.systemMeta.sha1,
+            status: app.resourceStatus.NORMAL,
+            resourceType,
+            meta: JSON.stringify(meta),
+            systemMeta: JSON.stringify(Object.assign(metaInfo.systemMeta, dependencies)),
+            resourceUrl: uploadData.url,
+            userId: ctx.request.userId,
+            resourceName: resourceName === undefined ?
+                ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
+                ctx.helper.stringExpand.cutString(resourceName, 80),
+            mimeType: metaInfo.systemMeta.mimeType
+        })).catch(err => {
+            sendToWormhole(fileStream)
             ctx.error(err)
         })
 

@@ -146,15 +146,15 @@ module.exports = class ResourcesController extends Controller {
      */
     async create(ctx) {
 
-        const stream = await ctx.getFileStream()
-        ctx.request.body = stream.fields
+        const fileStream = await ctx.getFileStream()
+        ctx.request.body = fileStream.fields
 
         let meta = ctx.checkBody('meta').toJson().value
         let parentId = ctx.checkBody('parentId').default('').value
         let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
         let resourceType = ctx.checkBody('resourceType').isResourceType().value
 
-        if (!stream || !stream.filename) {
+        if (!fileStream || !fileStream.filename) {
             ctx.errors.push({file: 'Can\'t found upload file'})
         }
 
@@ -171,7 +171,7 @@ module.exports = class ResourcesController extends Controller {
             }
         }
 
-        await ctx.service.resourceService.createResource({resourceName, resourceType, parentId, meta, stream})
+        await ctx.service.resourceService.createResource({resourceName, resourceType, parentId, meta, fileStream})
     }
 
     /**
@@ -235,13 +235,13 @@ module.exports = class ResourcesController extends Controller {
      */
     async updateResourceContext(ctx) {
 
-        let stream = await ctx.getFileStream()
-        ctx.request.body = stream.fields
+        let fileStream = await ctx.getFileStream()
+        ctx.request.body = fileStream.fields
 
         let meta = ctx.checkBody('meta').toJson().value
         let resourceId = ctx.checkParams("resourceId").isResourceId().value
 
-        if (!stream || !stream.filename) {
+        if (!fileStream || !fileStream.filename) {
             ctx.errors.push({file: 'Can\'t found upload file'})
         }
 
@@ -254,21 +254,24 @@ module.exports = class ResourcesController extends Controller {
         }
 
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
-        let fileCheckAsync = ctx.helper.resourceCheck.resourceFileCheck(stream, resourceInfo.resourceName, resourceInfo.resourceType, meta)
-        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), stream)
+
+        let fileCheckAsync = ctx.helper.resourceFileCheck({
+            fileStream,
+            resourceType: resourceInfo.resourceType,
+            meta,
+            userId: ctx.request.userId
+        })
+        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
 
         const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
-            if (metaInfo.errors.length) {
-                return Promise.reject(metaInfo.errors[0])
-            }
             return {
-                meta: JSON.stringify(metaInfo.meta),
+                meta: meta,
                 systemMeta: JSON.stringify(metaInfo.systemMeta),
                 resourceUrl: uploadData.url,
                 mimeType: metaInfo.systemMeta.mimeType
             }
         }).catch(err => {
-            sendToWormhole(stream)
+            sendToWormhole(fileStream)
             ctx.error(err)
         })
 

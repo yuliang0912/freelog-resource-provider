@@ -17,7 +17,7 @@ class AuthSchemeService extends Service {
         let authScheme = {
             authSchemeName, languageType,
             dutyStatements: [],
-            dependCount: 0,
+            dependCount: resourceInfo.systemMeta.dependCount || 0,
             resourceId: resourceInfo.resourceId,
             serialNumber: app.mongoose.getNewObjectId(),
             userId: ctx.request.userId,
@@ -77,6 +77,8 @@ class AuthSchemeService extends Service {
      */
     async batchSignContracts({authScheme}) {
 
+        const {ctx} = this
+
         if (authScheme.status !== 0) {
             ctx.error({msg: '只有初始状态的授权方案才能发布', data: {currentStatus: authScheme.status}})
         }
@@ -84,7 +86,6 @@ class AuthSchemeService extends Service {
             ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
         }
 
-        const {ctx, app} = this
         const body = {
             signObjects: authScheme.dutyStatements.map(x => new Object({
                 targetId: x.authSchemeId,
@@ -94,7 +95,7 @@ class AuthSchemeService extends Service {
             partyTwo: authScheme.authSchemeId
         }
 
-        let contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`, {
+        const contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`, {
             method: 'post',
             contentType: 'json',
             data: body,
@@ -123,7 +124,7 @@ class AuthSchemeService extends Service {
         const {ctx} = this
 
         if (!dutyStatements.length) {
-            authScheme.bubbleResources = (resourceInfo.systemMeta.dependencies || []).map(x => new Object({
+            authScheme.bubbleResources = resourceInfo.systemMeta.dependencies.map(x => new Object({
                 resourceId: x.resourceId,
                 resourceName: x.resourceName
             }))
@@ -134,11 +135,9 @@ class AuthSchemeService extends Service {
             resourceId: resourceInfo.resourceId,
             resourceName: resourceInfo.resourceName,
             resourceType: resourceInfo.resourceType,
-            dependencies: await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies || [])
+            dependencies: await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies)
         }]
 
-        //TODO:依赖的数量应该体现到资源层面上.授权点只需要做一冗余即可.
-        //authScheme.dependCount = this._getTreeNodeCount(resourceDependencies) - 1
 
         if (!dutyStatements.length) {
             return []
@@ -346,7 +345,6 @@ class AuthSchemeService extends Service {
     _sortedUniqResoure(resources) {
         return lodash.sortedUniqBy(resources, x => x.resourceId)
     }
-
 }
 
 module.exports = AuthSchemeService

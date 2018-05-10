@@ -7,24 +7,17 @@
 const resourceStatus = require('../enum/resource_status')
 const resourceAttribute = require('../enum/resource_attribute')
 
+module.exports = {
 
-module.exports = (() => {
+    /**
+     * 资源内部属性
+     */
+    get resourceAttribute() {
+        return resourceAttribute(this.resourceType)
+    },
 
-    const appExpand = {
-        /**
-         * 资源内部属性
-         */
-        get resourceAttribute() {
-            return resourceAttribute(this.resourceType)
-        },
-
-        /**
-         * 资源状态
-         */
-        resourceStatus,
-
-    }
-
-    return appExpand
-
-})()
+    /**
+     * 资源状态
+     */
+    resourceStatus,
+}

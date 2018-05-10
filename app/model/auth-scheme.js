@@ -56,12 +56,12 @@ module.exports = app => {
         languageType: {type: String, default: 'freelog_policy', required: true},
         bubbleResources: [resourceInfoSchema], //授权点上抛的资源(冒泡给上层)
         dutyStatements: [statementAuthSchemeSchema], //声明解决的资源
-        associatedContracts: [associatedContractSchema], //关联的合同
+        associatedContracts: [associatedContractSchema], //声明所关联的合同
         statementCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //授权依赖声明覆盖率
         contractCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //指定执行合约覆盖率
         userId: {type: Number, required: true},
         serialNumber: {type: String, required: true}, //序列号,用于校验前端与后端是否一致
-        status: {type: Number, default: 0, required: true}, // 0:初始状态 1:已发布  2:已下架
+        status: {type: Number, default: 0, required: true}, // 0:初始状态 1:已发布  2:已下架  4:废弃(以后不允许在变动)
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

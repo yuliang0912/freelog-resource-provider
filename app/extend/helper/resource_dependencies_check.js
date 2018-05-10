@@ -1,5 +1,6 @@
 'use strict'
 
+const lodash = require('lodash')
 const globalInfo = require('egg-freelog-base/globalInfo')
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
@@ -14,7 +15,7 @@ module.exports = {
     async check({meta, resourceId}) {
 
         if (!Array.isArray(meta.dependencies) || !meta.dependencies.length) {
-            return {dependencies: []}
+            return {dependencies: [], dependCount: 0}
         }
 
         meta.dependencies = [...new Set(meta.dependencies)] //去重
@@ -22,37 +23,37 @@ module.exports = {
             return Promise.reject("meta.dependencies中必须是资源ID")
         }
 
-        let resourceList = await globalInfo.app.dal.resourceProvider.getResourceByIdList(meta.dependencies).map(item => {
+        const resourceList = await globalInfo.app.dal.resourceProvider.getResourceByIdList(meta.dependencies).map(item => {
             return {resourceId: item.resourceId, resourceName: item.resourceName}
         })
         if (resourceList.length !== meta.dependencies.length) {
             return Promise.reject(`meta.dependencies中存在无效的依赖资源.(${meta.dependencies.toString()})`)
         }
 
-        let allSubDependencies = [...meta.dependencies]
-        let checkResult = await this.checkCircleDependency(resourceId, meta.dependencies, allSubDependencies)
+        const allSubDependencies = [...meta.dependencies]
+        const checkResult = await this.checkCircleDependency(resourceId, meta.dependencies, allSubDependencies)
 
         if (checkResult) {
             return Promise.reject("依赖中存在循环引用")
         }
 
-        return {dependencies: resourceList, allSubDependencies}
+        return {dependencies: resourceList, dependCount: lodash.flattenDeep(allSubDependencies).length}
     },
 
 
     /**
-     * 检查循环依赖
+     * 检查循环依赖,同时获取所有的叶级依赖
      * @param resourceId
      * @param dependencies
      * @returns {Promise<boolean>}
      */
     async checkCircleDependency(resourceId, dependencies, allSubDependencies) {
 
-        if (!resourceId || !dependencies.length) {
+        if (!dependencies.length) {
             return false
         }
 
-        if (dependencies.some(x => x === resourceId)) {
+        if (resourceId && dependencies.some(x => x === resourceId)) {
             return true
         }
 
@@ -64,12 +65,10 @@ module.exports = {
             return [...acc, ...subResourceIds]
         }, [])
 
-        allSubDependencies = [...allSubDependencies, ...subDependencies]
+        allSubDependencies.push(subDependencies)
 
-        if (subDependencies.length && this.checkCircleDependency(resourceId, subDependencies, allSubDependencies)) {
-            return true
-        }
+        const checkResult = await this.checkCircleDependency(resourceId, subDependencies, allSubDependencies)
 
-        return false
+        return subDependencies.length && checkResult
     }
 }
