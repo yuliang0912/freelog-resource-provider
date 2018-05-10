@@ -58,6 +58,7 @@ class AuthSchemeService extends Service {
 
         if (policyText) {
             const policySegment = ctx.helper.policyCompiler({policyText, languageType: authScheme.languageType})
+            model.policy = authScheme.policy
             model.policy.push(policySegment)
             model.serialNumber = app.mongoose.getNewObjectId()
             model.policyText = policyText
