@@ -5,7 +5,7 @@
 'use strict'
 
 const uuid = require('uuid')
-const fileCheck = new (require('../file-check/index'))
+const fileCheck = new (require('./file-check/index'))
 const polifyParseFactory = require('./helper/policy_parse_factory')
 const resourceDependencyCheck = require('./helper/resource_dependencies_check')
 

@@ -3,9 +3,10 @@
 const mime = require('mime')
 const crypto = require('crypto')
 const Patrun = require('patrun')
-const pbFileCheck = new (require('./pb-file-check'))
-const imageFileCheck = new (require('./image-file-check'))
-const widgetFileCheck = new (require('./widget-file-check'))
+const fileCheckBase = require('./fileCheckBase')
+const pbFileCheck = new (require('./implement/pb-file-check'))
+const imageFileCheck = new (require('./implement/image-file-check'))
+const widgetFileCheck = new (require('./implement/widget-file-check'))
 const resourceTypes = require('egg-freelog-base/app/enum/resource_type')
 
 module.exports = class FileGeneralCheck {
@@ -43,7 +44,11 @@ module.exports = class FileGeneralCheck {
         const patrun = Patrun()
 
         const checkBuild = (checkHandler, ...args) => {
+
             const task1 = this._getFileBaseInfo(...args)
+            if (checkHandler && !(checkHandler instanceof fileCheckBase)) {
+                throw new Error("checkHandler must be extends fileCheckBase")
+            }
             const task2 = checkHandler ? checkHandler.check(...args) : undefined
             return Promise.all([task1, task2]).then(([fileBaseInfo, checkInfo]) => {
                 return {systemMeta: Object.assign({dependencies: []}, fileBaseInfo, checkInfo)}
@@ -89,7 +94,7 @@ module.exports = class FileGeneralCheck {
             fileStream.on('data', chunk => {
                 sha1sum.update(chunk)
                 fileSize += chunk.length
-            }).on('end', async function () {
+            }).on('end', () => {
                 resolve({sha1: sha1sum.digest('hex'), fileSize, mimeType})
             }).on('error', reject)
         })

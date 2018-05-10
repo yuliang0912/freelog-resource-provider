@@ -14,6 +14,7 @@ const schema = {
      * @returns {{id: string, type: string, properties: {resourceId: {type: string, format: string}, authSchemeId: {type: string, format: string}, statements: {type: string, uniqueItems: boolean, items: {$ref: string}}}}}
      */
     statementSchema() {
+
         const statementSchema = {
             id: "/statementSchema",
             type: "object",
@@ -25,12 +26,8 @@ const schema = {
             }
         }
 
-        // statements: {
-        //     type: "array",
-        //         uniqueItems: true,
-        //         items: {$ref: "/statementSchema"}
-        // }
         jsonSchemaValidator.addSchema(statementSchema, '/statementSchema')
+
         return statementSchema
     },
 
@@ -39,13 +36,16 @@ const schema = {
      * @returns {{id: string, type: string, uniqueItems: boolean, items: {$ref: string}}}
      */
     statementArraySchema() {
+
         const statementArraySchema = {
             id: "/statementArraySchema",
             type: "array",
             uniqueItems: true,
             items: {$ref: "/statementSchema"}
         }
+
         jsonSchemaValidator.addSchema(statementArraySchema, '/statementArraySchema')
+
         return statementArraySchema
     }
 }

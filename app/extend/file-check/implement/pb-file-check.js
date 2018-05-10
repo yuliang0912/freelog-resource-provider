@@ -4,17 +4,19 @@
 
 const lodash = require('lodash')
 const chreeio = require('cheerio')
-const resourceType = require('egg-freelog-base/app/enum/resource_type')
+const fileCheckBase = require('../fileCheckBase')
 const globalInfo = require('egg-freelog-base/globalInfo')
+const resourceType = require('egg-freelog-base/app/enum/resource_type')
 
-module.exports = class PageBuildFileCheck {
+
+module.exports = class PageBuildFileCheck extends fileCheckBase {
 
     /**
      * PB文件检查
      * @param fileStream
      * @returns {Promise<any>}
      */
-    async check({fileStream, meta}) {
+    check({fileStream, meta}) {
 
         return new Promise((resolve, reject) => {
             let chunks = []

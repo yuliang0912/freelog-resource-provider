@@ -6,7 +6,7 @@
 'use strict';
 
 const Controller = require('egg').Controller;
-const statementSchema = require('../../extend/helper/json-schema/statement-schema')
+const statementSchema = require('../../extend/json-schema/statement-schema')
 
 module.exports = class PolicyController extends Controller {
 

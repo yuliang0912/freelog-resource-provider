@@ -2,10 +2,10 @@
 
 const sizeOf = require('image-size')
 const mime = require('mime')
-//目前针对其他类型的文件检测的不准确,调整为根据后缀名来检测.不在读取文件信息中的mimetype
-const fileType = require('file-type')
+//const fileType = require('file-type')
+const fileCheckBase = require('../fileCheckBase')
 
-module.exports = class ImageFileCheck {
+module.exports = class ImageFileCheck extends fileCheckBase {
 
     /**
      * 图片文件检查
@@ -45,6 +45,7 @@ module.exports = class ImageFileCheck {
 
     /**
      * 获取文件的mime和ext
+     * 目前针对其他类型的文件检测的不准确,调整为根据后缀名来检测.不在读取文件信息中的mimetype
      * @param fileBuffer
      */
     getFileType(fileBuffer) {

@@ -1,10 +1,11 @@
 'use strict'
 
 const semver = require('semver')
-const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
+const fileCheckBase = require('../fileCheckBase')
 const globalInfo = require('egg-freelog-base/globalInfo')
+const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
-module.exports = class WidgetFileCheck {
+module.exports = class WidgetFileCheck extends fileCheckBase {
 
     /**
      * 检查插件资源(命名全局唯一,版本检测)

@@ -3,7 +3,7 @@
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 
-const fileCheck = new (require('../file-check/index'))
+const fileCheck = new (require('../extend/file-check/index'))
 
 class ResourceService extends Service {
 
