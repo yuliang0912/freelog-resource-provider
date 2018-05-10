@@ -198,7 +198,10 @@ module.exports = class ResourcesController extends Controller {
         let model = {}
         if (meta) {
             model.meta = JSON.stringify(meta)
-            let dependencies = await ctx.helper.resourceDependencyCheck.check({meta, resourceId}).catch(err => {
+            let dependencies = await ctx.helper.resourceDependencyCheck({
+                dependencies: meta.dependencies,
+                resourceId
+            }).catch(err => {
                 ctx.error(err)
             })
             model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))

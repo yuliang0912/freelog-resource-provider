@@ -67,7 +67,7 @@ module.exports = class ResourceDependenciceCheck {
 
         allSubDependencies.push(subDependencies)
 
-        const checkResult = await this.checkCircleDependency(resourceId, subDependencies, allSubDependencies)
+        const checkResult = await this._checkCircleDependency(resourceId, subDependencies, allSubDependencies)
 
         return subDependencies.length && checkResult
     }

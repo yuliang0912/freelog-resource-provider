@@ -107,7 +107,8 @@ module.exports = {
     },
 
     logger: {
-        consoleLevel: 'DEBUG',
+        consoleLevel: 'NONE',
+        level: 'NONE',
     },
 
     notfound: {

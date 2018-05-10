@@ -10,19 +10,19 @@ module.exports = class FreelogResourcePolicyCompiler {
      * @param policyName
      * @returns {Uint8Array | any[] | Int32Array | Uint16Array | Uint32Array | Float64Array | *}
      */
-    compiler(policyText, policyName) {
+    compiler({policyText, policyName}) {
 
-        const policySegment = freelogPolicyCompiler.compile(policyText)
+        const policySegments = freelogPolicyCompiler.compile(policyText)
 
-        if (policySegment.errorMsg) {
+        if (policySegments.errorMsg) {
             throw new Error("resource-policy-error:" + policySegment.errorMsg)
         }
 
-        if (policySegment.policy_segments.length !== 1) {
+        if (policySegments.policy_segments.length !== 1) {
             throw new Error("resource-policy-error,暂不支持多个策略段")
         }
 
-        const policySegment = policySegment.policy_segments.map(item => new Object({
+        const policySegment = policySegments.policy_segments.map(item => new Object({
             segmentId: '',
             segmentText: item.segmentText,
             users: item.users,
@@ -40,7 +40,7 @@ module.exports = class FreelogResourcePolicyCompiler {
     }
 
     /**
-     * 生存事件ID
+     * 生成事件ID
      * @param event
      */
     _generateEventId(event) {

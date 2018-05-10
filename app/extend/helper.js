@@ -6,8 +6,8 @@
 
 const uuid = require('uuid')
 const fileCheck = new (require('./file-check/index'))
-const polifyParseFactory = require('./helper/policy_parse_factory')
-const resourceDependencyCheck = require('./helper/resource_dependencies_check')
+const policyCompiler = new (require('./policy-compiler/index'))
+const resourceDependencyCheck = new (require('./resource-attribute-check/resource_dependencies_check'))
 
 module.exports = {
 
@@ -17,9 +17,11 @@ module.exports = {
     uuid: uuid,
 
     /**
-     * 授权语言转换
+     * 授权语言转换{policyText, languageType, policyName}
      */
-    policyParse: polifyParseFactory.parse,
+    policyCompiler(...args) {
+        return policyCompiler.compiler(...args)
+    },
 
     /**
      * 文件检查
@@ -33,6 +35,8 @@ module.exports = {
     /**
      * 资源依赖检查
      */
-    resourceDependencyCheck: resourceDependencyCheck
+    resourceDependencyCheck(...args) {
+        return resourceDependencyCheck.check(...args)
+    }
 }
 

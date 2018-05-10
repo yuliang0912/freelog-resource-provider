@@ -2,7 +2,6 @@
 
 const Service = require('egg').Service
 const lodash = require('lodash')
-const policyParse = require('../extend/helper/policy_parse_factory')
 
 class AuthSchemeService extends Service {
 
@@ -26,8 +25,9 @@ class AuthSchemeService extends Service {
         }
 
         if (policyText) {
+            const policySegment = ctx.helper.policyCompiler({policyText, languageType})
             authScheme.policyText = policyText
-            authScheme.policy = policyParse.parse(policyText, languageType)
+            authScheme.policy.push(policySegment)
         }
 
         if (isPublish && (authScheme.policy.length === 0 || dutyStatements.length > 0)) {
@@ -57,8 +57,9 @@ class AuthSchemeService extends Service {
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
         if (policyText) {
+            const policySegment = ctx.helper.policyCompiler({policyText, languageType: authScheme.languageType})
+            model.policy.push(policySegment)
             model.serialNumber = app.mongoose.getNewObjectId()
-            model.policy = policyParse.parse(policyText, authScheme.languageType)
             model.policyText = policyText
         }
 
@@ -95,7 +96,7 @@ class AuthSchemeService extends Service {
             partyTwo: authScheme.authSchemeId
         }
 
-        const contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/v1/contracts/batchCreateAuthSchemeContracts`, {
+        const contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/batchCreateAuthSchemeContracts`, {
             method: 'post',
             contentType: 'json',
             data: body,
