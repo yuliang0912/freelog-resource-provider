@@ -57,6 +57,7 @@ module.exports = class PolicyCompiler {
     _policySegmentIdGenerate(policySegment) {
 
         const signObject = {
+            users: policySegment.users,
             fsmDescription: policySegment.fsmDescription,
             activatedStates: policySegment.activatedStates,
             initialState: policySegment.initialState,
