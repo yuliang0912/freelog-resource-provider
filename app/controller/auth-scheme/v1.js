@@ -91,12 +91,9 @@ module.exports = class PolicyController extends Controller {
         })
 
         await ctx.service.authSchemeService.createAuthScheme({
-            authSchemeName,
-            resourceInfo,
-            policies,
-            languageType,
+            authSchemeName, resourceInfo, languageType, isPublish,
+            policies: {addPolicySegments: policies},
             dutyStatements: dutyStatements || [],
-            isPublish
         }).then(data => ctx.success(data))
     }
 

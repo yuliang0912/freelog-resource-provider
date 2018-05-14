@@ -65,6 +65,35 @@ class ResourceService extends Service {
     }
 
     /**
+     * 更新资源
+     * @param resourceId
+     * @param model
+     * @returns {Promise<void>}
+     */
+    async updateResource({resourceInfo, model}) {
+
+        const {ctx} = this
+
+        if (model.meta) {
+            model.meta = JSON.stringify(model.meta)
+        }
+        if (model.meta && Array.isArray(model.meta.dependencies)
+            && !this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
+            if (ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
+                ctx.error({msg: '当前资源已经存在发布的授权方案,必须全部废弃才能修改资源依赖'})
+            }
+            let dependencies = await ctx.helper.resourceDependencyCheck({
+                dependencies: model.meta.dependencies,
+                resourceId: resourceInfo.resourceId
+            }).catch(err => ctx.error(err))
+            model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
+            model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
+        }
+
+        return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
+    }
+
+    /**
      * 获取资源的依赖树
      * @param resourceId
      * @param deep
@@ -106,6 +135,18 @@ class ResourceService extends Service {
             resourceType: item.resourceType,
             dependencies: await this.buildDependencyTree(item.systemMeta.dependencies || [], currDeep, maxDeep)
         }))
+    }
+
+    /**
+     * 依赖比较
+     * @param dependencies
+     * @param targetDependencies
+     * @private
+     */
+    _dependenciesCompare(metaDependencies, systemMetaDependencies) {
+        const first = metaDependencies.sort().toString()
+        const second = systemMetaDependencies.map(t => t.resourceId).sort().toString()
+        return first === second
     }
 }
 

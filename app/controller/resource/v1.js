@@ -181,14 +181,14 @@ module.exports = class ResourcesController extends Controller {
     async update(ctx) {
 
         let resourceId = ctx.checkParams("id").isResourceId().value
-        let meta = ctx.checkBody('meta').value
-        let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
-
-        if (meta !== undefined && !ctx.app.type.object(meta)) {
-            ctx.errors.push({meta: 'meta必须是json对象'})
-        }
+        let meta = ctx.checkBody('meta').optional().isObject().value
+        let resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
 
         ctx.allowContentType({type: 'json'}).validate()
+
+        if (meta === resourceName && resourceName === undefined) {
+            ctx.error({msg: '缺少有效参数'})
+        }
 
         let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
         if (!resourceInfo) {
@@ -197,22 +197,16 @@ module.exports = class ResourcesController extends Controller {
 
         let model = {}
         if (meta) {
-            model.meta = JSON.stringify(meta)
-            let dependencies = await ctx.helper.resourceDependencyCheck({
-                dependencies: meta.dependencies,
-                resourceId
-            }).catch(err => ctx.error(err))
-            model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
+            model.meta = meta
         }
         if (resourceName) {
             model.resourceName = resourceName
         }
 
-        if (!Object.keys(model).length) {
-            ctx.error({msg: '无可更新内容'})
-        }
-
-        return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId}).bind(ctx).then(ctx.success).catch(ctx.error)
+        return ctx.service.resourceService.updateResource({
+            resourceInfo,
+            model
+        }).bind(ctx).then(ctx.success).catch(ctx.error)
     }
 
     /**

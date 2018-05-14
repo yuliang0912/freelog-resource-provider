@@ -24,18 +24,15 @@ class AuthSchemeService extends Service {
             status: 0
         }
 
-        const newPolicies = this._policiesHandler({authScheme, policies})
-        if (newPolicies) {
-            authScheme.policy = newPolicies
+        if (policies) {
+            authScheme.policy = this._policiesHandler({authScheme, policies})
         }
-
         if (isPublish && (authScheme.policy.length === 0 || dutyStatements.length > 0)) {
             ctx.error({
                 msg: "当前状态无法直接发布",
                 data: {policyCount: authScheme.policy.length, dutyStatementCount: dutyStatements.length}
             })
         }
-
         if (isPublish) {
             authScheme.status = 1
         }
@@ -43,7 +40,10 @@ class AuthSchemeService extends Service {
         resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
         authScheme.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
 
-        return ctx.dal.authSchemeProvider.create(authScheme)
+        return ctx.dal.authSchemeProvider.create(authScheme).then(data => {
+            authScheme.status = 1 && ctx.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: resourceInfo.resourceId})
+            return data
+        })
     }
 
     /**
@@ -55,12 +55,9 @@ class AuthSchemeService extends Service {
         const {ctx} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
-        const newPolicies = this._policiesHandler({authScheme, policies})
-
-        if (newPolicies) {
-            model.policy = newPolicies
+        if (policies) {
+            model.policy = this._policiesHandler({authScheme, policies})
         }
-
         if (Array.isArray(dutyStatements)) {
             const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
             model.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
@@ -106,7 +103,12 @@ class AuthSchemeService extends Service {
             contractId: x.contractId
         }))
 
-        await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {associatedContracts, status: 1})
+        await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {
+            associatedContracts,
+            status: 1
+        }).then(() => {
+            return ctx.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: authScheme.resourceId})
+        })
 
         return contracts
     }
@@ -126,10 +128,6 @@ class AuthSchemeService extends Service {
      * @private
      */
     _policiesHandler({authScheme, policies}) {
-
-        if (!policies) {
-            return null
-        }
 
         let {ctx} = this
         let {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
