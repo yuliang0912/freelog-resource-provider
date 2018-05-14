@@ -15,7 +15,7 @@ module.exports = class FreelogResourcePolicyCompiler {
         const policySegments = freelogPolicyCompiler.compile(policyText)
 
         if (policySegments.errorMsg) {
-            throw new Error("resource-policy-error:" + policySegment.errorMsg)
+            throw new Error("resource-policy-error:" + policySegments.errorMsg)
         }
 
         if (policySegments.policy_segments.length !== 1) {
@@ -24,6 +24,7 @@ module.exports = class FreelogResourcePolicyCompiler {
 
         const policySegment = policySegments.policy_segments.map(item => new Object({
             segmentId: '',
+            policyName: policyName,
             segmentText: item.segmentText,
             users: item.users,
             fsmDescription: item.state_transition_table,

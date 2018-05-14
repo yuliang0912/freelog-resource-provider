@@ -2,6 +2,7 @@
 
 const crypto = require('crypto')
 const Patrun = require('patrun')
+const {validator} = require('egg-freelog-base/app/extend/application')
 const FreelogResourcePolicyCompiler = require('./freelog-resource-policy-compiler')
 
 module.exports = class PolicyCompiler {
@@ -16,12 +17,16 @@ module.exports = class PolicyCompiler {
      * @param languageType
      * @param policyName
      */
-    compiler({policyText, languageType, policyName}) {
+    compiler({policyText, languageType = 'freelog_policy_lang', policyName}) {
 
         const compilerFn = this.compilerPatrun.find({languageType})
 
         if (!compilerFn) {
             throw new Error(`不被支持的策略语言类型:${languageType}`)
+        }
+
+        if (validator.isBase64(policyText)) {
+            policyText = new Buffer(policyText, 'base64').toString()
         }
 
         return compilerFn({policyText, languageType, policyName})

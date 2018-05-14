@@ -7,6 +7,7 @@
 
 const Controller = require('egg').Controller;
 const statementSchema = require('../../extend/json-schema/statement-schema')
+const batchOperationPolicySchema = require('../../extend/json-schema/batch-operation-policy')
 
 module.exports = class PolicyController extends Controller {
 
@@ -60,16 +61,23 @@ module.exports = class PolicyController extends Controller {
 
         const resourceId = ctx.checkBody('resourceId').isResourceId().value
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
-        const policyText = ctx.checkBody('policyText').optional().isBase64().decodeBase64().value //base64编码之后的字符串
+        const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
         const languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
         let dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
         const isPublish = ctx.checkBody('isPublish').optional().default(0).in([0, 1]).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        dutyStatements = dutyStatements || []
-        const result = statementSchema.jsonSchemaValidator.validate(dutyStatements, statementSchema.statementArraySchema)
-        result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
+        if (dutyStatements) {
+            const result = statementSchema.jsonSchemaValidator.validate(dutyStatements, statementSchema.statementArraySchema)
+            result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
+        }
+
+        if (policies) {
+            const result = batchOperationPolicySchema.jsonSchemaValidator
+                .validate(policies, batchOperationPolicySchema.addPolicySegmentsValidator)
+            result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
+        }
 
         const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({
             resourceId, userId: ctx.request.userId
@@ -79,15 +87,15 @@ module.exports = class PolicyController extends Controller {
         }
 
         await ctx.dal.authSchemeProvider.count({resourceId}).then(count => {
-            count >= 10 && ctx.error({msg: '同一个资源授权点最多只能创建10个'})
+            count >= 20 && ctx.error({msg: '同一个资源授权点最多只能创建20个'})
         })
 
         await ctx.service.authSchemeService.createAuthScheme({
             authSchemeName,
             resourceInfo,
-            policyText,
+            policies,
             languageType,
-            dutyStatements,
+            dutyStatements: dutyStatements || [],
             isPublish
         }).then(data => ctx.success(data))
     }
@@ -100,17 +108,24 @@ module.exports = class PolicyController extends Controller {
 
         const authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
         const authSchemeName = ctx.checkBody('authSchemeName').optional().type("string").len(2, 100).trim().value
-        const policyText = ctx.checkBody('policyText').optional().isBase64().decodeBase64().value //base64编码之后的字符串
+        const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
         const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
         ctx.allowContentType({type: 'json'}).validate()
 
         if (dutyStatements) {
-            const result = statementSchema.jsonSchemaValidator.validate(dutyStatements, statementSchema.statementArraySchema)
+            const result = statementSchema.jsonSchemaValidator
+                .validate(dutyStatements, statementSchema.statementArraySchema)
             result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
         }
 
+        if (policies) {
+            const result = batchOperationPolicySchema.jsonSchemaValidator
+                .validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
+            result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
+        }
+
         //都为undefined
-        if (authSchemeName === policyText && policyText === dutyStatements) {
+        if (authSchemeName === policies && policies === dutyStatements) {
             ctx.error({msg: "最少需要一个有效参数"})
         }
 
@@ -123,7 +138,7 @@ module.exports = class PolicyController extends Controller {
         }
 
         await ctx.service.authSchemeService.updateAuthScheme({
-            authScheme: authScheme.toObject(), authSchemeName, policyText, dutyStatements
+            authScheme: authScheme.toObject(), authSchemeName, policies, dutyStatements
         }).then(() => {
             return ctx.dal.authSchemeProvider.findById(authSchemeId)
         }).then(data => ctx.success(data)).catch(err => ctx.error(err))
@@ -154,5 +169,17 @@ module.exports = class PolicyController extends Controller {
         }).then(data => {
             ctx.success(data)
         })
+    }
+
+    async test(ctx) {
+
+        const policies = ctx.request.body
+
+        const result = batchOperationPolicySchema.jsonSchemaValidator
+            .validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
+
+        result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
+
+        ctx.success(111)
     }
 }

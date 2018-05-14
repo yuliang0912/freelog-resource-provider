@@ -21,7 +21,7 @@ class ResourceService extends Service {
 
         let dependencyCheck = ctx.helper.resourceDependencyCheck({dependencies: meta.dependencies})
         let fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType, meta, userId: ctx.request.userId})
-        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), fileStream)
+        let fileUploadAsync = app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), fileStream)
 
         const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync, dependencyCheck]).then(([metaInfo, uploadData, dependencies]) => new Object({
             resourceId: metaInfo.systemMeta.sha1,
@@ -80,14 +80,12 @@ class ResourceService extends Service {
 
         let dependencies = resourceInfo.systemMeta.dependencies || []
 
-        return this.buildDependencyTree(dependencies).then(dependencies => {
-            return {
-                resourceId: resourceInfo.resourceId,
-                resourceName: resourceInfo.resourceName,
-                resourceType: resourceInfo.resourceType,
-                dependencies: dependencies
-            }
-        })
+        return this.buildDependencyTree(dependencies).then(dependencies => new Object({
+            resourceId: resourceInfo.resourceId,
+            resourceName: resourceInfo.resourceName,
+            resourceType: resourceInfo.resourceType,
+            dependencies: dependencies
+        }))
     }
 
     /**
@@ -102,14 +100,12 @@ class ResourceService extends Service {
             return []
         }
         let resourceIds = dependencies.map(item => item.resourceId)
-        return this.ctx.dal.resourceProvider.getResourceByIdList(resourceIds).map(async item => {
-            return {
-                resourceId: item.resourceId,
-                resourceName: item.resourceName,
-                resourceType: item.resourceType,
-                dependencies: await this.buildDependencyTree(item.systemMeta.dependencies || [], currDeep, maxDeep)
-            }
-        })
+        return this.ctx.dal.resourceProvider.getResourceByIdList(resourceIds).map(async item => new Object({
+            resourceId: item.resourceId,
+            resourceName: item.resourceName,
+            resourceType: item.resourceType,
+            dependencies: await this.buildDependencyTree(item.systemMeta.dependencies || [], currDeep, maxDeep)
+        }))
     }
 }
 

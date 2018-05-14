@@ -59,7 +59,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
             let task2 = this.resourceKnex.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
                  VALUES (:resourceId,:resourceName,:lastVersion,:userId,:status,:createDate) ON DUPLICATE KEY UPDATE lastVersion = :lastVersion`,
                 {
-                    resourceId: parentId ? parentId : resource.resourceId,
+                    resourceId: parentId || resource.resourceId,
                     resourceName: resource.resourceName,
                     lastVersion: resource.resourceId,
                     userId: resource.userId,

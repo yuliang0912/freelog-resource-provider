@@ -24,12 +24,9 @@ module.exports = class ResourceTreeProvider extends MongoBaseOperation {
 
         return this.Relation.findOneAndUpdate({resourceId: parentId}, {
             $addToSet: {children: resourceId}
-        }, {select: 'parentIds'}).then((parentResource) => {
-            return super.create({
-                resourceId, userId,
-                parentIds: parentResource.parentIds.concat(parentId)
-            })
-        })
+        }, {select: 'parentIds'}).then(parentResource => super.create({
+            resourceId, userId, parentIds: parentResource.parentIds.concat(parentId)
+        }))
     }
 
     /**

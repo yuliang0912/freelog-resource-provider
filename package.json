@@ -23,7 +23,7 @@
     "lodash": "^4.17.10",
     "mime": "^2.3.1",
     "moment": "^2.22.1",
-    "mongoose": "^5.0.17",
+    "mongoose": "^5.1.0",
     "node-mysql": "^0.4.2",
     "patrun": "^0.5.1",
     "semver": "^5.5.0",

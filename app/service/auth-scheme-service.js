@@ -9,7 +9,7 @@ class AuthSchemeService extends Service {
      * 创建授权点
      * @returns {Promise<void>}
      */
-    async createAuthScheme({authSchemeName, resourceInfo, policyText, languageType, dutyStatements, isPublish}) {
+    async createAuthScheme({authSchemeName, resourceInfo, policies, languageType, dutyStatements, isPublish}) {
 
         const {app, ctx} = this;
 
@@ -24,10 +24,9 @@ class AuthSchemeService extends Service {
             status: 0
         }
 
-        if (policyText) {
-            const policySegment = ctx.helper.policyCompiler({policyText, languageType})
-            authScheme.policyText = policyText
-            authScheme.policy.push(policySegment)
+        const newPolicies = this._policiesHandler({authScheme, policies})
+        if (newPolicies) {
+            authScheme.policy = newPolicies
         }
 
         if (isPublish && (authScheme.policy.length === 0 || dutyStatements.length > 0)) {
@@ -51,17 +50,15 @@ class AuthSchemeService extends Service {
      * 更新授权方案
      * @returns {Promise<void>}
      */
-    async updateAuthScheme({authScheme, authSchemeName, policyText, dutyStatements}) {
+    async updateAuthScheme({authScheme, authSchemeName, policies, dutyStatements}) {
 
-        const {ctx, app} = this
+        const {ctx} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
-        if (policyText) {
-            const policySegment = ctx.helper.policyCompiler({policyText, languageType: authScheme.languageType})
-            model.policy = authScheme.policy
-            model.policy.push(policySegment)
-            model.serialNumber = app.mongoose.getNewObjectId()
-            model.policyText = policyText
+        const newPolicies = this._policiesHandler({authScheme, policies})
+
+        if (newPolicies) {
+            model.policy = newPolicies
         }
 
         if (Array.isArray(dutyStatements)) {
@@ -112,6 +109,48 @@ class AuthSchemeService extends Service {
         await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {associatedContracts, status: 1})
 
         return contracts
+    }
+
+    /**
+     * 检查是否存在有效的授权方案
+     */
+    isExistValidAuthScheme(resourceId) {
+        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1})
+    }
+
+    /**
+     * 处理策略段变更
+     * @param authScheme
+     * @param policies
+     * @returns {*}
+     * @private
+     */
+    _policiesHandler({authScheme, policies}) {
+
+        if (!policies) {
+            return null
+        }
+
+        let {ctx} = this
+        let {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
+        let oldPolicySegments = new Map(authScheme.policy.map(x => [x.segmentId, x]))
+
+        removePolicySegments && removePolicySegments.forEach(oldPolicySegments.delete)
+
+        updatePolicySegments && updatePolicySegments.forEach(item => {
+            oldPolicySegments.has(item.policySegmentId) &&
+            oldPolicySegments.set(item.policySegmentId, ctx.helper.policyCompiler(item))
+        })
+
+        addPolicySegments && addPolicySegments.forEach(item => {
+            let newPolicy = ctx.helper.policyCompiler(item)
+            if (oldPolicySegments.has(newPolicy.segmentId)) {
+                throw Object.assign(new Error("不能添加已经存在的策略段"), {data: newPolicy})
+            }
+            oldPolicySegments.set(newPolicy.segmentId, newPolicy)
+        })
+
+        return Array.from(oldPolicySegments.values())
     }
 
     /**
