@@ -20,6 +20,7 @@ module.exports = class PolicyController extends Controller {
 
         let authSchemeIds = ctx.checkQuery('authSchemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 50).value
         let resourceIds = ctx.checkQuery('resourceIds').optional().isSplitResourceId().toSplitArray().len(1, 50).value
+        let authSchemeStatus = ctx.checkQuery('authSchemeStatus').optional().toInt().in([0, 1, 4]).value
 
         ctx.validate()
 
@@ -30,9 +31,11 @@ module.exports = class PolicyController extends Controller {
         if (resourceIds) {
             condition.resourceId = {$in: resourceIds}
         }
-
         if (!Object.keys(condition).length) {
             ctx.error({msg: '最少需要一个有效参数'})
+        }
+        if (authSchemeStatus !== undefined) {
+            condition.status = authSchemeStatus
         }
 
         await ctx.dal.authSchemeProvider.find(condition).bind(ctx).then(ctx.success)
@@ -121,8 +124,7 @@ module.exports = class PolicyController extends Controller {
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
         }
 
-        //都为undefined
-        if (authSchemeName === policies && policies === dutyStatements) {
+        if (authSchemeName === undefined && policies === undefined && dutyStatements === undefined) {
             ctx.error({msg: "最少需要一个有效参数"})
         }
 
@@ -168,15 +170,22 @@ module.exports = class PolicyController extends Controller {
         })
     }
 
-    async test(ctx) {
+    /**
+     * 删除授权方案(不可恢复)
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async destroy(ctx) {
 
-        const policies = ctx.request.body
+        const authSchemeId = ctx.checkParams('id').isMongoObjectId('authSchemeId格式错误').value
+        ctx.validate()
 
-        const result = batchOperationPolicySchema.jsonSchemaValidator
-            .validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
+        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        if (!authScheme || authScheme.userId !== ctx.request.userId) {
+            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
+        }
 
-        result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
-
-        ctx.success(111)
+        await ctx.service.authSchemeService.deleteAuthScheme(authSchemeId, authScheme.resourceId)
+            .then(data => ctx.success(true)).catch(err => ctx.error(err))
     }
 }

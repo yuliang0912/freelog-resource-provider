@@ -41,7 +41,7 @@ class AuthSchemeService extends Service {
         authScheme.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
 
         return ctx.dal.authSchemeProvider.create(authScheme).then(data => {
-            authScheme.status = 1 && ctx.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: resourceInfo.resourceId})
+            authScheme.status = 1 && ctx.service.resourceService.updateResourceStatus(resourceInfo.resourceId, 2)
             return data
         })
     }
@@ -106,9 +106,7 @@ class AuthSchemeService extends Service {
         await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {
             associatedContracts,
             status: 1
-        }).then(() => {
-            return ctx.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: authScheme.resourceId})
-        })
+        }).then(() => ctx.service.resourceService.updateResourceStatus(authScheme.resourceId, 2))
 
         return contracts
     }
@@ -116,8 +114,26 @@ class AuthSchemeService extends Service {
     /**
      * 检查是否存在有效的授权方案
      */
-    isExistValidAuthScheme(resourceId) {
-        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1})
+    async isExistValidAuthScheme(resourceId) {
+        const count = await this.ctx.dal.authSchemeProvider.count({resourceId, status: 1})
+        return count > 0
+    }
+
+    /**
+     * 删除授权方案
+     * @param authSchemeId
+     */
+    async deleteAuthScheme(authSchemeId, resourceId) {
+
+        const {ctx} = this
+        await ctx.dal.authSchemeProvider.update({_id: authSchemeId}, {status: 4})
+        await this.isExistValidAuthScheme(resourceId).then(isExist => {
+            if (!isExist) { //如果删除授权点以后.资源不存在有效授权点,则资源变更为未发布状态
+                ctx.service.resourceService.updateResourceStatus(resourceId, 1)
+            }
+        })
+
+        return true
     }
 
     /**

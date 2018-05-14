@@ -24,8 +24,6 @@ module.exports = app => {
     //获取资源依赖树
     router.get('/v1/resources/getResourceDependencyTree/:resourceId', controller.resource.v1.getResourceDependencyTree)
 
-    router.post('/v1/resources/authScheme/test', '/v1/resources/authScheme/test', controller.authScheme.v1.test)
-
     /**
      * 资源授权方案(授权点)
      */

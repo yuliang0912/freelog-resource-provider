@@ -137,6 +137,17 @@ class ResourceService extends Service {
         }))
     }
 
+
+    /**
+     * 更新资源状态
+     * @param resourceId
+     * @param status
+     * @returns {Promise<*>}
+     */
+    async updateResourceStatus(resourceId, status) {
+        return this.ctx.dal.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
+    }
+
     /**
      * 依赖比较
      * @param dependencies

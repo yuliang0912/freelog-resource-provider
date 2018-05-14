@@ -4,15 +4,15 @@ module.exports = {
     /**
      * 制作中
      */
-    MAKING: 1,
+    MAKING: 0,
 
     /**
      * 已发布
      */
-    PUBLISH: 2,
+    PUBLISH: 1,
 
     /**
      * 已废弃
      */
-    WASTE: 2
+    WASTE: 4
 }
