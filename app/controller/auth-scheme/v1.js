@@ -6,8 +6,8 @@
 'use strict';
 
 const Controller = require('egg').Controller;
-const statementSchema = require('../../extend/json-schema/statement-schema')
-const batchOperationPolicySchema = require('../../extend/json-schema/batch-operation-policy')
+const dutyStatementSchema = require('../../extend/json-schema/duty-statements-schema')
+const batchOperationPolicySchema = require('../../extend/json-schema/batch-operation-policy-schema')
 
 module.exports = class PolicyController extends Controller {
 
@@ -38,7 +38,7 @@ module.exports = class PolicyController extends Controller {
             condition.status = authSchemeStatus
         }
 
-        await ctx.dal.authSchemeProvider.find(condition).bind(ctx).then(ctx.success)
+        await ctx.dal.authSchemeProvider.find(condition).then(ctx.success)
     }
 
     /**
@@ -52,7 +52,7 @@ module.exports = class PolicyController extends Controller {
 
         ctx.validate()
 
-        await  ctx.dal.authSchemeProvider.findById(authSchemeId).bind(ctx).then(ctx.success)
+        await ctx.dal.authSchemeProvider.findById(authSchemeId).then(ctx.success)
     }
 
     /**
@@ -66,19 +66,18 @@ module.exports = class PolicyController extends Controller {
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
         const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
         const languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
-        let dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
+        const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
         const isPublish = ctx.checkBody('isPublish').optional().default(0).in([0, 1]).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
         if (dutyStatements) {
-            const result = statementSchema.jsonSchemaValidator.validate(dutyStatements, statementSchema.statementArraySchema)
+            const result = dutyStatementSchema.validate(dutyStatements, dutyStatementSchema.dutyStatementsValidator)
             result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
         }
 
         if (policies) {
-            const result = batchOperationPolicySchema.jsonSchemaValidator
-                .validate(policies, batchOperationPolicySchema.addPolicySegmentsValidator)
+            const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.addPolicySegmentsValidator)
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
         }
 
@@ -97,7 +96,7 @@ module.exports = class PolicyController extends Controller {
             authSchemeName, resourceInfo, languageType, isPublish,
             policies: {addPolicySegments: policies},
             dutyStatements: dutyStatements || [],
-        }).then(data => ctx.success(data))
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -113,14 +112,12 @@ module.exports = class PolicyController extends Controller {
         ctx.allowContentType({type: 'json'}).validate()
 
         if (dutyStatements) {
-            const result = statementSchema.jsonSchemaValidator
-                .validate(dutyStatements, statementSchema.statementArraySchema)
+            const result = dutyStatementSchema.validate(dutyStatements, dutyStatementSchema.dutyStatementsValidator)
             result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
         }
 
         if (policies) {
-            const result = batchOperationPolicySchema.jsonSchemaValidator
-                .validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
+            const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
         }
 
@@ -140,7 +137,7 @@ module.exports = class PolicyController extends Controller {
             authScheme: authScheme.toObject(), authSchemeName, policies, dutyStatements
         }).then(() => {
             return ctx.dal.authSchemeProvider.findById(authSchemeId)
-        }).then(data => ctx.success(data)).catch(err => ctx.error(err))
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -165,9 +162,7 @@ module.exports = class PolicyController extends Controller {
 
         await ctx.service.authSchemeService.batchSignContracts({
             authScheme: authScheme.toObject()
-        }).then(data => {
-            ctx.success(data)
-        })
+        }).then(ctx.success)
     }
 
     /**
@@ -186,6 +181,6 @@ module.exports = class PolicyController extends Controller {
         }
 
         await ctx.service.authSchemeService.deleteAuthScheme(authSchemeId, authScheme.resourceId)
-            .then(data => ctx.success(true)).catch(err => ctx.error(err))
+            .then(data => ctx.success(true)).catch(ctx.error)
     }
 }

@@ -27,7 +27,7 @@ class AuthSchemeService extends Service {
         if (policies) {
             authScheme.policy = this._policiesHandler({authScheme, policies})
         }
-        if (isPublish && (authScheme.policy.length === 0 || dutyStatements.length > 0)) {
+        if (isPublish && (!authScheme.policy.length || dutyStatements.length)) {
             ctx.error({
                 msg: "当前状态无法直接发布",
                 data: {policyCount: authScheme.policy.length, dutyStatementCount: dutyStatements.length}
@@ -193,11 +193,6 @@ class AuthSchemeService extends Service {
             dependencies: await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies)
         }]
 
-
-        if (!dutyStatements.length) {
-            return []
-        }
-
         const buildStatements = this._validateDependencyStatements(resourceInfo, dutyStatements, resourceDependencies)
         if (buildStatements.length !== dutyStatements.length) {
             ctx.error({
@@ -247,7 +242,7 @@ class AuthSchemeService extends Service {
 
         statementMaps.delete(resourceInfo.resourceId)
 
-        return [...statementMaps.values()]
+        return Array.from(statementMaps.values())
     }
 
     /**

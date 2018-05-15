@@ -30,7 +30,7 @@ module.exports = class ResourceDependenciceCheck {
             throw new Error(`dependencies中存在无效的依赖资源.(${dependencies.toString()})`)
         }
 
-        const allSubDependencies = [...dependencies]
+        const allSubDependencies = dependencies.slice()
         const checkResult = await this._checkCircleDependency(resourceId, dependencies, allSubDependencies)
 
         if (checkResult) {

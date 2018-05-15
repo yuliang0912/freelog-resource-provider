@@ -52,7 +52,7 @@ module.exports = class ResourcesController extends Controller {
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
             respositories = await ctx.dal.resourceProvider
-                .getRespositories(condition, page, pageSize).bind(ctx)
+                .getRespositories(condition, page, pageSize)
                 .catch(ctx.error)
         }
 
@@ -89,7 +89,7 @@ module.exports = class ResourcesController extends Controller {
 
         let resourceId = resourceMatch.split('.')[0]
         let attribute = resourceMatch.split('.')[1]
-        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId}).bind(ctx).catch(ctx.error)
+        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId}).catch(ctx.error)
 
         if (!resourceInfo) {
             ctx.error({msg: '未找到资源'})
@@ -135,7 +135,7 @@ module.exports = class ResourcesController extends Controller {
         ctx.validate()
 
         await ctx.dal.resourceProvider
-            .getResourceInfo({resourceId, userId: ctx.request.userId}).bind(ctx)
+            .getResourceInfo({resourceId, userId: ctx.request.userId})
             .then(ctx.success)
     }
 
@@ -165,7 +165,7 @@ module.exports = class ResourcesController extends Controller {
         ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
 
         if (parentId) {
-            let parentResource = await ctx.dal.resourceProvider.getResourceInfo({resourceId: parentId}).bind(ctx).catch(ctx.error)
+            let parentResource = await ctx.dal.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
             if (!parentResource || parentResource.userId !== ctx.request.userId) {
                 ctx.error({msg: 'parentId错误,或者没有权限引用'})
             }
@@ -206,7 +206,7 @@ module.exports = class ResourcesController extends Controller {
         return ctx.service.resourceService.updateResource({
             resourceInfo,
             model
-        }).bind(ctx).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -219,8 +219,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.validate()
 
-        await ctx.dal.resourceProvider.getResourceByIdList(resourceIds)
-            .bind(ctx).then(ctx.success).catch(ctx.error)
+        await ctx.dal.resourceProvider.getResourceByIdList(resourceIds).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -258,13 +257,11 @@ module.exports = class ResourcesController extends Controller {
         })
         let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
 
-        const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
-            return {
-                meta: meta,
-                systemMeta: JSON.stringify(metaInfo.systemMeta),
-                resourceUrl: uploadData.url,
-                mimeType: metaInfo.systemMeta.mimeType
-            }
+        const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
+            meta: meta,
+            systemMeta: JSON.stringify(metaInfo.systemMeta),
+            resourceUrl: uploadData.url,
+            mimeType: metaInfo.systemMeta.mimeType
         }).catch(err => {
             sendToWormhole(fileStream)
             ctx.error(err)
@@ -276,7 +273,7 @@ module.exports = class ResourcesController extends Controller {
             resourceInfo.resourceUrl = updateResourceInfo.resourceUrl
             resourceInfo.mimeType = updateResourceInfo.mimeType
             ctx.success(resourceInfo)
-        }).catch(err => ctx.error(err))
+        }).catch(ctx.error)
 
         if (resourceInfo.resourceType === ctx.app.resourceType.WIDGET) {
             await ctx.dal.componentsProvider.create({
@@ -295,9 +292,9 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise<void>}
      */
     async getResourceDependencyTree(ctx) {
+
         let resourceId = ctx.checkParams("resourceId").isResourceId().value
-        ctx.validate()
-        let tree = await ctx.service.resourceService.getResourceDependencyTree(resourceId)
-        ctx.success(tree)
+
+        await ctx.validate().service.resourceService.getResourceDependencyTree(resourceId).then(ctx.success)
     }
 }
