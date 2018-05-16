@@ -67,7 +67,7 @@ class BatchOperationPolicyJsonSchemaValidator extends FreelogCommonJsonSchema {
             properties: {
                 policySegmentId: {required: true, type: "string", format: 'md5'},
                 policyName: {required: true, type: "string", format: "policyName"},
-                policyText: {required: true, type: "string", format: 'base64'}
+                status: {required: true, type: "integer", minimum: 0, maximum: 1}
             }
         })
 

@@ -152,8 +152,12 @@ class AuthSchemeService extends Service {
         removePolicySegments && removePolicySegments.forEach(oldPolicySegments.delete)
 
         updatePolicySegments && updatePolicySegments.forEach(item => {
-            oldPolicySegments.has(item.policySegmentId) &&
-            oldPolicySegments.set(item.policySegmentId, ctx.helper.policyCompiler(item))
+            let targetPolicySegment = oldPolicySegments.get(item.policySegmentId)
+            if (!targetPolicySegment) {
+                throw Object.assign(new Error("未能找到需要更新的策略段"), {data: targetPolicySegment})
+            }
+            targetPolicySegment.policyName = item.policyName
+            targetPolicySegment.status = item.status
         })
 
         addPolicySegments && addPolicySegments.forEach(item => {

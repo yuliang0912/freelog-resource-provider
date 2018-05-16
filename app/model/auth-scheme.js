@@ -13,7 +13,6 @@ module.exports = app => {
                 dependCount: ret.dependCount,
                 statementState: ret.statementState,
                 policy: ret.policy,
-                policyText: ret.policyText,
                 languageType: ret.languageType,
                 bubbleResources: ret.bubbleResources,
                 dutyStatements: ret.dutyStatements,
@@ -52,7 +51,6 @@ module.exports = app => {
         dependResources: {type: [String], default: []}, //依赖的资源(第一层依赖)
         statementState: {type: Number, default: 1, required: true}, //授权点类型 1:全部上抛(默认)  2:全包含  3:部分上抛
         policy: {type: Array, default: []}, //引用策略段
-        policyText: {type: String, default: ''}, //引用策略描述语言原文
         languageType: {type: String, default: 'freelog_policy', required: true},
         bubbleResources: [resourceInfoSchema], //授权点上抛的资源(冒泡给上层)
         dutyStatements: [statementAuthSchemeSchema], //声明解决的资源
