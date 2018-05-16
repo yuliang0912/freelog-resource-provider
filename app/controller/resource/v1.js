@@ -262,7 +262,7 @@ module.exports = class ResourcesController extends Controller {
             systemMeta: JSON.stringify(metaInfo.systemMeta),
             resourceUrl: uploadData.url,
             mimeType: metaInfo.systemMeta.mimeType
-        }).catch(err => {
+        })).catch(err => {
             sendToWormhole(fileStream)
             ctx.error(err)
         })
