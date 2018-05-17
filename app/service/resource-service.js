@@ -27,8 +27,8 @@ class ResourceService extends Service {
             resourceId: metaInfo.systemMeta.sha1,
             status: app.resourceStatus.NORMAL,
             resourceType,
-            meta: JSON.stringify(meta),
-            systemMeta: JSON.stringify(Object.assign(metaInfo.systemMeta, dependencies)),
+            meta: meta,
+            systemMeta: Object.assign(metaInfo.systemMeta, dependencies),
             resourceUrl: uploadData.url,
             userId: ctx.request.userId,
             resourceName: resourceName === undefined ?
@@ -44,24 +44,9 @@ class ResourceService extends Service {
             resource && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: resourceInfo.resourceId})
         })
 
-        await ctx.dal.resourceProvider.createResource(resourceInfo, parentId).bind(ctx)
-            .then(() => {
-                return ctx.dal.resourceTreeProvider.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId)
-            })
-            .then(() => {
-                resourceInfo.meta = JSON.parse(resourceInfo.meta)
-                resourceInfo.systemMeta = JSON.parse(resourceInfo.systemMeta)
-                ctx.success(resourceInfo)
-            }).catch(ctx.error)
-
-        if (resourceType === ctx.app.resourceType.WIDGET) {
-            await ctx.dal.componentsProvider.create({
-                widgetName: resourceInfo.systemMeta.widgetName,
-                version: resourceInfo.systemMeta.version,
-                resourceId: resourceInfo.resourceId,
-                userId: resourceInfo.userId
-            }).catch(console.error)
-        }
+        return ctx.dal.resourceProvider.createResource(resourceInfo, parentId)
+            .then(() => ctx.dal.resourceTreeProvider.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId))
+            .then(() => resourceInfo)
     }
 
     /**

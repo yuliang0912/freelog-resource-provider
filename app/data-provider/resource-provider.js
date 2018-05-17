@@ -54,6 +54,10 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
             return Promise.reject(new Error("resource is not object"))
         }
 
+        const {meta, systemMeta} = resource
+
+        resource = Object.assign({}, resource, {meta: JSON.stringify(meta), systemMeta: JSON.stringify(systemMeta)})
+
         return this.resourceKnex.transaction(trans => {
             let task1 = super.queryChain.transacting(trans).insert(resource)
             let task2 = this.resourceKnex.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
@@ -66,8 +70,16 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     createDate: moment().toDate(),
                     status: 1
                 }).transacting(trans).then()
+            let task3 = resource.resourceType === this.app.resourceType.WIDGET ?
+                this.resourceKnex('components').transacting(trans).insert({
+                    widgetName: systemMeta.widgetName,
+                    version: systemMeta.version,
+                    resourceId: resource.resourceId,
+                    userId: resource.userId,
+                    createDate: moment().toDate(),
+                }) : Promise.resolve(null)
 
-            return Promise.all([task1, task2]).then(trans.commit).catch(trans.rollback)
+            return Promise.all([task1, task2, task3]).then(trans.commit).catch(trans.rollback)
         })
     }
 
