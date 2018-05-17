@@ -35,9 +35,8 @@
     "node": ">=8.0.0"
   },
   "scripts": {
-    "start": "egg-scripts start --port=7001",
+    "start": "egg-scripts start",
     "stop": "egg-scripts stop",
-    "dev": "egg-bin dev",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",
     "cov": "egg-bin cov",

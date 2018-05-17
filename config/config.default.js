@@ -6,6 +6,12 @@ const globalInfo = require('egg-freelog-base/globalInfo')
 
 module.exports = {
 
+    cluster: {
+        listen: {
+            port: 7001
+        }
+    },
+
     keys: '20ab72d9397ff78c5058a106c635f008',
 
     i18n: {
