@@ -30,6 +30,11 @@ module.exports = app => {
     router.resources('/v1/resources/authSchemes', '/v1/resources/authSchemes', controller.authScheme.v1)
 
     /**
+     * 资源收藏相关API
+     */
+    router.resources('/v1/resources/collections', '/v1/resources/collections', controller.collection.v1)
+
+    /**
      * 资源本身相关API
      */
     router.resources('/v1/resources', '/v1/resources', controller.resource.v1)

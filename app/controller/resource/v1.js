@@ -191,6 +191,7 @@ module.exports = class ResourcesController extends Controller {
         let resourceId = ctx.checkParams("id").isResourceId().value
         let meta = ctx.checkBody('meta').optional().isObject().value
         let resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
+        let description = ctx.checkBody('description').optional().type('string').value
 
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -209,6 +210,9 @@ module.exports = class ResourcesController extends Controller {
         }
         if (resourceName) {
             model.resourceName = resourceName
+        }
+        if (description) {
+            model.description = description
         }
 
         return ctx.service.resourceService.updateResource({

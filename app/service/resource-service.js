@@ -19,6 +19,7 @@ class ResourceService extends Service {
 
         let {ctx, app} = this
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
+        let userInfo = ctx.request.identityInfo.userInfo
 
         let dependencyCheck = ctx.helper.resourceDependencyCheck({dependencies: meta.dependencies})
         let fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType, meta, userId: ctx.request.userId})
@@ -31,7 +32,8 @@ class ResourceService extends Service {
             meta: meta,
             systemMeta: Object.assign(metaInfo.systemMeta, dependencies),
             resourceUrl: uploadData.url,
-            userId: ctx.request.userId,
+            userId: userInfo.userId,
+            userName: userInfo.userName || userInfo.nickname,
             resourceName: resourceName === undefined ?
                 ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),

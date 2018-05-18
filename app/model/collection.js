@@ -7,11 +7,14 @@ module.exports = app => {
     const toObjectOptions = {
         transform: function (doc, ret, options) {
             return {
-
                 resourceId: ret.resourceId,
                 resourceName: ret.resourceName,
                 resourceType: ret.resourceType,
+                authorId: ret.authorId,
+                authorName: ret.authorName,
                 userId: ret.userId,
+                createDate: ret.createDate,
+                updateDate: ret.updateDate,
                 status: ret.status
             }
         }
@@ -22,6 +25,8 @@ module.exports = app => {
         resourceId: {type: String, required: true, unique: true},
         resourceName: {type: String, required: true},
         resourceType: {type: String, required: true},
+        authorId: {type: Number, required: true},
+        authorName: {type: String, default: ''},
         userId: {type: Number, required: true},
         status: {type: Number, default: 0, required: true}
     }, {

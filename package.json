@@ -10,6 +10,7 @@
     "@freelog/resource-policy-compiler": "0.0.11",
     "ali-oss": "^4.15.0",
     "bluebird": "^3.5.1",
+    "busboy": "^0.2.14",
     "cheerio": "^1.0.0-rc.2",
     "egg": "2.5.0",
     "egg-freelog-base": "^1.1.40",
