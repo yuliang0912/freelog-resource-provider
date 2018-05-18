@@ -153,6 +153,7 @@ module.exports = class ResourcesController extends Controller {
         let parentId = ctx.checkBody('parentId').default('').value
         let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
         let resourceType = ctx.checkBody('resourceType').isResourceType().value
+        let description = ctx.checkBody('description').optional().type('string').value
 
         if (!fileStream || !fileStream.filename) {
             ctx.errors.push({file: 'Can\'t found upload file'})
@@ -171,8 +172,14 @@ module.exports = class ResourcesController extends Controller {
             }
         }
 
-        await ctx.service.resourceService.createResource({resourceName, resourceType, parentId, meta, fileStream})
-            .then(ctx.success).catch(ctx.error)
+        await ctx.service.resourceService.createResource({
+            resourceName,
+            resourceType,
+            parentId,
+            meta,
+            fileStream,
+            description
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**

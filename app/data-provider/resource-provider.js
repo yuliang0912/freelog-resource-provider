@@ -67,7 +67,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     resourceName: resource.resourceName,
                     lastVersion: resource.resourceId,
                     userId: resource.userId,
-                    createDate: moment().toDate(),
+                    createDate: resource.createDate,
                     status: 1
                 }).transacting(trans).then()
             let task3 = resource.resourceType === this.app.resourceType.WIDGET ?
@@ -76,7 +76,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     version: systemMeta.version,
                     resourceId: resource.resourceId,
                     userId: resource.userId,
-                    createDate: moment().toDate(),
+                    createDate: resource.createDate,
                 }) : Promise.resolve(null)
 
             return Promise.all([task1, task2, task3]).then(trans.commit).catch(trans.rollback)

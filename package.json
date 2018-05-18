@@ -11,7 +11,7 @@
     "ali-oss": "^4.15.0",
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
-    "egg": "^2.8.1",
+    "egg": "2.5.0",
     "egg-freelog-base": "^1.1.40",
     "egg-freelog-database": "^1.0.6",
     "egg-scripts": "^2.6.0",

@@ -1,5 +1,6 @@
 'use strict'
 
+const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 
@@ -14,7 +15,7 @@ class ResourceService extends Service {
      * @param fileStream
      * @returns {Promise<void>}
      */
-    async createResource({resourceName, resourceType, parentId, meta, fileStream}) {
+    async createResource({resourceName, resourceType, parentId, meta, description, fileStream}) {
 
         let {ctx, app} = this
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
@@ -34,7 +35,11 @@ class ResourceService extends Service {
             resourceName: resourceName === undefined ?
                 ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),
-            mimeType: metaInfo.systemMeta.mimeType
+            mimeType: metaInfo.systemMeta.mimeType,
+            description: app.type.nullOrUndefined(description) ? '' : description,
+            intro: this._getResourceIntroFromDescription(description),
+            createDate: moment().toDate(),
+            updateDate: moment().toDate()
         })).catch(err => {
             sendToWormhole(fileStream)
             ctx.error(err)
@@ -57,7 +62,7 @@ class ResourceService extends Service {
      */
     async updateResource({resourceInfo, model}) {
 
-        const {ctx} = this
+        const {ctx, app} = this
 
         if (model.meta) {
             model.meta = JSON.stringify(model.meta)
@@ -73,6 +78,9 @@ class ResourceService extends Service {
             }).catch(err => ctx.error(err))
             model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
             model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
+        }
+        if (!app.type.nullOrUndefined(model.description)) {
+            model.intro = this._getResourceIntroFromDescription(model.description)
         }
 
         return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
@@ -131,6 +139,20 @@ class ResourceService extends Service {
      */
     async updateResourceStatus(resourceId, status) {
         return this.ctx.dal.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
+    }
+
+    /**
+     * 从资源描述中获取简介信息
+     * @param resourceDescription
+     * @private
+     */
+    _getResourceIntroFromDescription(resourceDescription) {
+        const {ctx, app} = this
+        if (app.type.nullOrUndefined(resourceDescription)) {
+            return ''
+        }
+        const removeHtmlTag = (input) => input.replace(/<[a-zA-Z0-9]+? [^<>]*?>|<\/[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?\/>|\r|\n/ig, "")
+        return ctx.helper.stringExpand.cutString(removeHtmlTag(unescape(removeHtmlTag(resourceDescription)), 100));
     }
 
     /**
