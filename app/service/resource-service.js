@@ -81,7 +81,7 @@ class ResourceService extends Service {
             let dependencies = await ctx.helper.resourceDependencyCheck({
                 dependencies: model.meta.dependencies,
                 resourceId: resourceInfo.resourceId
-            }).catch(err => ctx.error(err))
+            }).catch(ctx.error)
             model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
             model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
         }

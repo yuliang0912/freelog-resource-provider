@@ -12,6 +12,7 @@ module.exports = class SubsidiaryFileCheck {
     /**
      * 主入口
      * @param fileStream
+     * @param checkType
      */
     main({fileStream, checkType = 'thumbnailImage'}) {
 
