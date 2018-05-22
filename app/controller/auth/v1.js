@@ -42,8 +42,11 @@ module.exports = class ResourceAuthController extends Controller {
 
         let objectKey = resourceInfo.resourceUrl.replace(/^http:\/\/freelog-shenzhen.oss-cn-shenzhen(-internal){0,1}.aliyuncs.com/, '')
 
+        response['expires'] = 60
+        response['response-content-type'] = resourceInfo.mimeType
+
         //默认60秒有效期
-        resourceInfo.resourceUrl = this.client.signatureUrl(objectKey, Object.assign(response, {expires: 60}));
+        resourceInfo.resourceUrl = this.client.signatureUrl(objectKey, response);
 
         ctx.success(resourceInfo)
     }

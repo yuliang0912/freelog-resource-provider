@@ -5,7 +5,6 @@
 'use strict'
 
 const moment = require('moment')
-
 const KnexBaseOperation = require('egg-freelog-database/lib/database/knex-base-operation')
 
 module.exports = class ResourceProvider extends KnexBaseOperation {
@@ -54,9 +53,13 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
             return Promise.reject(new Error("resource is not object"))
         }
 
-        const {meta, systemMeta} = resource
+        const {meta, systemMeta, previewImages} = resource
 
-        resource = Object.assign({}, resource, {meta: JSON.stringify(meta), systemMeta: JSON.stringify(systemMeta)})
+        resource = Object.assign({}, resource, {
+            meta: JSON.stringify(meta),
+            systemMeta: JSON.stringify(systemMeta),
+            previewImages: JSON.stringify(previewImages)
+        })
 
         return this.resourceKnex.transaction(trans => {
             let task1 = super.queryChain.transacting(trans).insert(resource)
@@ -67,7 +70,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     resourceName: resource.resourceName,
                     lastVersion: resource.resourceId,
                     userId: resource.userId,
-                    createDate: moment().toDate(),
+                    createDate: resource.createDate,
                     status: 1
                 }).transacting(trans).then()
             let task3 = resource.resourceType === this.app.resourceType.WIDGET ?
@@ -76,7 +79,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     version: systemMeta.version,
                     resourceId: resource.resourceId,
                     userId: resource.userId,
-                    createDate: moment().toDate(),
+                    createDate: resource.createDate,
                 }) : Promise.resolve(null)
 
             return Promise.all([task1, task2, task3]).then(trans.commit).catch(trans.rollback)

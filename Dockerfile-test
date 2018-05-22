@@ -1,4 +1,4 @@
-FROM daocloud.io/node:8.5-alpine
+FROM daocloud.io/node:8.11.1
 
 MAINTAINER yuliang <yuliang@ciwong.com>
 

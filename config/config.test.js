@@ -5,6 +5,13 @@
 'use strict'
 
 module.exports = {
+
+    cluster: {
+        listen: {
+            port: 5001
+        }
+    },
+
     knex: {
         //资源相关DB配置
         resource: {

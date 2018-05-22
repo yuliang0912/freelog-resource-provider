@@ -5,9 +5,10 @@
 'use strict'
 
 const uuid = require('uuid')
-const fileCheck = new (require('./file-check/index'))
+const fileCheck = new (require('./resource-file-check/index'))
 const policyCompiler = new (require('./policy-compiler/index'))
 const resourceDependencyCheck = new (require('./resource-attribute-check/resource_dependencies_check'))
+const subsidiaryFileCheck = new (require('./subsidiary-file-check/index'))
 
 module.exports = {
 
@@ -30,6 +31,15 @@ module.exports = {
      */
     resourceFileCheck(...args) {
         return fileCheck.main(...args)
+    },
+
+    /**
+     * 附属文件检查
+     * @param args
+     * @returns {*}
+     */
+    subsidiaryFileCheck(...args) {
+        return subsidiaryFileCheck.main(...args)
     },
 
     /**

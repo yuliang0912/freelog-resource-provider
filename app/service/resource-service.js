@@ -1,7 +1,11 @@
 'use strict'
 
+const uuid = require('uuid')
+const lodash = require('lodash')
+const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
+
 
 class ResourceService extends Service {
 
@@ -14,10 +18,11 @@ class ResourceService extends Service {
      * @param fileStream
      * @returns {Promise<void>}
      */
-    async createResource({resourceName, resourceType, parentId, meta, fileStream}) {
+    async createResource({resourceName, resourceType, parentId, meta, description, previewImage, fileStream}) {
 
         let {ctx, app} = this
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
+        let userInfo = ctx.request.identityInfo.userInfo
 
         let dependencyCheck = ctx.helper.resourceDependencyCheck({dependencies: meta.dependencies})
         let fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType, meta, userId: ctx.request.userId})
@@ -30,11 +35,17 @@ class ResourceService extends Service {
             meta: meta,
             systemMeta: Object.assign(metaInfo.systemMeta, dependencies),
             resourceUrl: uploadData.url,
-            userId: ctx.request.userId,
+            userId: userInfo.userId,
+            userName: userInfo.userName || userInfo.nickname,
             resourceName: resourceName === undefined ?
                 ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),
-            mimeType: metaInfo.systemMeta.mimeType
+            mimeType: metaInfo.systemMeta.mimeType,
+            previewImages: app.type.nullOrUndefined(previewImage) ? [] : [previewImage],
+            description: app.type.nullOrUndefined(description) ? '' : description,
+            intro: this._getResourceIntroFromDescription(description),
+            createDate: moment().toDate(),
+            updateDate: moment().toDate()
         })).catch(err => {
             sendToWormhole(fileStream)
             ctx.error(err)
@@ -57,7 +68,7 @@ class ResourceService extends Service {
      */
     async updateResource({resourceInfo, model}) {
 
-        const {ctx} = this
+        const {ctx, app} = this
 
         if (model.meta) {
             model.meta = JSON.stringify(model.meta)
@@ -70,9 +81,15 @@ class ResourceService extends Service {
             let dependencies = await ctx.helper.resourceDependencyCheck({
                 dependencies: model.meta.dependencies,
                 resourceId: resourceInfo.resourceId
-            }).catch(err => ctx.error(err))
+            }).catch(ctx.error)
             model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
             model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
+        }
+        if (!app.type.nullOrUndefined(model.description)) {
+            model.intro = this._getResourceIntroFromDescription(model.description)
+        }
+        if (model.previewImages) {
+            model.previewImages = JSON.stringify(model.previewImages)
         }
 
         return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
@@ -131,6 +148,43 @@ class ResourceService extends Service {
      */
     async updateResourceStatus(resourceId, status) {
         return this.ctx.dal.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
+    }
+
+    /**
+     * 上床资源预览图
+     * @param fileStream
+     * @returns {Promise<void>}
+     */
+    async upoladPreviewImage(fileStream) {
+
+        const {ctx, app, config} = this
+        const fileCheckResult = await ctx.helper.subsidiaryFileCheck({
+            fileStream,
+            checkType: 'thumbnailImage'
+        }).catch(err => {
+            sendToWormhole(fileStream)
+            ctx.error(err)
+        })
+
+        const uploadConfig = lodash.defaultsDeep({}, {aliOss: {bucket: 'freelog-image'}}, config.uploadConfig)
+        const fileUrl = await app.uploadFile(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
+            .then(data => data.url)
+
+        return fileUrl
+    }
+
+    /**
+     * 从资源描述中获取简介信息
+     * @param resourceDescription
+     * @private
+     */
+    _getResourceIntroFromDescription(resourceDescription) {
+        const {ctx, app} = this
+        if (app.type.nullOrUndefined(resourceDescription)) {
+            return ''
+        }
+        const removeHtmlTag = (input) => input.replace(/<[a-zA-Z0-9]+? [^<>]*?>|<\/[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?\/>|\r|\n/ig, "")
+        return ctx.helper.stringExpand.cutString(removeHtmlTag(unescape(removeHtmlTag(resourceDescription)), 100));
     }
 
     /**

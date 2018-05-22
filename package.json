@@ -10,9 +10,10 @@
     "@freelog/resource-policy-compiler": "0.0.11",
     "ali-oss": "^4.15.0",
     "bluebird": "^3.5.1",
+    "busboy": "^0.2.14",
     "cheerio": "^1.0.0-rc.2",
-    "egg": "^2.8.1",
-    "egg-freelog-base": "^1.1.40",
+    "egg": "2.5.0",
+    "egg-freelog-base": "^1.1.41",
     "egg-freelog-database": "^1.0.6",
     "egg-scripts": "^2.6.0",
     "file-type": "^7.7.1",
@@ -35,9 +36,8 @@
     "node": ">=8.0.0"
   },
   "scripts": {
-    "start": "egg-scripts start --port=7001",
+    "start": "egg-scripts start",
     "stop": "egg-scripts stop",
-    "dev": "egg-bin dev",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",
     "cov": "egg-bin cov",

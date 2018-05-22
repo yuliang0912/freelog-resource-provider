@@ -2,9 +2,13 @@
 
 const fs = require('fs')
 
-const globalInfo = require('egg-freelog-base/globalInfo')
-
 module.exports = {
+
+    cluster: {
+        listen: {
+            port: 7001
+        }
+    },
 
     keys: '20ab72d9397ff78c5058a106c635f008',
 
@@ -90,11 +94,11 @@ module.exports = {
     },
 
     multipart: {
-        autoFields: true,
+        autoFields: false,
         defaultCharset: 'utf8',
         fieldNameSize: 100,
         fieldSize: '100kb',
-        fields: 10,
+        fields: 20,
         fileSize: '100mb',
         files: 10,
         fileExtensions: [],
