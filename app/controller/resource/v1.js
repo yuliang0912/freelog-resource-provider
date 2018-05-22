@@ -309,4 +309,19 @@ module.exports = class ResourcesController extends Controller {
 
         await ctx.validate().service.resourceService.getResourceDependencyTree(resourceId).then(ctx.success)
     }
+
+    /**
+     * 上传预览图
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async upoladPreviewImage(ctx) {
+
+        let fileStream = await ctx.getFileStream()
+        if (!fileStream || !fileStream.filename) {
+            ctx.error({msg: 'Can\'t found upload file'})
+        }
+
+        await ctx.service.resourceService.upoladPreviewImage(fileStream).then(ctx.success).catch(ctx.error)
+    }
 }

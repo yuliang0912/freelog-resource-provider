@@ -1,8 +1,11 @@
 'use strict'
 
+const uuid = require('uuid')
+const lodash = require('lodash')
 const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
+
 
 class ResourceService extends Service {
 
@@ -141,6 +144,29 @@ class ResourceService extends Service {
      */
     async updateResourceStatus(resourceId, status) {
         return this.ctx.dal.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
+    }
+
+    /**
+     * 上床资源预览图
+     * @param fileStream
+     * @returns {Promise<void>}
+     */
+    async upoladPreviewImage(fileStream) {
+
+        const {ctx, app, config} = this
+        const fileCheckResult = await ctx.helper.subsidiaryFileCheck({
+            fileStream,
+            checkType: 'thumbnailImage'
+        }).catch(err => {
+            sendToWormhole(fileStream)
+            ctx.error(err)
+        })
+
+        const uploadConfig = lodash.defaultsDeep({}, {aliOss: {bucket: 'freelog-image'}}, config.uploadConfig)
+        const fileUrl = await app.uploadFile(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
+            .then(data => data.url)
+
+        return fileUrl
     }
 
     /**

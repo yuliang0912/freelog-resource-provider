@@ -20,14 +20,11 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
 
         return new Promise((resolve, reject) => {
             let chunks = []
-            fileStream.on('data', chunk => {
-                chunks.push(chunk)
-            }).on('end', () => {
-                resolve(Buffer.concat(chunks))
-            }).on('error', reject)
-        }).then(fileBuffer => {
-            return this._checkFileContentAndGetWidgets(fileBuffer, meta)
-        })
+            fileStream
+                .on('data', chunk => chunks.push(chunk))
+                .on('end', () => resolve(Buffer.concat(chunks)))
+                .on('error', reject)
+        }).then(fileBuffer => this._checkFileContentAndGetWidgets(fileBuffer, meta))
     }
 
     /**

@@ -16,11 +16,10 @@ module.exports = class ImageFileCheck extends fileCheckBase {
 
         return new Promise((resolve, reject) => {
             let chunks = []
-            fileStream.on('data', chunk => {
-                chunks.push(chunk)
-            }).on('end', () => {
-                resolve(Buffer.concat(chunks))
-            }).on('error', reject)
+            fileStream
+                .on('data', chunk => chunks.push(chunk))
+                .on('end', () => resolve(Buffer.concat(chunks)))
+                .on('error', reject)
         }).then(fileBuffer => {
             this.checkMimeType(fileStream.filename)
             const imageFile = sizeOf(fileBuffer)
@@ -48,7 +47,7 @@ module.exports = class ImageFileCheck extends fileCheckBase {
      * 目前针对其他类型的文件检测的不准确,调整为根据后缀名来检测.不在读取文件信息中的mimetype
      * @param fileBuffer
      */
-    getFileType(fileBuffer) {
+    _getFileType(fileBuffer) {
         return fileType(fileBuffer)
     }
 }

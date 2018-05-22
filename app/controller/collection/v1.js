@@ -71,6 +71,18 @@ module.exports = class CollectionController extends Controller {
     }
 
     /**
+     * 查看收藏的资源详情
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async show(ctx) {
+        const resourceId = ctx.checkParams('id').isResourceId().value
+        ctx.validate()
+
+        await ctx.dal.collectionProvider.findOne({resourceId, status: 0}).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
      * 删除收藏
      * @param ctx
      * @returns {Promise<void>}
