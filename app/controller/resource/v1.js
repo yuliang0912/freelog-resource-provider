@@ -154,11 +154,11 @@ module.exports = class ResourcesController extends Controller {
         let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
         let resourceType = ctx.checkBody('resourceType').isResourceType().value
         let description = ctx.checkBody('description').optional().type('string').value
+        let previewImage = ctx.checkBody('previewImage').optional().isUrl().value
 
         if (!fileStream || !fileStream.filename) {
             ctx.errors.push({file: 'Can\'t found upload file'})
         }
-
         if (parentId !== '' && !ctx.helper.commonRegex.resourceId.test(parentId)) {
             ctx.errors.push({parentId: 'parentId格式错误'})
         }
@@ -172,14 +172,8 @@ module.exports = class ResourcesController extends Controller {
             }
         }
 
-        await ctx.service.resourceService.createResource({
-            resourceName,
-            resourceType,
-            parentId,
-            meta,
-            fileStream,
-            description
-        }).then(ctx.success).catch(ctx.error)
+        const createResourceInfo = {resourceName, resourceType, parentId, meta, fileStream, description, previewImage}
+        await ctx.service.resourceService.createResource(createResourceInfo).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -192,10 +186,11 @@ module.exports = class ResourcesController extends Controller {
         let meta = ctx.checkBody('meta').optional().isObject().value
         let resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
         let description = ctx.checkBody('description').optional().type('string').value
+        let previewImages = ctx.checkBody('previewImages').optional().isArray().value
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        if (meta === resourceName && resourceName === undefined) {
+        if (meta === undefined && resourceName === undefined && previewImages === undefined) {
             ctx.error({msg: '缺少有效参数'})
         }
 
@@ -213,6 +208,9 @@ module.exports = class ResourcesController extends Controller {
         }
         if (description) {
             model.description = description
+        }
+        if (Array.isArray(previewImages)) {
+            model.previewImages = previewImages
         }
 
         return ctx.service.resourceService.updateResource({

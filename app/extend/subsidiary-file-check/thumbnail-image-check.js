@@ -1,7 +1,6 @@
 'use strict'
 
 const sizeOf = require('image-size')
-const sendToWormhole = require('stream-wormhole')
 
 module.exports = class ThumbnailImageCheck {
 
@@ -22,7 +21,7 @@ module.exports = class ThumbnailImageCheck {
             fileStream.on('data', chunk => {
                 fileSize += chunk.length
                 if (fileSize > 3145728) {
-                    return reject(new Error('fileSize must be less then 3MB'))
+                    return reject(new Error('fileSize must be less than 3MB'))
                 }
                 chunks.push(chunk)
             }).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject)

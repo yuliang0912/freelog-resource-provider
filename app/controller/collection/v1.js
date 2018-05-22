@@ -76,6 +76,7 @@ module.exports = class CollectionController extends Controller {
      * @returns {Promise<void>}
      */
     async show(ctx) {
+
         const resourceId = ctx.checkParams('id').isResourceId().value
         ctx.validate()
 

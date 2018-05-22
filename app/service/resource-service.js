@@ -18,7 +18,7 @@ class ResourceService extends Service {
      * @param fileStream
      * @returns {Promise<void>}
      */
-    async createResource({resourceName, resourceType, parentId, meta, description, fileStream}) {
+    async createResource({resourceName, resourceType, parentId, meta, description, previewImage, fileStream}) {
 
         let {ctx, app} = this
         let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
@@ -41,6 +41,7 @@ class ResourceService extends Service {
                 ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),
             mimeType: metaInfo.systemMeta.mimeType,
+            previewImages: app.type.nullOrUndefined(previewImage) ? [] : [previewImage],
             description: app.type.nullOrUndefined(description) ? '' : description,
             intro: this._getResourceIntroFromDescription(description),
             createDate: moment().toDate(),
@@ -86,6 +87,9 @@ class ResourceService extends Service {
         }
         if (!app.type.nullOrUndefined(model.description)) {
             model.intro = this._getResourceIntroFromDescription(model.description)
+        }
+        if (model.previewImages) {
+            model.previewImages = JSON.stringify(model.previewImages)
         }
 
         return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})

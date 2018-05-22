@@ -5,7 +5,6 @@
 'use strict'
 
 const moment = require('moment')
-
 const KnexBaseOperation = require('egg-freelog-database/lib/database/knex-base-operation')
 
 module.exports = class ResourceProvider extends KnexBaseOperation {
@@ -54,9 +53,13 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
             return Promise.reject(new Error("resource is not object"))
         }
 
-        const {meta, systemMeta} = resource
+        const {meta, systemMeta, previewImages} = resource
 
-        resource = Object.assign({}, resource, {meta: JSON.stringify(meta), systemMeta: JSON.stringify(systemMeta)})
+        resource = Object.assign({}, resource, {
+            meta: JSON.stringify(meta),
+            systemMeta: JSON.stringify(systemMeta),
+            previewImages: JSON.stringify(previewImages)
+        })
 
         return this.resourceKnex.transaction(trans => {
             let task1 = super.queryChain.transacting(trans).insert(resource)
