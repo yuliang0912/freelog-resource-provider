@@ -70,9 +70,6 @@ class ResourceService extends Service {
 
         const {ctx, app} = this
 
-        if (model.meta) {
-            model.meta = JSON.stringify(model.meta)
-        }
         if (model.meta && Array.isArray(model.meta.dependencies)
             && !this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
             if (ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
@@ -90,6 +87,9 @@ class ResourceService extends Service {
         }
         if (model.previewImages) {
             model.previewImages = JSON.stringify(model.previewImages)
+        }
+        if (model.meta) {
+            model.meta = JSON.stringify(model.meta)
         }
 
         return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
