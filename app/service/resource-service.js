@@ -72,7 +72,7 @@ class ResourceService extends Service {
 
         if (model.meta && Array.isArray(model.meta.dependencies)
             && !this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
-            if (ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
+            if (await ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
                 ctx.error({msg: '当前资源已经存在发布的授权方案,必须全部废弃才能修改资源依赖'})
             }
             let dependencies = await ctx.helper.resourceDependencyCheck({
