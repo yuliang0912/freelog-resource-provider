@@ -41,7 +41,7 @@ class AuthSchemeService extends Service {
         authScheme.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
 
         return ctx.dal.authSchemeProvider.create(authScheme).then(data => {
-            authScheme.status = 1 && ctx.service.resourceService.updateResourceStatus(resourceInfo.resourceId, 2)
+            authScheme.status == 1 && ctx.service.resourceService.updateResourceStatus(resourceInfo.resourceId, 2)
             return data
         })
     }
