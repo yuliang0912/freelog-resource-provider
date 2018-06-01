@@ -73,7 +73,7 @@ class AuthSchemeService extends Service {
      */
     async batchSignContracts({authScheme}) {
 
-        const {ctx} = this
+        const {ctx, app} = this
 
         if (authScheme.status !== 0) {
             ctx.error({msg: '只有初始状态的授权方案才能发布', data: {currentStatus: authScheme.status}})
@@ -82,21 +82,25 @@ class AuthSchemeService extends Service {
             ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
         }
 
-        const body = {
-            signObjects: authScheme.dutyStatements.map(x => new Object({
-                targetId: x.authSchemeId,
-                segmentId: x.policySegmentId,
-                serialNumber: x.serialNumber
-            })),
-            partyTwo: authScheme.authSchemeId
-        }
+        let contracts = []
+        if (authScheme.dutyStatements.length) {
 
-        const contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/batchCreateAuthSchemeContracts`, {
-            method: 'post',
-            contentType: 'json',
-            data: body,
-            dataType: 'json'
-        })
+            const body = {
+                partyTwo: authScheme.authSchemeId,
+                contractType: app.contractType.ResourceToResource,
+                signObjects: authScheme.dutyStatements.map(x => new Object({
+                    targetId: x.authSchemeId,
+                    segmentId: x.policySegmentId
+                }))
+            }
+
+            contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/batchCreateAuthSchemeContracts`, {
+                method: 'post',
+                contentType: 'json',
+                data: body,
+                dataType: 'json'
+            }).catch(ctx.error)
+        }
 
         const associatedContracts = contracts.map(x => new Object({
             authSchemeId: x.targetId,
@@ -114,9 +118,8 @@ class AuthSchemeService extends Service {
     /**
      * 检查是否存在有效的授权方案
      */
-    async isExistValidAuthScheme(resourceId) {
-        const count = await this.ctx.dal.authSchemeProvider.count({resourceId, status: 1})
-        return count > 0
+    isExistValidAuthScheme(resourceId) {
+        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
     }
 
     /**

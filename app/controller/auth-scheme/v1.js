@@ -65,7 +65,7 @@ module.exports = class PolicyController extends Controller {
         const resourceId = ctx.checkBody('resourceId').isResourceId().value
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
         const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
-        const languageType = ctx.checkBody('languageType').default('freelog_policy_lang').in(['freelog_policy_lang']).value
+        const languageType = ctx.checkBody('languageType').optional().default('freelog_policy_lang').in(['freelog_policy_lang']).value
         const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
         const isPublish = ctx.checkBody('isPublish').optional().default(0).in([0, 1]).value
 

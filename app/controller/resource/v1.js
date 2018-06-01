@@ -15,6 +15,7 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async warehouse(ctx) {
+
         let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
         let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
@@ -27,7 +28,7 @@ module.exports = class ResourcesController extends Controller {
             condition.resourceType = resourceType
         }
 
-        await  ctx.dal.resourceProvider.searchPageList(condition, keyWords, page, pageSize).then(({totalItem, dataList}) => {
+        await ctx.dal.resourceProvider.searchPageList(condition, keyWords, page, pageSize).then(({totalItem, dataList}) => {
             ctx.success({page, pageSize, totalItem, dataList})
         })
     }
