@@ -156,9 +156,6 @@ module.exports = class PolicyController extends Controller {
         if (authScheme.status !== 0) {
             ctx.error({msg: "授权方案状态校验失败", data: {authSchemeStatus: authScheme.status}})
         }
-        if (!authScheme.dutyStatements.length) {
-            ctx.error({msg: "授权方案中不存在声明信息"})
-        }
 
         await ctx.service.authSchemeService.batchSignContracts({
             authScheme: authScheme.toObject()
