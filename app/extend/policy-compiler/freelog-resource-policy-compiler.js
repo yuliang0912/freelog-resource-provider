@@ -31,7 +31,7 @@ module.exports = class FreelogResourcePolicyCompiler {
             activatedStates: item.activatedStates,
             initialState: item.initialState,
             terminateState: item.terminateState,
-            status: 0
+            status: 1
         }))[0]
 
         policySegment.fsmDescription.forEach(item => {

@@ -31,7 +31,7 @@ module.exports = app => {
         resourceName: {type: String, required: true},
         authSchemeId: {type: String, required: true},
         policySegmentId: {type: String, required: true},
-        serialNumber: {type: String, required: true}
+        contractId: {type: String, default: ''}
     }, {_id: false})
 
     const resourceInfoSchema = new mongoose.Schema({

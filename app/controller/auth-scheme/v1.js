@@ -21,24 +21,20 @@ module.exports = class PolicyController extends Controller {
         let authSchemeIds = ctx.checkQuery('authSchemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 50).value
         let resourceIds = ctx.checkQuery('resourceIds').optional().isSplitResourceId().toSplitArray().len(1, 50).value
         let authSchemeStatus = ctx.checkQuery('authSchemeStatus').optional().toInt().in([0, 1, 4]).value
+        let policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
 
         ctx.validate()
 
-        let condition = {}
-        if (authSchemeIds) {
-            condition._id = {$in: authSchemeIds}
-        }
-        if (resourceIds) {
-            condition.resourceId = {$in: resourceIds}
-        }
-        if (!Object.keys(condition).length) {
-            ctx.error({msg: '最少需要一个有效参数'})
-        }
-        if (authSchemeStatus !== undefined) {
-            condition.status = authSchemeStatus
+        if (authSchemeIds === undefined && resourceIds === undefined) {
+            ctx.error({msg: '接口最少需要一个有效参数'})
         }
 
-        await ctx.dal.authSchemeProvider.find(condition).then(ctx.success)
+        await ctx.service.authSchemeService.findAuthSchemeList({
+            authSchemeIds,
+            resourceIds,
+            authSchemeStatus,
+            policyStatus
+        }).then(ctx.success)
     }
 
     /**
@@ -49,10 +45,17 @@ module.exports = class PolicyController extends Controller {
     async show(ctx) {
 
         let authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
+        let policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
 
         ctx.validate()
 
-        await ctx.dal.authSchemeProvider.findById(authSchemeId).then(ctx.success)
+        let authSchemeInfo = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+
+        if (policyStatus === 0 || policyStatus === 1) {
+            authSchemeInfo.policy = authSchemeInfo.policy.filter(x => x.status === policyStatus)
+        }
+
+        ctx.success(authSchemeInfo)
     }
 
     /**

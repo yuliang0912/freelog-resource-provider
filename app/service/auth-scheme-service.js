@@ -6,6 +6,48 @@ const lodash = require('lodash')
 class AuthSchemeService extends Service {
 
     /**
+     * 查找授权方案列表
+     * @param authSchemeIds
+     * @param resourceIds
+     * @param authSchemeStatus
+     * @param policyStatus
+     * @returns {PromiseLike<T> | Promise<T>}
+     */
+    findAuthSchemeList({authSchemeIds, resourceIds, authSchemeStatus, policyStatus}) {
+
+        let condition = {}
+        if (authSchemeIds) {
+            condition._id = {$in: authSchemeIds}
+        }
+        if (resourceIds) {
+            condition.resourceId = {$in: resourceIds}
+        }
+        if (authSchemeStatus !== undefined) {
+            condition.status = authSchemeStatus
+        }
+
+        return this.ctx.dal.authSchemeProvider.find(condition).then(dataList => this._filterPolicyStatus(dataList, policyStatus))
+    }
+
+    /**
+     * 过滤掉指定的授权状态
+     * @param dataList
+     * @param policyStatus
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _filterPolicyStatus(dataList, policyStatus) {
+
+        if (policyStatus === 1 || policyStatus === 0) {
+            dataList.forEach(item => {
+                item.policy = item.policy.filter(x => x.status === policyStatus)
+            })
+        }
+        return dataList
+    }
+
+
+    /**
      * 创建授权点
      * @returns {Promise<void>}
      */
@@ -83,24 +125,24 @@ class AuthSchemeService extends Service {
         }
 
         let contracts = []
-        if (authScheme.dutyStatements.length) {
-
-            const body = {
-                partyTwo: authScheme.authSchemeId,
-                contractType: app.contractType.ResourceToResource,
-                signObjects: authScheme.dutyStatements.map(x => new Object({
-                    targetId: x.authSchemeId,
-                    segmentId: x.policySegmentId
-                }))
-            }
-
+        let dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
+        if (dutyStatementMap.size) {
             contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/batchCreateAuthSchemeContracts`, {
                 method: 'post',
                 contentType: 'json',
-                data: body,
+                data: {
+                    partyTwo: authScheme.authSchemeId,
+                    contractType: app.contractType.ResourceToResource,
+                    signObjects: authScheme.dutyStatements.map(x => new Object({
+                        targetId: x.authSchemeId,
+                        segmentId: x.policySegmentId
+                    }))
+                },
                 dataType: 'json'
             }).catch(ctx.error)
         }
+
+        contracts.forEach(x => dutyStatementMap.get(x.targetId).contractId = x.contractId)
 
         const associatedContracts = contracts.map(x => new Object({
             authSchemeId: x.targetId,
@@ -108,8 +150,9 @@ class AuthSchemeService extends Service {
         }))
 
         await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {
+            status: 1,
             associatedContracts,
-            status: 1
+            dutyStatements: Array.from(dutyStatementMap.values()),
         }).then(() => ctx.service.resourceService.updateResourceStatus(authScheme.resourceId, 2))
 
         return contracts
