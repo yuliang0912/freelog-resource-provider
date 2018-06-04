@@ -195,7 +195,7 @@ class AuthSchemeService extends Service {
         let {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
         let oldPolicySegments = new Map(authScheme.policy.map(x => [x.segmentId, x]))
 
-        removePolicySegments && removePolicySegments.forEach(oldPolicySegments.delete)
+        removePolicySegments && removePolicySegments.forEach(item => oldPolicySegments.delete(item))
 
         updatePolicySegments && updatePolicySegments.forEach(item => {
             let targetPolicySegment = oldPolicySegments.get(item.policySegmentId)
