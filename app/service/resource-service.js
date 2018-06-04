@@ -168,7 +168,7 @@ class ResourceService extends Service {
 
         const uploadConfig = lodash.defaultsDeep({}, {aliOss: {bucket: 'freelog-image'}}, config.uploadConfig)
         const fileUrl = await app.uploadFile(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
-            .then(data => data.url.replace(/(-internal){0,1}.aliyuncs.com/, ''))
+            .then(data => data.url.replace('-internal', ''))
 
         return fileUrl
     }
