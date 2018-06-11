@@ -18,10 +18,10 @@ module.exports = class PolicyController extends Controller {
      */
     async index(ctx) {
 
-        let authSchemeIds = ctx.checkQuery('authSchemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 50).value
-        let resourceIds = ctx.checkQuery('resourceIds').optional().isSplitResourceId().toSplitArray().len(1, 50).value
-        let authSchemeStatus = ctx.checkQuery('authSchemeStatus').optional().toInt().in([0, 1, 4]).value
-        let policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
+        const authSchemeIds = ctx.checkQuery('authSchemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 50).value
+        const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitResourceId().toSplitArray().len(1, 50).value
+        const authSchemeStatus = ctx.checkQuery('authSchemeStatus').optional().toInt().in([0, 1, 4]).value
+        const policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
 
         ctx.validate()
 
@@ -44,8 +44,8 @@ module.exports = class PolicyController extends Controller {
      */
     async show(ctx) {
 
-        let authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
-        let policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
+        const authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
+        const policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
 
         ctx.validate()
 

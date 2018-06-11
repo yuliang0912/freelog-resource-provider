@@ -26,5 +26,13 @@ module.exports = {
             })
             this.req.pipe(busboy)
         })
+    },
+
+    /**
+     * restful-base-url
+     * @returns {*}
+     */
+    get webApi() {
+        return this.app.webApi
     }
 }

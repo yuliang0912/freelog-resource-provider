@@ -43,6 +43,7 @@ class AuthSchemeService extends Service {
                 item.policy = item.policy.filter(x => x.status === policyStatus)
             })
         }
+
         return dataList
     }
 
@@ -55,7 +56,7 @@ class AuthSchemeService extends Service {
 
         const {app, ctx} = this;
 
-        let authScheme = {
+        var authScheme = {
             authSchemeName, languageType,
             dutyStatements: [],
             dependCount: resourceInfo.systemMeta.dependCount || 0,
@@ -124,10 +125,10 @@ class AuthSchemeService extends Service {
             ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
         }
 
-        let contracts = []
-        let dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
+        var contracts = []
+        const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
         if (dutyStatementMap.size) {
-            contracts = await ctx.curlIntranetApi(`${this.config.gatewayUrl}/api/v1/contracts/batchCreateAuthSchemeContracts`, {
+            contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
                 method: 'post',
                 contentType: 'json',
                 data: {
@@ -191,9 +192,9 @@ class AuthSchemeService extends Service {
      */
     _policiesHandler({authScheme, policies}) {
 
-        let {ctx} = this
-        let {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
-        let oldPolicySegments = new Map(authScheme.policy.map(x => [x.segmentId, x]))
+        const {ctx} = this
+        const {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
+        const oldPolicySegments = new Map(authScheme.policy.map(x => [x.segmentId, x]))
 
         removePolicySegments && removePolicySegments.forEach(item => oldPolicySegments.delete(item))
 
@@ -282,7 +283,7 @@ class AuthSchemeService extends Service {
                 }
                 //父级存在并且父级的依赖也存在,则表示依赖链完整
                 let parent = statementMaps.get(item.resourceId)
-                statementMaps.get(node.resourceId).validate = !!(parent && parent.validate)
+                statementMaps.get(node.resourceId).validate = Boolean(parent && parent.validate)
                 statementMaps.get(node.resourceId).resourceName = node.resourceName
                 recursion(item.dependencies, statementMaps)
             }))
@@ -359,7 +360,7 @@ class AuthSchemeService extends Service {
 
         authScheme.bubbleResources = lodash.differenceWith(allBubbleResources, dutyStatements, this._isEqualResource)
 
-        resourceInfo.dependCount - statistics.dependCount
+        //resourceInfo.dependCount - statistics.dependCount
 
         return dutyStatements
     }
