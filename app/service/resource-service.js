@@ -6,7 +6,6 @@ const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 
-
 class ResourceService extends Service {
 
     /**
@@ -20,13 +19,18 @@ class ResourceService extends Service {
      */
     async createResource({resourceName, resourceType, parentId, meta, description, previewImage, fileStream}) {
 
-        let {ctx, app} = this
-        let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
-        let userInfo = ctx.request.identityInfo.userInfo
+        const {ctx, app} = this
+        const fileName = ctx.helper.uuid.v4().replace(/-/g, '')
+        const userInfo = ctx.request.identityInfo.userInfo
 
-        let dependencyCheck = ctx.helper.resourceDependencyCheck({dependencies: meta.dependencies})
-        let fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType, meta, userId: ctx.request.userId})
-        let fileUploadAsync = app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), fileStream)
+        const dependencyCheck = ctx.helper.resourceDependencyCheck({dependencies: meta.dependencies})
+        const fileCheckAsync = ctx.helper.resourceFileCheck({
+            fileStream,
+            resourceType,
+            meta,
+            userId: ctx.request.userId
+        })
+        const fileUploadAsync = app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), fileStream)
 
         const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync, dependencyCheck]).then(([metaInfo, uploadData, dependencies]) => new Object({
             resourceId: metaInfo.systemMeta.sha1,
@@ -103,13 +107,13 @@ class ResourceService extends Service {
      */
     async getResourceDependencyTree(resourceId, deep = 0) {
 
-        let {ctx} = this
-        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
+        const {ctx} = this
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             ctx.error({msg: '未找到有效资源'})
         }
 
-        let dependencies = resourceInfo.systemMeta.dependencies || []
+        const dependencies = resourceInfo.systemMeta.dependencies || []
 
         return this.buildDependencyTree(dependencies).then(dependencies => new Object({
             resourceId: resourceInfo.resourceId,
@@ -130,7 +134,7 @@ class ResourceService extends Service {
         if (!dependencies.length || currDeep++ < maxDeep) {
             return []
         }
-        let resourceIds = dependencies.map(item => item.resourceId)
+        const resourceIds = dependencies.map(item => item.resourceId)
         return this.ctx.dal.resourceProvider.getResourceByIdList(resourceIds).map(async item => new Object({
             resourceId: item.resourceId,
             resourceName: item.resourceName,
@@ -179,12 +183,14 @@ class ResourceService extends Service {
      * @private
      */
     _getResourceIntroFromDescription(resourceDescription) {
+
         const {ctx, app} = this
         if (app.type.nullOrUndefined(resourceDescription)) {
             return ''
         }
+
         const removeHtmlTag = (input) => input.replace(/<[a-zA-Z0-9]+? [^<>]*?>|<\/[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?\/>|\r|\n/ig, "")
-        return ctx.helper.stringExpand.cutString(removeHtmlTag(unescape(removeHtmlTag(resourceDescription)), 100));
+        return ctx.helper.stringExpand.cutString(removeHtmlTag(unescape(removeHtmlTag(resourceDescription)), 100))
     }
 
     /**

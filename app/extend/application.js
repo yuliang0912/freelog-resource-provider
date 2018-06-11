@@ -5,6 +5,7 @@
 'use strict'
 
 const resourceStatus = require('../enum/resource_status')
+const resourceAttribute = require('../enum/resource_attribute')
 const restfulWebApi = require('./restful-web-api/index')
 let restfulWebApiInstance = null
 

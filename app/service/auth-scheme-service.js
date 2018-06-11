@@ -176,7 +176,7 @@ class AuthSchemeService extends Service {
         await ctx.dal.authSchemeProvider.update({_id: authSchemeId}, {status: 4})
         await this.isExistValidAuthScheme(resourceId).then(isExist => {
             if (!isExist) { //如果删除授权点以后.资源不存在有效授权点,则资源变更为未发布状态
-                ctx.service.resourceService.updateResourceStatus(resourceId, 1)
+                return ctx.service.resourceService.updateResourceStatus(resourceId, 1)
             }
         })
 
