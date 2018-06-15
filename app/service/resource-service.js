@@ -58,7 +58,7 @@ class ResourceService extends Service {
      * @param fileStream
      * @returns {Promise<void>}
      */
-    async createResource({sha1, resourceName, parentId, meta, description, previewImage}) {
+    async createResource({sha1, resourceName, parentId, meta, description, previewImages}) {
 
         const {ctx, app} = this
         const userInfo = ctx.request.identityInfo.userInfo
@@ -85,7 +85,7 @@ class ResourceService extends Service {
                 ctx.helper.stringExpand.cutString(uploadFileInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),
             mimeType: uploadFileInfo.systemMeta.mimeType,
-            previewImages: app.type.nullOrUndefined(previewImage) ? [] : [previewImage],
+            previewImages: previewImages,
             description: app.type.nullOrUndefined(description) ? '' : description,
             intro: this._getResourceIntroFromDescription(description),
             createDate: moment().toDate(),

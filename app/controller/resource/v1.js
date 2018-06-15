@@ -150,9 +150,13 @@ module.exports = class ResourcesController extends Controller {
         const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const parentId = ctx.checkBody('parentId').optional().isResourceId().value
-        const previewImage = ctx.checkBody('previewImage').optional().isUrl().value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
+
+        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+            ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
+        }
 
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -169,7 +173,7 @@ module.exports = class ResourcesController extends Controller {
             parentId,
             meta,
             description,
-            previewImage
+            previewImages
         }).then(ctx.success).catch(ctx.error)
     }
 
@@ -205,7 +209,11 @@ module.exports = class ResourcesController extends Controller {
         const meta = ctx.checkBody('meta').optional().isObject().value
         const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
+
+        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+            ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
+        }
 
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -228,7 +236,7 @@ module.exports = class ResourcesController extends Controller {
         if (description) {
             model.description = description
         }
-        if (Array.isArray(previewImages)) {
+        if (previewImages) {
             model.previewImages = previewImages
         }
 
