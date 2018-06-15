@@ -15,9 +15,6 @@ module.exports = app => {
     //资源列表
     router.get('/v1/resources/list', resource.v1.list)
 
-    //更新资源内容(开发版)
-    router.post('/v1/resources/updateResourceContext/:resourceId', resource.v1.updateResourceContext)
-
     //获取资源授权的访问路径
     router.get('/v1/resources/auth/getResource', auth.v1.getResource)
 
@@ -27,8 +24,14 @@ module.exports = app => {
     //获取资源依赖树
     router.get('/v1/resources/getResourceDependencyTree/:resourceId', resource.v1.getResourceDependencyTree)
 
+    //上传资源文件
+    router.post('/v1/resources/uploadResourceFile', resource.v1.uploadResourceFile)
+
     //上传资源预览图
     router.post('/v1/resources/upoladPreviewImage', '/v1/resources/upoladPreviewImage', resource.v1.upoladPreviewImage)
+
+    //更新资源内容(开发版)
+    router.post('/v1/resources/updateResourceContext/:resourceId', resource.v1.updateResourceContext)
 
     /**
      * 资源授权方案(授权点)

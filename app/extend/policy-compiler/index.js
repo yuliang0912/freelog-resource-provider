@@ -5,7 +5,7 @@ const Patrun = require('patrun')
 const {validator} = require('egg-freelog-base/app/extend/application')
 const FreelogResourcePolicyCompiler = require('./freelog-resource-policy-compiler')
 
-module.exports = class PolicyCompiler {
+class PolicyCompiler {
 
     constructor() {
         this.compilerPatrun = this._registerCompiler()
@@ -76,3 +76,5 @@ module.exports = class PolicyCompiler {
         return policySegment
     }
 }
+
+module.exports = new PolicyCompiler()

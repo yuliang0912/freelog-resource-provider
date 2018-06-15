@@ -147,34 +147,52 @@ module.exports = class ResourcesController extends Controller {
      */
     async create(ctx) {
 
-        const fileStream = await ctx.getFileStream()
-        ctx.request.body = fileStream.fields
+        const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
+        const meta = ctx.checkBody('meta').optional().default({}).isObject().value
+        const parentId = ctx.checkBody('parentId').optional().isResourceId().value
+        const previewImage = ctx.checkBody('previewImage').optional().isUrl().value
+        const resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
+        const description = ctx.checkBody('description').optional().type('string').value
 
-        let meta = ctx.checkBody('meta').toJson().value
-        let parentId = ctx.checkBody('parentId').default('').value
-        let resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
-        let resourceType = ctx.checkBody('resourceType').isResourceType().value
-        let description = ctx.checkBody('description').optional().type('string').value
-        let previewImage = ctx.checkBody('previewImage').optional().isUrl().value
-
-        if (!fileStream || !fileStream.filename) {
-            ctx.errors.push({file: 'Can\'t found upload file'})
-        }
-        if (parentId !== '' && !ctx.helper.commonRegex.resourceId.test(parentId)) {
-            ctx.errors.push({parentId: 'parentId格式错误'})
-        }
-
-        ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
+        ctx.allowContentType({type: 'json'}).validate()
 
         if (parentId) {
-            let parentResource = await ctx.dal.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
+            const parentResource = await ctx.dal.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
             if (!parentResource || parentResource.userId !== ctx.request.userId) {
                 ctx.error({msg: 'parentId错误,或者没有权限引用'})
             }
         }
 
-        const createResourceInfo = {resourceName, resourceType, parentId, meta, fileStream, description, previewImage}
-        await ctx.service.resourceService.createResource(createResourceInfo).then(ctx.success).catch(ctx.error)
+        await ctx.service.resourceService.createResource({
+            sha1,
+            resourceName,
+            parentId,
+            meta,
+            description,
+            previewImage
+        }).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
+     * 上传资源文件
+     * @returns {Promise<void>}
+     */
+    async uploadResourceFile(ctx) {
+
+        const fileStream = await ctx.getFileStream()
+        ctx.request.body = fileStream.fields
+
+        const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value
+        if (!fileStream || !fileStream.filename) {
+            ctx.errors.push({file: 'Can\'t found upload file'})
+        }
+
+        ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
+
+        await ctx.service.resourceService.uploadResourceFile({
+            fileStream,
+            resourceType
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -183,11 +201,11 @@ module.exports = class ResourcesController extends Controller {
      */
     async update(ctx) {
 
-        let resourceId = ctx.checkParams("id").isResourceId().value
-        let meta = ctx.checkBody('meta').optional().isObject().value
-        let resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
-        let description = ctx.checkBody('description').optional().type('string').value
-        let previewImages = ctx.checkBody('previewImages').optional().isArray().value
+        const resourceId = ctx.checkParams("id").isResourceId().value
+        const meta = ctx.checkBody('meta').optional().isObject().value
+        const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
+        const description = ctx.checkBody('description').optional().type('string').value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().value
 
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -195,12 +213,12 @@ module.exports = class ResourcesController extends Controller {
             ctx.error({msg: '缺少有效参数'})
         }
 
-        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
         if (!resourceInfo) {
             ctx.error({msg: '未找到有效资源'})
         }
 
-        let model = {}
+        const model = {}
         if (meta) {
             model.meta = meta
         }
@@ -214,10 +232,7 @@ module.exports = class ResourcesController extends Controller {
             model.previewImages = previewImages
         }
 
-        return ctx.service.resourceService.updateResource({
-            resourceInfo,
-            model
-        }).then(ctx.success).catch(ctx.error)
+        await ctx.service.resourceService.updateResource({resourceInfo, model}).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -226,7 +241,7 @@ module.exports = class ResourcesController extends Controller {
      */
     async list(ctx) {
 
-        let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 50).value
+        let resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value
 
         ctx.validate()
 

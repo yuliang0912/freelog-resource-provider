@@ -2,7 +2,7 @@
 
 const sizeOf = require('image-size')
 
-module.exports = class ThumbnailImageCheck {
+class ThumbnailImageCheck {
 
     /**
      * 图片文件检查
@@ -34,3 +34,5 @@ module.exports = class ThumbnailImageCheck {
         })
     }
 }
+
+module.exports = new ThumbnailImageCheck()

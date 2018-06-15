@@ -1,9 +1,9 @@
 'use strict'
 
 const Patrun = require('patrun')
-const thumbnailImageCheck = new (require('./thumbnail-image-check'))
+const thumbnailImageCheck = require('./thumbnail-image-check')
 
-module.exports = class SubsidiaryFileCheck {
+class SubsidiaryFileCheck {
 
     constructor() {
         this.handlerPatrun = this._registerCheckHanlder()
@@ -43,3 +43,5 @@ module.exports = class SubsidiaryFileCheck {
     }
 
 }
+
+module.exports = new SubsidiaryFileCheck()

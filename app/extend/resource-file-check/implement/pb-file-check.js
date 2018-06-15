@@ -16,7 +16,7 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
      * @param fileStream
      * @returns {Promise<any>}
      */
-    check({fileStream, meta}) {
+    check({fileStream}) {
 
         return new Promise((resolve, reject) => {
             let chunks = []
@@ -24,7 +24,7 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
                 .on('data', chunk => chunks.push(chunk))
                 .on('end', () => resolve(Buffer.concat(chunks)))
                 .on('error', reject)
-        }).then(fileBuffer => this._checkFileContentAndGetWidgets(fileBuffer, meta))
+        }).then(fileBuffer => this._checkFileContentAndGetWidgets(fileBuffer))
     }
 
     /**
@@ -33,19 +33,14 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
      * @returns {Promise<*>}
      * @private
      */
-    async _checkFileContentAndGetWidgets(fileBuffer, meta) {
+    async _checkFileContentAndGetWidgets(fileBuffer) {
 
         const $ = chreeio.load(fileBuffer.toString())
         const widgets = $('[data-widget-src]').map((index, element) => $(element).attr('data-widget-src')).get()
 
         if (!widgets.length) {
-            throw new Error("PageBuild资源最少需要包含一个widget")
+            return {widgets: []}
         }
-
-        // const diffDependencies = lodash.difference(widgets, meta.dependencies || [])
-        // if (diffDependencies.length) {
-        //     throw new Error(`widgetIds:${diffResource.toString()}没有在声明列表中`)
-        // }
 
         const widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIdList(widgets).where({
             status: 2,

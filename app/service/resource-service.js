@@ -9,6 +9,47 @@ const sendToWormhole = require('stream-wormhole')
 class ResourceService extends Service {
 
     /**
+     * 上传资源文件(暂存)
+     * @param fileStream
+     * @param resourceType
+     * @returns {Promise<void>}
+     */
+    async uploadResourceFile({fileStream, resourceType}) {
+
+        const {ctx, app} = this
+        const userId = ctx.request.userId
+        const objectKey = `resources/${resourceType}/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
+        const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
+        const fileUploadAsync = app.upload.putStream(objectKey, fileStream)
+
+        const uploadFileInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
+            userId, objectKey, resourceType,
+            sha1: metaInfo.systemMeta.sha1,
+            resourceFileUrl: uploadData.url,
+            systemMeta: metaInfo.systemMeta,
+            expireDate: moment().add(30, "day").toDate()
+        })).catch(err => {
+            sendToWormhole(fileStream)
+            ctx.error(err)
+        })
+
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: uploadFileInfo.sha1}).catch(ctx.error)
+        if (resourceInfo) {
+            ctx.error({msg: '资源已经存在,不能上传重复的文件', data: {resourceInfo}})
+        }
+
+        await ctx.dal.uploadFileInfoProvider.findOne({
+            userId, sha1: uploadFileInfo.sha1
+        }).then(oldUploadFileInfo => {
+            if (!oldUploadFileInfo) {
+                return ctx.dal.uploadFileInfoProvider.create(uploadFileInfo).catch(ctx.error)
+            }
+        })
+
+        return {sha1: uploadFileInfo.sha1}
+    }
+
+    /**
      * 创建资源
      * @param resourceName
      * @param resourceType
@@ -17,50 +58,45 @@ class ResourceService extends Service {
      * @param fileStream
      * @returns {Promise<void>}
      */
-    async createResource({resourceName, resourceType, parentId, meta, description, previewImage, fileStream}) {
+    async createResource({sha1, resourceName, parentId, meta, description, previewImage}) {
 
         const {ctx, app} = this
-        const fileName = ctx.helper.uuid.v4().replace(/-/g, '')
         const userInfo = ctx.request.identityInfo.userInfo
 
-        const dependencyCheck = ctx.helper.resourceDependencyCheck({dependencies: meta.dependencies})
-        const fileCheckAsync = ctx.helper.resourceFileCheck({
-            fileStream,
-            resourceType,
-            meta,
-            userId: ctx.request.userId
+        await ctx.dal.resourceProvider.getResourceInfo({resourceId: sha1}).then(existResourceInfo => {
+            existResourceInfo && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: {existResourceInfo}})
         })
-        const fileUploadAsync = app.upload.putStream(`resources/${resourceType}/${fileName}`.toLowerCase(), fileStream)
 
-        const resourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync, dependencyCheck]).then(([metaInfo, uploadData, dependencies]) => new Object({
-            resourceId: metaInfo.systemMeta.sha1,
+        const uploadFileInfo = await ctx.dal.uploadFileInfoProvider.findOne({sha1, userId: userInfo.userId})
+        if (!uploadFileInfo) {
+            ctx.error({msg: '参数sha1校验失败,未能找到对应的资源文件信息'})
+        }
+
+        const resourceInfo = {
+            meta,
+            resourceId: sha1,
             status: app.resourceStatus.NORMAL,
-            resourceType,
-            meta: meta,
-            systemMeta: Object.assign(metaInfo.systemMeta, dependencies),
-            resourceUrl: uploadData.url,
+            resourceType: uploadFileInfo.resourceType,
+            systemMeta: uploadFileInfo.systemMeta,
+            resourceUrl: uploadFileInfo.resourceFileUrl,
             userId: userInfo.userId,
             userName: userInfo.userName || userInfo.nickname,
             resourceName: resourceName === undefined ?
-                ctx.helper.stringExpand.cutString(metaInfo.systemMeta.sha1, 10) :
+                ctx.helper.stringExpand.cutString(uploadFileInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),
-            mimeType: metaInfo.systemMeta.mimeType,
+            mimeType: uploadFileInfo.systemMeta.mimeType,
             previewImages: app.type.nullOrUndefined(previewImage) ? [] : [previewImage],
             description: app.type.nullOrUndefined(description) ? '' : description,
             intro: this._getResourceIntroFromDescription(description),
             createDate: moment().toDate(),
             updateDate: moment().toDate()
-        })).catch(err => {
-            sendToWormhole(fileStream)
-            ctx.error(err)
-        })
+        }
 
-        await ctx.dal.resourceProvider.getResourceInfo({resourceId: resourceInfo.resourceId}).then(resource => {
-            resource && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: resourceInfo.resourceId})
-        })
+        await ctx.helper.resourceAttributeCheck(resourceInfo)
 
         return ctx.dal.resourceProvider.createResource(resourceInfo, parentId)
-            .then(() => ctx.dal.resourceTreeProvider.createResourceTree(ctx.request.userId, resourceInfo.resourceId, parentId))
+            .then(() => ctx.dal.resourceTreeProvider.createResourceTree(userInfo.userId, resourceInfo.resourceId, parentId))
+            .then(() => ctx.dal.uploadFileInfoProvider.deleteOne({sha1, userId: userInfo.userId}))
             .then(() => resourceInfo)
     }
 

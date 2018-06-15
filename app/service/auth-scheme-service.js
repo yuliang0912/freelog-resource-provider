@@ -176,7 +176,7 @@ class AuthSchemeService extends Service {
         await ctx.dal.authSchemeProvider.update({_id: authSchemeId}, {status: 4})
         await this.isExistValidAuthScheme(resourceId).then(isExist => {
             if (!isExist) { //如果删除授权点以后.资源不存在有效授权点,则资源变更为未发布状态
-                return ctx.service.resourceService.updateResourceStatus(resourceId, 1)
+              return  ctx.service.resourceService.updateResourceStatus(resourceId, 1)
             }
         })
 
@@ -320,9 +320,9 @@ class AuthSchemeService extends Service {
             })
         }
 
-        const authSchemeInfoMaps = new Map(authSchemeInfos.map(item => [item._id.toString(), item]))
+        const authSchemeInfoMap = new Map(authSchemeInfos.map(item => [item._id.toString(), item]))
         const validateFailedStatements = dutyStatements.filter(statement => {
-            let authScheme = statement.authSchemeInfo = authSchemeInfoMaps.get(statement.authSchemeId)
+            let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
             if (statement.serialNumber !== authScheme.serialNumber) {
                 ctx.error({
                     msg: 'dutyStatements数据中授权策略发生改变,请确认序列号.',

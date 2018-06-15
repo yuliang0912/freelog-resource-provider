@@ -4,7 +4,7 @@ const lodash = require('lodash')
 const globalInfo = require('egg-freelog-base/globalInfo')
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
-module.exports = class ResourceDependenciceCheck {
+class ResourceDependenciceCheck {
 
     /**
      * 检查依赖
@@ -72,3 +72,5 @@ module.exports = class ResourceDependenciceCheck {
         return subDependencies.length && checkResult
     }
 }
+
+module.exports = new ResourceDependenciceCheck()

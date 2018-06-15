@@ -6,10 +6,9 @@ const Patrun = require('patrun')
 const fileCheckBase = require('./fileCheckBase')
 const pbFileCheck = new (require('./implement/pb-file-check'))
 const imageFileCheck = new (require('./implement/image-file-check'))
-const widgetFileCheck = new (require('./implement/widget-file-check'))
 const resourceTypes = require('egg-freelog-base/app/enum/resource_type')
 
-module.exports = class FileGeneralCheck {
+class FileGeneralCheck {
 
     constructor() {
         this.handlerPatrun = this._registerCheckHanlder()
@@ -70,11 +69,6 @@ module.exports = class FileGeneralCheck {
          */
         patrun.add({resourceType: resourceTypes.PAGE_BUILD}, (...args) => checkBuild(pbFileCheck, ...args))
 
-        /**
-         * WIDGET文件检测
-         */
-        patrun.add({resourceType: resourceTypes.WIDGET}, (...args) => checkBuild(widgetFileCheck, ...args))
-
 
         return patrun
     }
@@ -98,3 +92,5 @@ module.exports = class FileGeneralCheck {
         })
     }
 }
+
+module.exports = new FileGeneralCheck()

@@ -1,11 +1,10 @@
 'use strict'
 
 const semver = require('semver')
-const fileCheckBase = require('../fileCheckBase')
 const globalInfo = require('egg-freelog-base/globalInfo')
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
-module.exports = class WidgetFileCheck extends fileCheckBase {
+class WidgetNameAndVersionCheck {
 
     /**
      * 检查插件资源(命名全局唯一,版本检测)
@@ -18,6 +17,7 @@ module.exports = class WidgetFileCheck extends fileCheckBase {
         if (!Reflect.has(meta, 'widgetName')) {
             throw new Error("meta中必须包含widgetName属性")
         }
+
         if (!Reflect.has(meta, 'version')) {
             throw new Error("meta中必须包含version属性")
         }
@@ -27,6 +27,7 @@ module.exports = class WidgetFileCheck extends fileCheckBase {
         if (!commonRegex.widgetName.test(widgetName)) {
             throw new Error("widgetName命名不符合规范")
         }
+
         if (!semver.valid(version)) {
             throw new Error("widget-version命名不符合 semantic versioning规范")
         }
@@ -47,3 +48,5 @@ module.exports = class WidgetFileCheck extends fileCheckBase {
         return {widgetName, version}
     }
 }
+
+module.exports = new WidgetNameAndVersionCheck()
