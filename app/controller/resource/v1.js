@@ -263,11 +263,11 @@ module.exports = class ResourcesController extends Controller {
      */
     async updateResourceContext(ctx) {
 
-        let fileStream = await ctx.getFileStream()
+        const fileStream = await ctx.getFileStream()
         ctx.request.body = fileStream.fields
 
-        let meta = ctx.checkBody('meta').toJson().value
-        let resourceId = ctx.checkParams("resourceId").isResourceId().value
+        const meta = ctx.checkBody('meta').toJson().value
+        const resourceId = ctx.checkParams("resourceId").isResourceId().value
 
         if (!fileStream || !fileStream.filename) {
             ctx.errors.push({file: 'Can\'t found upload file'})
@@ -275,21 +275,20 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
 
-        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
-
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
         }
 
-        let fileName = ctx.helper.uuid.v4().replace(/-/g, '')
+        const fileName = ctx.helper.uuid.v4().replace(/-/g, '')
 
-        let fileCheckAsync = ctx.helper.resourceFileCheck({
+        const fileCheckAsync = ctx.helper.resourceFileCheck({
             fileStream,
             resourceType: resourceInfo.resourceType,
             meta,
             userId: ctx.request.userId
         })
-        let fileUploadAsync = ctx.app.upload.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
+        const fileUploadAsync = ctx.app.ossClient.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
 
         const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
             meta: meta,
@@ -327,7 +326,7 @@ module.exports = class ResourcesController extends Controller {
      */
     async getResourceDependencyTree(ctx) {
 
-        let resourceId = ctx.checkParams("resourceId").isResourceId().value
+        const resourceId = ctx.checkParams("resourceId").isResourceId().value
 
         await ctx.validate().service.resourceService.getResourceDependencyTree(resourceId).then(ctx.success)
     }
@@ -339,7 +338,7 @@ module.exports = class ResourcesController extends Controller {
      */
     async upoladPreviewImage(ctx) {
 
-        let fileStream = await ctx.getFileStream()
+        const fileStream = await ctx.getFileStream()
         if (!fileStream || !fileStream.filename) {
             ctx.error({msg: 'Can\'t found upload file'})
         }

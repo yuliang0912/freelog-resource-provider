@@ -18,9 +18,9 @@ class ResourceService extends Service {
 
         const {ctx, app} = this
         const userId = ctx.request.userId
-        const objectKey = `resources/${resourceType}/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
+        const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
         const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
-        const fileUploadAsync = app.upload.putStream(objectKey, fileStream)
+        const fileUploadAsync = app.ossClient.putStream(objectKey, fileStream)
 
         const uploadFileInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
             userId, objectKey, resourceType,
@@ -78,7 +78,6 @@ class ResourceService extends Service {
             status: app.resourceStatus.NORMAL,
             resourceType: uploadFileInfo.resourceType,
             systemMeta: uploadFileInfo.systemMeta,
-            resourceUrl: uploadFileInfo.resourceFileUrl,
             userId: userInfo.userId,
             userName: userInfo.userName || userInfo.nickname,
             resourceName: resourceName === undefined ?
@@ -92,11 +91,15 @@ class ResourceService extends Service {
             updateDate: moment().toDate()
         }
 
+        const resourceObjectKey = uploadFileInfo.objectKey.replace('temporary_upload/', `resources/${uploadFileInfo.resourceType}/`)
+        resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
+
         await ctx.helper.resourceAttributeCheck(resourceInfo)
 
         return ctx.dal.resourceProvider.createResource(resourceInfo, parentId)
             .then(() => ctx.dal.resourceTreeProvider.createResourceTree(userInfo.userId, resourceInfo.resourceId, parentId))
             .then(() => ctx.dal.uploadFileInfoProvider.deleteOne({sha1, userId: userInfo.userId}))
+            .then(() => app.ossClient.copyFile(resourceObjectKey, uploadFileInfo.objectKey))
             .then(() => resourceInfo)
     }
 
@@ -207,7 +210,7 @@ class ResourceService extends Service {
         })
 
         const uploadConfig = lodash.defaultsDeep({}, {aliOss: {bucket: 'freelog-image'}}, config.uploadConfig)
-        const fileUrl = await app.uploadFile(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
+        const fileUrl = await app.ossClientCustom(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
             .then(data => data.url.replace('-internal', ''))
 
         return fileUrl
