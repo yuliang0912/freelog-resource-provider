@@ -9,6 +9,7 @@ const Controller = require('egg').Controller;
 const sendToWormhole = require('stream-wormhole');
 
 module.exports = class ResourcesController extends Controller {
+
     /**
      * 资源仓库
      * @param ctx
@@ -16,14 +17,14 @@ module.exports = class ResourcesController extends Controller {
      */
     async warehouse(ctx) {
 
-        let page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-        let pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-        let resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
-        let keyWords = ctx.checkQuery("keyWords").optional().decodeURIComponent().value
+        const page = ctx.checkQuery("page").default(1).gt(0).toInt().value
+        const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
+        const keyWords = ctx.checkQuery("keyWords").optional().decodeURIComponent().value
 
         ctx.validate()
 
-        let condition = {status: 2}
+        const condition = {status: 2}
         if (resourceType) {
             condition.resourceType = resourceType
         }
@@ -39,33 +40,25 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async index(ctx) {
-        let page = ctx.checkQuery('page').optional().gt(0).toInt().default(1).value
-        let pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
 
-        let condition = {
-            userId: ctx.request.userId
-        }
-
+        const page = ctx.checkQuery('page').optional().gt(0).toInt().default(1).value
+        const pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
         ctx.validate()
 
-        let respositories = []
-        let totalItem = await ctx.dal.resourceProvider.getResourceCount(condition)
+        var respositories = []
+        const condition = {userId: ctx.request.userId}
+        const totalItem = await ctx.dal.resourceProvider.getResourceCount(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            respositories = await ctx.dal.resourceProvider
-                .getRespositories(condition, page, pageSize)
-                .catch(ctx.error)
+            respositories = await ctx.dal.resourceProvider.getRespositories(condition, page, pageSize).catch(ctx.error)
         }
-
         if (respositories.length === 0) {
             ctx.success({page, pageSize, totalItem, dataList: []})
         }
 
-        let lastVersionArray = respositories.map(t => t.lastVersion)
-
-        let dataList = await ctx.dal.resourceProvider.getResourceByIdList(lastVersionArray)
-
-        ctx.success({page, pageSize, totalItem, dataList})
+        await ctx.dal.resourceProvider.getResourceByIdList(respositories.map(t => t.lastVersion)).then(dataList => {
+            ctx.success({page, pageSize, totalItem, dataList})
+        })
     }
 
     /**
@@ -123,21 +116,6 @@ module.exports = class ResourcesController extends Controller {
         //     // ctx.set('etag', file.headers['etag'])
         //     // ctx.set('last-modified', file.headers['last-modified'])
         // })
-    }
-
-    /**
-     * 编辑资源
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
-    async edit(ctx) {
-        let resourceId = ctx.checkParams("id").isResourceId().value
-
-        ctx.validate()
-
-        await ctx.dal.resourceProvider
-            .getResourceInfo({resourceId, userId: ctx.request.userId})
-            .then(ctx.success)
     }
 
     /**
@@ -209,7 +187,7 @@ module.exports = class ResourcesController extends Controller {
         const meta = ctx.checkBody('meta').optional().isObject().value
         const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
 
         if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
@@ -343,6 +321,6 @@ module.exports = class ResourcesController extends Controller {
             ctx.error({msg: 'Can\'t found upload file'})
         }
 
-        await ctx.service.resourceService.upoladPreviewImage(fileStream).then(ctx.success).catch(ctx.error)
+        await ctx.service.resourceService.uploadPreviewImage(fileStream).then(ctx.success).catch(ctx.error)
     }
 }

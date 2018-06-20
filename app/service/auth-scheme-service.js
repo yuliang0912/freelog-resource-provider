@@ -15,7 +15,7 @@ class AuthSchemeService extends Service {
      */
     findAuthSchemeList({authSchemeIds, resourceIds, authSchemeStatus, policyStatus}) {
 
-        let condition = {}
+        const condition = {}
         if (authSchemeIds) {
             condition._id = {$in: authSchemeIds}
         }
@@ -30,25 +30,6 @@ class AuthSchemeService extends Service {
     }
 
     /**
-     * 过滤掉指定的授权状态
-     * @param dataList
-     * @param policyStatus
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _filterPolicyStatus(dataList, policyStatus) {
-
-        if (policyStatus === 1 || policyStatus === 0) {
-            dataList.forEach(item => {
-                item.policy = item.policy.filter(x => x.status === policyStatus)
-            })
-        }
-
-        return dataList
-    }
-
-
-    /**
      * 创建授权点
      * @returns {Promise<void>}
      */
@@ -56,7 +37,7 @@ class AuthSchemeService extends Service {
 
         const {app, ctx} = this;
 
-        var authScheme = {
+        const authScheme = {
             authSchemeName, languageType,
             dutyStatements: [],
             dependCount: resourceInfo.systemMeta.dependCount || 0,
@@ -174,13 +155,29 @@ class AuthSchemeService extends Service {
 
         const {ctx} = this
         await ctx.dal.authSchemeProvider.update({_id: authSchemeId}, {status: 4})
-        await this.isExistValidAuthScheme(resourceId).then(isExist => {
-            if (!isExist) { //如果删除授权点以后.资源不存在有效授权点,则资源变更为未发布状态
-              return  ctx.service.resourceService.updateResourceStatus(resourceId, 1)
-            }
-        })
-
+        const isExist = await this.isExistValidAuthScheme(resourceId)
+        if (!isExist) {
+            return ctx.service.resourceService.updateResourceStatus(resourceId, 1)
+        }
         return true
+    }
+
+    /**
+     * 过滤掉指定的授权状态
+     * @param dataList
+     * @param policyStatus
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _filterPolicyStatus(dataList, policyStatus) {
+
+        if (policyStatus === 1 || policyStatus === 0) {
+            dataList.forEach(item => {
+                item.policy = item.policy.filter(x => x.status === policyStatus)
+            })
+        }
+
+        return dataList
     }
 
     /**
@@ -320,17 +317,18 @@ class AuthSchemeService extends Service {
             })
         }
 
+
         const authSchemeInfoMap = new Map(authSchemeInfos.map(item => [item._id.toString(), item]))
         const validateFailedStatements = dutyStatements.filter(statement => {
             let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
-            if (statement.serialNumber !== authScheme.serialNumber) {
-                ctx.error({
-                    msg: 'dutyStatements数据中授权策略发生改变,请确认序列号.',
-                    data: {statement}
-                })
-            }
+            // if (statement.serialNumber !== authScheme.serialNumber) {
+            //     ctx.error({
+            //         msg: 'dutyStatements数据中授权策略发生改变,请确认序列号.',
+            //         data: {statement}
+            //     })
+            // }
             return !authScheme || authScheme.resourceId !== statement.resourceId
-                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId)
+                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId && x.status === 1)
         })
         if (validateFailedStatements.length) {
             ctx.error({

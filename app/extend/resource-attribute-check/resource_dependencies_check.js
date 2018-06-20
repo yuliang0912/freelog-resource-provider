@@ -53,6 +53,7 @@ class ResourceDependenciceCheck {
             return false
         }
 
+        console.log(resourceId, dependencies)
         if (resourceId && dependencies.some(x => x === resourceId)) {
             return true
         }

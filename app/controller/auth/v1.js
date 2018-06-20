@@ -24,23 +24,23 @@ module.exports = class ResourceAuthController extends Controller {
      */
     async getResource(ctx) {
 
-        let jwt = ctx.checkHeader('authorization').exist().notEmpty().value
-        let response = ctx.checkHeader('response').optional().toJson().default({}).value
+        const jwt = ctx.checkHeader('authorization').exist().notEmpty().value
+        const response = ctx.checkHeader('response').optional().toJson().default({}).value
 
         ctx.validate(false)
 
-        let authResult = this.resourceAuthJwt.verifyJwt(jwt.replace(/^bearer /i, ""))
+        const authResult = this.resourceAuthJwt.verifyJwt(jwt.replace(/^bearer /i, ""))
 
         if (!authResult.isVerify) {
             ctx.error({msg: 'json-web-token校验失败', data: authResult})
         }
 
-        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authResult.payLoad.resourceId})
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authResult.payLoad.resourceId})
         if (!resourceInfo) {
             ctx.error({msg: '未能找到资源'})
         }
 
-        let objectKey = resourceInfo.resourceUrl.replace(/^http:\/\/freelog-shenzhen.oss-cn-shenzhen(-internal){0,1}.aliyuncs.com/, '')
+        const objectKey = resourceInfo.resourceUrl.replace(/^http:\/\/freelog-shenzhen.oss-cn-shenzhen(-internal){0,1}.aliyuncs.com/, '')
 
         response['expires'] = 60
         response['response-content-type'] = resourceInfo.mimeType

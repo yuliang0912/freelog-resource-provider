@@ -5,7 +5,7 @@ module.exports = app => {
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
-        transform: function (doc, ret, options) {
+        transform(doc, ret, options) {
             return {
                 authSchemeId: ret._id.toString(),
                 authSchemeName: ret.authSchemeName,

@@ -91,16 +91,16 @@ class ResourceService extends Service {
             updateDate: moment().toDate()
         }
 
-        const resourceObjectKey = uploadFileInfo.objectKey.replace('temporary_upload/', `resources/${uploadFileInfo.resourceType}/`)
+        const resourceObjectKey = `resources/${uploadFileInfo.resourceType}/${resourceInfo.resourceId}`
         resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
 
-        await ctx.helper.resourceAttributeCheck(resourceInfo)
+        await ctx.helper.resourceAttributeCheck(resourceInfo).then(() => ctx.dal.resourceProvider.createResource(resourceInfo, parentId))
 
-        return ctx.dal.resourceProvider.createResource(resourceInfo, parentId)
-            .then(() => ctx.dal.resourceTreeProvider.createResourceTree(userInfo.userId, resourceInfo.resourceId, parentId))
-            .then(() => ctx.dal.uploadFileInfoProvider.deleteOne({sha1, userId: userInfo.userId}))
-            .then(() => app.ossClient.copyFile(resourceObjectKey, uploadFileInfo.objectKey))
-            .then(() => resourceInfo)
+        ctx.dal.resourceTreeProvider.createResourceTree(userInfo.userId, resourceInfo.resourceId, parentId).catch(console.error)
+        ctx.dal.uploadFileInfoProvider.deleteOne({sha1, userId: userInfo.userId}).catch(console.error)
+        app.ossClient.copyFile(resourceObjectKey, uploadFileInfo.objectKey).catch(console.error)
+
+        return resourceInfo
     }
 
     /**
@@ -118,7 +118,7 @@ class ResourceService extends Service {
             if (await ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
                 ctx.error({msg: '当前资源已经存在发布的授权方案,必须全部废弃才能修改资源依赖'})
             }
-            let dependencies = await ctx.helper.resourceDependencyCheck({
+            const dependencies = await ctx.helper.resourceDependencyCheck({
                 dependencies: model.meta.dependencies,
                 resourceId: resourceInfo.resourceId
             }).catch(ctx.error)
@@ -198,7 +198,7 @@ class ResourceService extends Service {
      * @param fileStream
      * @returns {Promise<void>}
      */
-    async upoladPreviewImage(fileStream) {
+    async uploadPreviewImage(fileStream) {
 
         const {ctx, app, config} = this
         const fileCheckResult = await ctx.helper.subsidiaryFileCheck({

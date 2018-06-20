@@ -9,6 +9,7 @@ const fileCheck = require('./resource-file-check/index')
 const policyCompiler = require('./policy-compiler/index')
 const subsidiaryFileCheck = require('./subsidiary-file-check/index')
 const resourceAttributeCheck = require('./resource-attribute-check/index')
+const resourceDependencyCheck = require('./resource-attribute-check/resource_dependencies_check')
 
 module.exports = {
 
@@ -45,6 +46,13 @@ module.exports = {
      */
     resourceAttributeCheck(...args) {
         return resourceAttributeCheck.main(...args)
+    },
+
+    /**
+     * 资源依赖检查
+     */
+    resourceDependencyCheck({dependencies, resourceId}) {
+        return resourceDependencyCheck.check(...arguments)
     }
 }
 

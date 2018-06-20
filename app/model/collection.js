@@ -5,7 +5,7 @@ module.exports = app => {
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
-        transform: function (doc, ret, options) {
+        transform(doc, ret, options) {
             return {
                 resourceId: ret.resourceId,
                 resourceName: ret.resourceName,
@@ -19,7 +19,6 @@ module.exports = app => {
             }
         }
     }
-
 
     const CollectionSchema = new mongoose.Schema({
         resourceId: {type: String, required: true, unique: true},

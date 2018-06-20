@@ -20,7 +20,7 @@ class ResourceAttributeCheck {
      */
     main(resourceInfo) {
 
-        const checkHandlerFn = this.handlerPatrun.find({resourceType})
+        const checkHandlerFn = this.handlerPatrun.find({resourceType: resourceInfo.resourceType})
 
         if (!checkHandlerFn) {
             return Promise.resolve({systemMeta: {}})

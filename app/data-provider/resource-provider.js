@@ -4,7 +4,6 @@
 
 'use strict'
 
-const moment = require('moment')
 const KnexBaseOperation = require('egg-freelog-database/lib/database/knex-base-operation')
 
 module.exports = class ResourceProvider extends KnexBaseOperation {
@@ -62,8 +61,8 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
         })
 
         return this.resourceKnex.transaction(trans => {
-            let task1 = super.queryChain.transacting(trans).insert(resource)
-            let task2 = this.resourceKnex.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
+            const task1 = super.queryChain.transacting(trans).insert(resource)
+            const task2 = this.resourceKnex.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
                  VALUES (:resourceId,:resourceName,:lastVersion,:userId,:status,:createDate) ON DUPLICATE KEY UPDATE lastVersion = :lastVersion`,
                 {
                     resourceId: parentId || resource.resourceId,
@@ -73,7 +72,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     createDate: resource.createDate,
                     status: 1
                 }).transacting(trans).then()
-            let task3 = resource.resourceType === this.app.resourceType.WIDGET ?
+            const task3 = resource.resourceType === this.app.resourceType.WIDGET ?
                 this.resourceKnex('components').transacting(trans).insert({
                     widgetName: systemMeta.widgetName,
                     version: systemMeta.version,
@@ -153,33 +152,28 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
      * @param pageSize
      */
     searchPageList(condition, keyWords, page, pageSize) {
-        let baseQuery = super.queryChain
+        const baseQuery = super.queryChain
         if (condition) {
             baseQuery.where(condition)
         }
         if (keyWords) {
-            baseQuery.where(function () {
-                let like = this.where('resourceName', 'like', `%${keyWords}%`)
-                    .orWhere('resourceId', 'like', `%${keyWords}%`)
-                if (!condition.resourceType) {
-                    like.orWhere('resourceType', 'like', `${keyWords}%`)
-                }
-                return like
-            })
+            baseQuery.where('resourceName', 'like', `%${keyWords}%`).orWhere('resourceId', 'like', `%${keyWords}%`)
         }
-        let countTask = baseQuery.clone().count("* as count").first()
-        let listTask = baseQuery.clone().select().orderBy("createDate", "desc")
+        if (!condition.resourceType && keyWords) {
+            baseQuery.orWhere('resourceType', 'like', `${keyWords}%`)
+        }
+        const countTask = baseQuery.clone().count("* as count").first()
+        const listTask = baseQuery.clone().select().orderBy("createDate", "desc")
         if (pageSize) {
             listTask.limit(pageSize)
         }
         if (page && pageSize) {
             listTask.offset((page - 1) * pageSize)
         }
-        return Promise.all([countTask, listTask]).then(([count, list]) => {
-            return {
-                totalItem: count.count ? parseInt(count.count) : 0,
-                dataList: list
-            }
-        })
+
+        return Promise.all([countTask, listTask]).then(([count, list]) => new Object({
+            totalItem: count.count ? parseInt(count.count) : 0,
+            dataList: list
+        }))
     }
 }
