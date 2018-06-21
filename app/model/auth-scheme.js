@@ -58,7 +58,6 @@ module.exports = app => {
         statementCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //授权依赖声明覆盖率
         contractCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //指定执行合约覆盖率
         userId: {type: Number, required: true},
-        serialNumber: {type: String, required: true}, //序列号,用于校验前端与后端是否一致
         status: {type: Number, default: 0, required: true}, // 0:初始状态 1:已发布  4:废弃(以后不允许在变动)
     }, {
         versionKey: false,

@@ -6,7 +6,7 @@
 'use strict';
 
 const Controller = require('egg').Controller;
-const dutyStatementSchema = require('../../extend/json-schema/duty-statements-schema')
+const statementAndBubbleSchema = require('../../extend/json-schema/statement-bubble-schema')
 const batchOperationPolicySchema = require('../../extend/json-schema/batch-operation-policy-schema')
 
 module.exports = class PolicyController extends Controller {
@@ -68,15 +68,20 @@ module.exports = class PolicyController extends Controller {
         const resourceId = ctx.checkBody('resourceId').isResourceId().value
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
         const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
-        const languageType = ctx.checkBody('languageType').default('freelog_policy_lang').optional().in(['freelog_policy_lang']).value
-        const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
-        const isPublish = ctx.checkBody('isPublish').default(0).optional().in([0, 1]).value
+        const languageType = ctx.checkBody('languageType').optional().in(['freelog_policy_lang']).default('freelog_policy_lang').value
+        const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).default([]).value
+        const bubbleResources = ctx.checkBody('bubbleResources').optional().isArray().len(0, 100).default([]).value
+        const isPublish = ctx.checkBody('isPublish').optional().in([0, 1]).default(0).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
         if (dutyStatements) {
-            const result = dutyStatementSchema.validate(dutyStatements, dutyStatementSchema.dutyStatementsValidator)
+            const result = statementAndBubbleSchema.validate(dutyStatements, statementAndBubbleSchema.dutyStatementsValidator)
             result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
+        }
+        if (bubbleResources) {
+            const result = statementAndBubbleSchema.validate(bubbleResources, statementAndBubbleSchema.bubbleResourcesValidator)
+            result.errors.length && ctx.error({msg: '参数bubbleResources格式校验失败', data: result.errors})
         }
 
         if (policies) {
@@ -92,13 +97,13 @@ module.exports = class PolicyController extends Controller {
         }
 
         await ctx.dal.authSchemeProvider.count({resourceId}).then(count => {
-            count >= 20 && ctx.error({msg: '同一个资源授权点最多只能创建20个'})
+            count >= 100 && ctx.error({msg: '同一个资源授权点最多只能创建20个'})
         })
 
         await ctx.service.authSchemeService.createAuthScheme({
             authSchemeName, resourceInfo, languageType, isPublish,
+            dutyStatements, bubbleResources,
             policies: {addPolicySegments: policies},
-            dutyStatements: dutyStatements || [],
         }).then(ctx.success).catch(ctx.error)
     }
 
@@ -111,14 +116,19 @@ module.exports = class PolicyController extends Controller {
         const authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
         const authSchemeName = ctx.checkBody('authSchemeName').optional().type("string").len(2, 100).trim().value
         const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
+        //注意:dutyStatements和bubbleResources参数不能默认[].否则代表清空
         const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
+        const bubbleResources = ctx.checkBody('bubbleResources').optional().isArray().len(0, 100).value
         ctx.allowContentType({type: 'json'}).validate()
 
         if (dutyStatements) {
-            const result = dutyStatementSchema.validate(dutyStatements, dutyStatementSchema.dutyStatementsValidator)
+            const result = statementAndBubbleSchema.validate(dutyStatements, statementAndBubbleSchema.dutyStatementsValidator)
             result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
         }
-
+        if (bubbleResources) {
+            const result = statementAndBubbleSchema.validate(bubbleResources, statementAndBubbleSchema.bubbleResourcesValidator)
+            result.errors.length && ctx.error({msg: '参数bubbleResources格式校验失败', data: result.errors})
+        }
         if (policies) {
             const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
@@ -132,12 +142,12 @@ module.exports = class PolicyController extends Controller {
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
-        if (authScheme.status === 1 && dutyStatements !== undefined) {
-            ctx.error({msg: "授权方案已经发布,声明部分不允许改动"})
+        if (authScheme.status === 1 && (dutyStatements || bubbleResources)) {
+            ctx.error({msg: "授权方案已经发布,声明与上抛数据不允许改动"})
         }
 
         await ctx.service.authSchemeService.updateAuthScheme({
-            authScheme: authScheme.toObject(), authSchemeName, policies, dutyStatements
+            authScheme: authScheme.toObject(), authSchemeName, policies, dutyStatements, bubbleResources
         }).then(() => {
             return ctx.dal.authSchemeProvider.findById(authSchemeId)
         }).then(ctx.success).catch(ctx.error)

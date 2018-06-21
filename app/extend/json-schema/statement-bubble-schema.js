@@ -18,6 +18,15 @@ class DutyStatementsSchemaValidator extends FreelogCommonJsonSchema {
     }
 
     /**
+     * 显示上抛主题校验
+     * @returns {ActiveX.ISchema}
+     */
+    get bubbleResourcesValidator() {
+        return super.getSchema('/bubbleResourceArraySchema')
+    }
+
+
+    /**
      * 初始化函数
      * @private
      */
@@ -47,6 +56,22 @@ class DutyStatementsSchemaValidator extends FreelogCommonJsonSchema {
             type: "array",
             uniqueItems: true,
             items: {$ref: "/statementSchema"}
+        })
+
+        super.addSchema({
+            id: "/bubbleResourceSchema",
+            type: "object",
+            additionalProperties: false,
+            properties: {
+                resourceId: {type: "string", format: 'resourceId'}
+            }
+        })
+
+        super.addSchema({
+            id: "/bubbleResourceArraySchema",
+            type: "array",
+            uniqueItems: true,
+            items: {$ref: "/bubbleResourceSchema"}
         })
     }
 }

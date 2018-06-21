@@ -33,36 +33,32 @@ class AuthSchemeService extends Service {
      * 创建授权点
      * @returns {Promise<void>}
      */
-    async createAuthScheme({authSchemeName, resourceInfo, policies, languageType, dutyStatements, isPublish}) {
+    async createAuthScheme({authSchemeName, resourceInfo, policies, languageType, dutyStatements, bubbleResources, isPublish}) {
 
-        const {app, ctx} = this;
+        const {ctx} = this
+
+        resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
 
         const authScheme = {
-            authSchemeName, languageType,
-            dutyStatements: [],
-            dependCount: resourceInfo.systemMeta.dependCount || 0,
-            resourceId: resourceInfo.resourceId,
-            serialNumber: app.mongoose.getNewObjectId(),
-            userId: ctx.request.userId,
             policy: [],
-            status: 0
+            status: isPublish ? 1 : 0,
+            userId: ctx.request.userId,
+            resourceId: resourceInfo.resourceId,
+            authSchemeName, languageType, dutyStatements, bubbleResources,
+            dependCount: resourceInfo.systemMeta.dependCount || resourceInfo.systemMeta.dependencies.length,
         }
 
         if (policies) {
             authScheme.policy = this._policiesHandler({authScheme, policies})
         }
-        if (isPublish && (!authScheme.policy.length || dutyStatements.length)) {
+
+        const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
+        if (authScheme.status === 1 && (!authScheme.policy.length || untreatedResources.length)) {
             ctx.error({
-                msg: "当前状态无法直接发布",
-                data: {policyCount: authScheme.policy.length, dutyStatementCount: dutyStatements.length}
+                msg: "当前状态无法直接发布,请检查是否存在有效策略,以及全部处理好依赖资源",
+                data: {policyCount: authScheme.policy.length, untreatedResources}
             })
         }
-        if (isPublish) {
-            authScheme.status = 1
-        }
-
-        resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
-        authScheme.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
 
         return ctx.dal.authSchemeProvider.create(authScheme).then(data => {
             authScheme.status == 1 && ctx.service.resourceService.updateResourceStatus(resourceInfo.resourceId, 2)
@@ -74,7 +70,7 @@ class AuthSchemeService extends Service {
      * 更新授权方案
      * @returns {Promise<void>}
      */
-    async updateAuthScheme({authScheme, authSchemeName, policies, dutyStatements}) {
+    async updateAuthScheme({authScheme, authSchemeName, policies, dutyStatements, bubbleResources}) {
 
         const {ctx} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
@@ -82,10 +78,11 @@ class AuthSchemeService extends Service {
         if (policies) {
             model.policy = this._policiesHandler({authScheme, policies})
         }
-        if (Array.isArray(dutyStatements)) {
+        if (dutyStatements || bubbleResources) {
+            authScheme.dutyStatements = dutyStatements || authScheme.dutyStatements
+            authScheme.bubbleResources = bubbleResources || authScheme.bubbleResources
             const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
-            model.dutyStatements = await this._perfectDutyStatements({authScheme, resourceInfo, dutyStatements})
-            model.bubbleResources = authScheme.bubbleResources
+            await this._checkStatementAndBubble({authScheme, resourceInfo})
         }
 
         return ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
@@ -104,6 +101,12 @@ class AuthSchemeService extends Service {
         }
         if (!authScheme.policy.length) {
             ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
+        }
+
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+        const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
+        if (untreatedResources.length) {
+            ctx.error({msg: '声明与上抛的数据不全,无法发布', data: {untreatedResources}})
         }
 
         var contracts = []
@@ -141,13 +144,6 @@ class AuthSchemeService extends Service {
     }
 
     /**
-     * 检查是否存在有效的授权方案
-     */
-    isExistValidAuthScheme(resourceId) {
-        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
-    }
-
-    /**
      * 删除授权方案
      * @param authSchemeId
      */
@@ -163,13 +159,20 @@ class AuthSchemeService extends Service {
     }
 
     /**
+     * 检查是否存在有效的授权方案
+     */
+    isExistValidAuthScheme(resourceId) {
+        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
+    }
+
+    /**
      * 过滤掉指定的授权状态
      * @param dataList
      * @param policyStatus
      * @returns {Promise<void>}
      * @private
      */
-    async _filterPolicyStatus(dataList, policyStatus) {
+    _filterPolicyStatus(dataList, policyStatus) {
 
         if (policyStatus === 1 || policyStatus === 0) {
             dataList.forEach(item => {
@@ -216,6 +219,128 @@ class AuthSchemeService extends Service {
     }
 
     /**
+     * 检查上抛和声明的数据是否在上抛树上,而且依赖关系正确
+     * @returns {Promise<void>} 返回未处理的上抛(没声明也没显示上抛)
+     * @private
+     */
+    async _checkStatementAndBubble({authScheme, resourceInfo}) {
+
+        const {dutyStatements, bubbleResources} = authScheme
+        const intersection = lodash.intersectionBy(dutyStatements, bubbleResources, 'resourceId')
+        if (intersection.length) {
+            ctx.error({msg: '声明与上抛的资源数据中存在交集', data: intersection})
+        }
+
+        const {ctx} = this
+        const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
+        const dutyStatementMap = new Map(dutyStatements.map(x => [x.resourceId, x]))
+        const bubbleResourceMap = new Map(bubbleResources.map(x => [x.resourceId, x]))
+        const authSchemeInfoMap = await ctx.dal.authSchemeProvider.find({_id: {$in: authSchemeIds}}).then(dataList => {
+            return new Map(dataList.map(x => [x._id.toString(), x]))
+        })
+
+        const validateFailedStatements = dutyStatements.filter(statement => {
+            let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
+            return !authScheme || authScheme.resourceId !== statement.resourceId // || authScheme.status !== 1
+                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId) // && x.status === 1)
+        })
+        if (validateFailedStatements.length) {
+            ctx.error({
+                msg: 'dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId以及他们的状态是否符合条件',
+                data: validateFailedStatements
+            })
+        }
+
+        const untreatedResources = []
+        const recursion = (resources) => resources.forEach(item => {
+            let dutyStatement = dutyStatementMap.get(item.resourceId)
+            let bubbleResource = bubbleResourceMap.get(item.resourceId)
+            if (bubbleResource) {
+                bubbleResource.validate = true
+                bubbleResource.resourceName = item.resourceName
+            }
+            else if (dutyStatement) {
+                dutyStatement.validate = true
+                dutyStatement.resourceName = item.resourceName
+                recursion(authSchemeInfoMap.get(dutyStatement.authSchemeId).bubbleResources)
+            }
+            else {
+                untreatedResources.push(item)
+            }
+        })
+
+        recursion(resourceInfo.systemMeta.dependencies)
+
+        const invalidStatements = dutyStatements.filter(x => !x.validate)
+        if (invalidStatements.length) {
+            ctx.error({
+                msg: 'dutyStatements数据校验失败,存在无效的声明',
+                data: {invalidStatements: invalidStatements.map(x => new Object({resourceId: x.resourceId}))}
+            })
+        }
+
+        const invalidBubbleResources = bubbleResources.filter(x => !x.validate)
+        if (invalidBubbleResources.length) {
+            ctx.error({
+                msg: 'bubbleResources中存在无效上抛',
+                data: invalidBubbleResources
+            })
+        }
+
+        return untreatedResources
+    }
+
+    /**
+     * 检查声明和上抛资源信息是否完整
+     * @param dutyStatements
+     * @param resourceInfo
+     * @param bubbleResources
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _checkStatementAndBubble1({authScheme, resourceInfo, bubbleResources}) {
+
+        var {ctx} = this
+        var allBubbleResources = resourceInfo.systemMeta.dependencies.slice()
+
+        const intersection = lodash.intersectionBy(authScheme.dutyStatements, bubbleResources, 'resourceId')
+        if (intersection.length) {
+            ctx.error({msg: '声明与上抛的资源数据中存在交集', data: intersection})
+        }
+
+        if (authScheme.__authSchemeList__) {
+            authScheme.__authSchemeList__.forEach(item => allBubbleResources = allBubbleResources.concat(item.bubbleResources))
+        } else {
+            await ctx.dal.authSchemeProvider.find({_id: {$in: authScheme.dutyStatements.map(item => item.authSchemeId)}})
+                .each(item => allBubbleResources = allBubbleResources.concat(item.bubbleResources))
+        }
+
+        //如果声明解决的资源不是其选择的授权方案的上抛资源的子集,则说明声明数据有误
+        const invalidStatements = lodash.differenceBy(authScheme.dutyStatements, allBubbleResources, 'resourceId')
+        if (invalidStatements.length) {
+            ctx.error({
+                msg: 'dutyStatements数据校验失败,存在无效的声明',
+                data: {invalidStatements, allBubbleResources}
+            })
+        }
+
+        //除开声明部分,剩余需要解决的
+        const remainderBubbleResources = lodash.differenceBy(allBubbleResources, authScheme.dutyStatements, 'resourceId')
+        const invalidBubbleResources = lodash.differenceBy(bubbleResources, remainderBubbleResources, 'resourceId')
+        if (invalidBubbleResources.length) {
+            ctx.error({
+                msg: 'bubbleResources中存在无效上抛',
+                data: invalidBubbleResources
+            })
+        }
+
+        //未完全选择的资源(没有声明,也没有显示上抛)
+        const noHandlerBubbleResources = lodash.differenceBy(remainderBubbleResources, bubbleResources, 'resourceId')
+
+        return noHandlerBubbleResources
+    }
+
+    /**
      * 完善与校验责任声明数据
      * @param resourceInfo
      * @param dutyStatements
@@ -224,50 +349,59 @@ class AuthSchemeService extends Service {
      */
     async _perfectDutyStatements({authScheme, resourceInfo, dutyStatements}) {
 
-        const {ctx} = this
-
         if (!dutyStatements.length) {
-            authScheme.bubbleResources = resourceInfo.systemMeta.dependencies.map(x => new Object({
-                resourceId: x.resourceId,
-                resourceName: x.resourceName
-            }))
             return []
         }
 
+        const {ctx} = this
+        var allBubbleResources = resourceInfo.systemMeta.dependencies.slice()
+        const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
+        const authSchemeList = await ctx.dal.authSchemeProvider.find({_id: {$in: authSchemeIds}})
+        const authSchemeInfoMap = new Map(authSchemeList.map(item => [item._id.toString(), item]))
+
+        const validateFailedStatements = dutyStatements.filter(statement => {
+            let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
+            if (authScheme) {
+                allBubbleResources = allBubbleResources.concat(authScheme.bubbleResources)
+            }
+            return !authScheme || authScheme.resourceId !== statement.resourceId // || authScheme.status !== 1
+                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId) // && x.status === 1)
+        })
+        if (validateFailedStatements.length) {
+            ctx.error({
+                msg: 'dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId是否匹配',
+                data: validateFailedStatements
+            })
+        }
+
+        const invalidStatements = lodash.differenceBy(dutyStatements, allBubbleResources, 'resourceId')
+        if (invalidStatements.length) {
+            ctx.error({
+                msg: 'dutyStatements数据校验失败,存在无效的声明',
+                data: {invalidStatements, allBubbleResources}
+            })
+        }
+
+        authScheme.__authSchemeList__ = authSchemeList
+
+        return this._validateDependencyStatements(resourceInfo, dutyStatements)
+    }
+
+    /**
+     * 校验声明与上抛的数据在依赖树上是否完整
+     * @param statementMaps
+     * @param resourceTree
+     * @private
+     */
+    async _validateDependency(resourceInfo, dutyStatements, bubbleResources) {
+
+        const {ctx} = this
         const resourceDependencies = [{
             resourceId: resourceInfo.resourceId,
             resourceName: resourceInfo.resourceName,
             resourceType: resourceInfo.resourceType,
             dependencies: await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies)
         }]
-
-        const buildStatements = this._validateDependencyStatements(resourceInfo, dutyStatements, resourceDependencies)
-        if (buildStatements.length !== dutyStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,请检查是否有重复的资源声明', data: {dutyStatements}
-            })
-        }
-
-        const validateFailedStatements = buildStatements.filter(item => !item.validate)
-        if (validateFailedStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,请检查依赖链是否完整', data: validateFailedStatements
-            })
-        }
-
-        await this._validateAuthSchemeAndPolicy(authScheme, resourceInfo, dutyStatements)
-
-        return buildStatements
-    }
-
-
-    /**
-     * 校验声明的数据是否在依赖树上
-     * @param statementMaps
-     * @param resourceTree
-     * @private
-     */
-    _validateDependencyStatements(resourceInfo, dutyStatements, resourceDependencies) {
 
         const statementMaps = dutyStatements.reduce((acc, current) => {
             return acc.set(current.resourceId, Object.assign({}, current))
@@ -290,77 +424,17 @@ class AuthSchemeService extends Service {
 
         statementMaps.delete(resourceInfo.resourceId)
 
-        return Array.from(statementMaps.values())
-    }
-
-    /**
-     * 验证资源的授权点与策略选择是否正确
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _validateAuthSchemeAndPolicy(authScheme, resourceInfo, dutyStatements) {
-
-        const {ctx} = this
-        const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
-
-        const authSchemeInfos = await ctx.dal.authSchemeProvider.find({_id: {$in: authSchemeIds}})
-        if (authSchemeIds.length !== authSchemeInfos.length) {
-            ctx.error({
-                msg: '参数dutyStatements中授权点数据校验失败',
-                data: {
-                    dutyStatements,
-                    authSchemeInfos: authSchemeInfos.map(x => new Object({
-                        resourceId: x.resourceId,
-                        authSchemeId: x._id.toString()
-                    }))
-                }
-            })
+        const buildStatements = Array.from(statementMaps.values())
+        if (buildStatements.length !== dutyStatements.length) {
+            ctx.error({msg: 'dutyStatements数据校验失败,请检查是否有重复的资源声明', data: {dutyStatements}})
         }
 
-
-        const authSchemeInfoMap = new Map(authSchemeInfos.map(item => [item._id.toString(), item]))
-        const validateFailedStatements = dutyStatements.filter(statement => {
-            let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
-            // if (statement.serialNumber !== authScheme.serialNumber) {
-            //     ctx.error({
-            //         msg: 'dutyStatements数据中授权策略发生改变,请确认序列号.',
-            //         data: {statement}
-            //     })
-            // }
-            return !authScheme || authScheme.resourceId !== statement.resourceId
-                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId && x.status === 1)
-        })
+        const validateFailedStatements = buildStatements.filter(item => !item.validate)
         if (validateFailedStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId是否匹配',
-                data: validateFailedStatements
-            })
+            ctx.error({msg: 'dutyStatements数据校验失败,请检查依赖链是否完整', data: validateFailedStatements})
         }
 
-        const statistics = authSchemeInfos.reduce((acc, current) => {
-            acc.dependCount += current.dependCount
-            acc.mergedBubbleResources = [...acc.mergedBubbleResources, ...current.bubbleResources]
-            return acc
-        }, {mergedBubbleResources: [], dependCount: 0})
-
-
-        //上抛的资源为依赖的以及声明解决的资源上抛的合集 然后去除自己解决掉的
-        const allBubbleResources = this._sortedUniqResoure(statistics.mergedBubbleResources.concat(resourceInfo.systemMeta.dependencies))
-        const invalidStatements = lodash.differenceWith(dutyStatements, allBubbleResources, this._isEqualResource)
-        if (invalidStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,存在无效的声明',
-                data: {
-                    invalidStatements, mergedBubbleResources
-                }
-            })
-        }
-
-        authScheme.bubbleResources = lodash.differenceWith(allBubbleResources, dutyStatements, this._isEqualResource)
-
-        //resourceInfo.dependCount - statistics.dependCount
-
-        return dutyStatements
+        return buildStatements
     }
 
     /**
