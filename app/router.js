@@ -21,6 +21,9 @@ module.exports = app => {
     //批量签约(for授权点)
     router.put('/v1/resources/authSchemes/batchSignContracts/:authSchemeId', authScheme.v1.batchSignContracts)
 
+    //授权点关联的合同信息
+    router.get('/v1/resources/authSchemes/associatedContracts/:authSchemeId', authScheme.v1.associatedContracts)
+
     //获取资源依赖树
     router.get('/v1/resources/getResourceDependencyTree/:resourceId', resource.v1.getResourceDependencyTree)
 
@@ -32,6 +35,7 @@ module.exports = app => {
 
     //更新资源内容(开发版)
     router.post('/v1/resources/updateResourceContext/:resourceId', resource.v1.updateResourceContext)
+
 
     /**
      * 资源授权方案(授权点)

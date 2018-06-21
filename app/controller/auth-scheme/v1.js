@@ -193,4 +193,32 @@ module.exports = class PolicyController extends Controller {
         await ctx.service.authSchemeService.deleteAuthScheme(authScheme.toObject())
             .then(data => ctx.success(true)).catch(ctx.error)
     }
+
+    /**
+     * 授权点关联的合同信息
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async associatedContracts(ctx) {
+
+        const authSchemeId = ctx.checkParams('authSchemeId').isMongoObjectId('authSchemeId格式错误').value
+        const contractStatus = ctx.checkQuery('contractStatus').optional().toInt().in([1, 2, 3]).value
+        ctx.validate()
+
+        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        if (!authScheme || authScheme.userId !== ctx.request.userId) {
+            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
+        }
+
+        const contractIds = authScheme.associatedContracts.map(x => x.contractId)
+        if (!contractIds.length) {
+            return ctx.success([])
+        }
+
+        var contractInfos = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`)
+        if (contractStatus) {
+            contractInfos = contractInfos.filter(x => x.status === contractStatus)
+        }
+        ctx.success(contractInfos)
+    }
 }
