@@ -125,5 +125,9 @@ module.exports = {
         resourceAuth: {
             publicKey: fs.readFileSync('config/auth_key/resource_auth_public_key.pem').toString()
         }
-    }
+    },
+
+    customLoader: [{
+        name: 'eventHandler', dir: 'app/event-handler'
+    }]
 }

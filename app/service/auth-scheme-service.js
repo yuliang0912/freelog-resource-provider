@@ -1,7 +1,8 @@
 'use strict'
 
-const Service = require('egg').Service
 const lodash = require('lodash')
+const Service = require('egg').Service
+const authSchemeEvents = require('../enum/auth-scheme-events')
 
 class AuthSchemeService extends Service {
 
@@ -11,7 +12,7 @@ class AuthSchemeService extends Service {
      * @param resourceIds
      * @param authSchemeStatus
      * @param policyStatus
-     * @returns {PromiseLike<T> | Promise<T>}
+     * @returns {PromiseLike<void> | Promise<void>}
      */
     findAuthSchemeList({authSchemeIds, resourceIds, authSchemeStatus, policyStatus}) {
 
@@ -31,11 +32,18 @@ class AuthSchemeService extends Service {
 
     /**
      * 创建授权点
-     * @returns {Promise<void>}
+     * @param authSchemeName
+     * @param resourceInfo
+     * @param policies
+     * @param languageType
+     * @param dutyStatements
+     * @param bubbleResources
+     * @param isPublish
+     * @returns {Promise<PromiseLike<T> | Promise<T>>}
      */
     async createAuthScheme({authSchemeName, resourceInfo, policies, languageType, dutyStatements, bubbleResources, isPublish}) {
 
-        const {ctx} = this
+        const {app, ctx} = this
 
         resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
 
@@ -64,15 +72,17 @@ class AuthSchemeService extends Service {
             })
         }
 
-        return ctx.dal.authSchemeProvider.create(authScheme).then(data => {
-            authScheme.status == 1 && ctx.service.resourceService.updateResourceStatus(resourceInfo.resourceId, 2)
-            return data
-        })
+        return ctx.dal.authSchemeProvider.create(authScheme).tap(() => app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme}))
     }
 
     /**
      * 更新授权方案
-     * @returns {Promise<void>}
+     * @param authScheme
+     * @param authSchemeName
+     * @param policies
+     * @param dutyStatements
+     * @param bubbleResources
+     * @returns {Promise<Promise<void>|IDBRequest|void>}
      */
     async updateAuthScheme({authScheme, authSchemeName, policies, dutyStatements, bubbleResources}) {
 
@@ -142,7 +152,9 @@ class AuthSchemeService extends Service {
             status: 1,
             associatedContracts,
             dutyStatements: Array.from(dutyStatementMap.values()),
-        }).then(() => ctx.service.resourceService.updateResourceStatus(authScheme.resourceId, 2))
+        }).then(() => {
+            app.emit(authSchemeEvents.releaseAuthSchemeEvent, {authScheme: Object.assign(authScheme, {status: 1})})
+        })
 
         return contracts
     }
@@ -151,75 +163,13 @@ class AuthSchemeService extends Service {
      * 删除授权方案
      * @param authSchemeId
      */
-    async deleteAuthScheme(authSchemeId, resourceId) {
+    async deleteAuthScheme(authScheme) {
 
-        const {ctx} = this
-        await ctx.dal.authSchemeProvider.update({_id: authSchemeId}, {status: 4})
-        const isExist = await this.isExistValidAuthScheme(resourceId)
-        if (!isExist) {
-            return ctx.service.resourceService.updateResourceStatus(resourceId, 1)
-        }
+        const {ctx, app} = this
+        await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {status: 4}).then(() => {
+            app.emit(authSchemeEvents.deleteAuthSchemeEvent, {authScheme: Object.assign(authScheme, {status: 4})})
+        })
         return true
-    }
-
-    /**
-     * 检查是否存在有效的授权方案
-     */
-    isExistValidAuthScheme(resourceId) {
-        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
-    }
-
-    /**
-     * 过滤掉指定的授权状态
-     * @param dataList
-     * @param policyStatus
-     * @returns {Promise<void>}
-     * @private
-     */
-    _filterPolicyStatus(dataList, policyStatus) {
-
-        if (policyStatus === 1 || policyStatus === 0) {
-            dataList.forEach(item => {
-                item.policy = item.policy.filter(x => x.status === policyStatus)
-            })
-        }
-
-        return dataList
-    }
-
-    /**
-     * 处理策略段变更
-     * @param authScheme
-     * @param policies
-     * @returns {*}
-     * @private
-     */
-    _policiesHandler({authScheme, policies}) {
-
-        const {ctx} = this
-        const {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
-        const oldPolicySegments = new Map(authScheme.policy.map(x => [x.segmentId, x]))
-
-        removePolicySegments && removePolicySegments.forEach(item => oldPolicySegments.delete(item))
-
-        updatePolicySegments && updatePolicySegments.forEach(item => {
-            let targetPolicySegment = oldPolicySegments.get(item.policySegmentId)
-            if (!targetPolicySegment) {
-                throw Object.assign(new Error("未能找到需要更新的策略段"), {data: targetPolicySegment})
-            }
-            targetPolicySegment.policyName = item.policyName
-            targetPolicySegment.status = item.status
-        })
-
-        addPolicySegments && addPolicySegments.forEach(item => {
-            let newPolicy = ctx.helper.policyCompiler(item)
-            if (oldPolicySegments.has(newPolicy.segmentId)) {
-                throw Object.assign(new Error("不能添加已经存在的策略段"), {data: newPolicy})
-            }
-            oldPolicySegments.set(newPolicy.segmentId, newPolicy)
-        })
-
-        return Array.from(oldPolicySegments.values())
     }
 
     /**
@@ -295,154 +245,67 @@ class AuthSchemeService extends Service {
     }
 
     /**
-     * 检查声明和上抛资源信息是否完整
-     * @param dutyStatements
-     * @param resourceInfo
-     * @param bubbleResources
-     * @returns {Promise<void>}
-     * @private
+     * 检查是否存在有效的授权方案
      */
-    async _checkStatementAndBubble1({authScheme, resourceInfo, bubbleResources}) {
-
-        var {ctx} = this
-        var allBubbleResources = resourceInfo.systemMeta.dependencies.slice()
-
-        const intersection = lodash.intersectionBy(authScheme.dutyStatements, bubbleResources, 'resourceId')
-        if (intersection.length) {
-            ctx.error({msg: '声明与上抛的资源数据中存在交集', data: intersection})
-        }
-
-        if (authScheme.__authSchemeList__) {
-            authScheme.__authSchemeList__.forEach(item => allBubbleResources = allBubbleResources.concat(item.bubbleResources))
-        } else {
-            await ctx.dal.authSchemeProvider.find({_id: {$in: authScheme.dutyStatements.map(item => item.authSchemeId)}})
-                .each(item => allBubbleResources = allBubbleResources.concat(item.bubbleResources))
-        }
-
-        //如果声明解决的资源不是其选择的授权方案的上抛资源的子集,则说明声明数据有误
-        const invalidStatements = lodash.differenceBy(authScheme.dutyStatements, allBubbleResources, 'resourceId')
-        if (invalidStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,存在无效的声明',
-                data: {invalidStatements, allBubbleResources}
-            })
-        }
-
-        //除开声明部分,剩余需要解决的
-        const remainderBubbleResources = lodash.differenceBy(allBubbleResources, authScheme.dutyStatements, 'resourceId')
-        const invalidBubbleResources = lodash.differenceBy(bubbleResources, remainderBubbleResources, 'resourceId')
-        if (invalidBubbleResources.length) {
-            ctx.error({
-                msg: 'bubbleResources中存在无效上抛',
-                data: invalidBubbleResources
-            })
-        }
-
-        //未完全选择的资源(没有声明,也没有显示上抛)
-        const noHandlerBubbleResources = lodash.differenceBy(remainderBubbleResources, bubbleResources, 'resourceId')
-
-        return noHandlerBubbleResources
+    isExistValidAuthScheme(resourceId) {
+        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
     }
 
     /**
-     * 完善与校验责任声明数据
-     * @param resourceInfo
-     * @param dutyStatements
+     * 过滤掉指定的授权状态
+     * @param dataList
+     * @param policyStatus
      * @returns {Promise<void>}
      * @private
      */
-    async _perfectDutyStatements({authScheme, resourceInfo, dutyStatements}) {
+    _filterPolicyStatus(dataList, policyStatus) {
 
-        if (!dutyStatements.length) {
-            return []
+        if (policyStatus === 1 || policyStatus === 0) {
+            dataList.forEach(item => {
+                item.policy = item.policy.filter(x => x.status === policyStatus)
+            })
         }
 
-        const {ctx} = this
-        var allBubbleResources = resourceInfo.systemMeta.dependencies.slice()
-        const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
-        const authSchemeList = await ctx.dal.authSchemeProvider.find({_id: {$in: authSchemeIds}})
-        const authSchemeInfoMap = new Map(authSchemeList.map(item => [item._id.toString(), item]))
+        return dataList
+    }
 
-        const validateFailedStatements = dutyStatements.filter(statement => {
-            let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
-            if (authScheme) {
-                allBubbleResources = allBubbleResources.concat(authScheme.bubbleResources)
+    /**
+     * 处理策略段变更
+     * @param authScheme
+     * @param policies
+     * @returns {*}
+     * @private
+     */
+    _policiesHandler({authScheme, policies}) {
+
+        const {ctx} = this
+        const {removePolicySegments, addPolicySegments, updatePolicySegments} = policies
+        const oldPolicySegments = new Map(authScheme.policy.map(x => [x.segmentId, x]))
+
+        removePolicySegments && removePolicySegments.forEach(item => oldPolicySegments.delete(item))
+
+        updatePolicySegments && updatePolicySegments.forEach(item => {
+            let targetPolicySegment = oldPolicySegments.get(item.policySegmentId)
+            if (!targetPolicySegment) {
+                throw Object.assign(new Error("未能找到需要更新的策略段"), {data: targetPolicySegment})
             }
-            return !authScheme || authScheme.resourceId !== statement.resourceId // || authScheme.status !== 1
-                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId) // && x.status === 1)
+            targetPolicySegment.policyName = item.policyName
+            targetPolicySegment.status = item.status
         })
-        if (validateFailedStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId是否匹配',
-                data: validateFailedStatements
-            })
-        }
 
-        const invalidStatements = lodash.differenceBy(dutyStatements, allBubbleResources, 'resourceId')
-        if (invalidStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,存在无效的声明',
-                data: {invalidStatements, allBubbleResources}
-            })
-        }
+        addPolicySegments && addPolicySegments.forEach(item => {
+            let newPolicy = ctx.helper.policyCompiler(item)
+            if (oldPolicySegments.has(newPolicy.segmentId)) {
+                throw Object.assign(new Error("不能添加已经存在的策略段"), {data: newPolicy})
+            }
+            oldPolicySegments.set(newPolicy.segmentId, newPolicy)
+        })
 
-        authScheme.__authSchemeList__ = authSchemeList
-
-        return this._validateDependencyStatements(resourceInfo, dutyStatements)
+        return Array.from(oldPolicySegments.values())
     }
 
     /**
-     * 校验声明与上抛的数据在依赖树上是否完整
-     * @param statementMaps
-     * @param resourceTree
-     * @private
-     */
-    async _validateDependency(resourceInfo, dutyStatements, bubbleResources) {
-
-        const {ctx} = this
-        const resourceDependencies = [{
-            resourceId: resourceInfo.resourceId,
-            resourceName: resourceInfo.resourceName,
-            resourceType: resourceInfo.resourceType,
-            dependencies: await ctx.service.resourceService.buildDependencyTree(resourceInfo.systemMeta.dependencies)
-        }]
-
-        const statementMaps = dutyStatements.reduce((acc, current) => {
-            return acc.set(current.resourceId, Object.assign({}, current))
-        }, new Map([[resourceInfo.resourceId, {validate: true}]]))
-
-        const recursion = (resourceTree, statementMaps) => {
-            resourceTree.forEach(item => item.dependencies.forEach(node => {
-                if (!statementMaps.has(node.resourceId)) {
-                    return
-                }
-                //父级存在并且父级的依赖也存在,则表示依赖链完整
-                let parent = statementMaps.get(item.resourceId)
-                statementMaps.get(node.resourceId).validate = Boolean(parent && parent.validate)
-                statementMaps.get(node.resourceId).resourceName = node.resourceName
-                recursion(item.dependencies, statementMaps)
-            }))
-        }
-
-        recursion(resourceDependencies, statementMaps)
-
-        statementMaps.delete(resourceInfo.resourceId)
-
-        const buildStatements = Array.from(statementMaps.values())
-        if (buildStatements.length !== dutyStatements.length) {
-            ctx.error({msg: 'dutyStatements数据校验失败,请检查是否有重复的资源声明', data: {dutyStatements}})
-        }
-
-        const validateFailedStatements = buildStatements.filter(item => !item.validate)
-        if (validateFailedStatements.length) {
-            ctx.error({msg: 'dutyStatements数据校验失败,请检查依赖链是否完整', data: validateFailedStatements})
-        }
-
-        return buildStatements
-    }
-
-    /**
-     * 计算覆盖率
+     * 计算覆盖率 (目前未完成)
      * @private
      */
     _calculateCoverageRate({authScheme, authSchemeInfos}) {
@@ -500,27 +363,6 @@ class AuthSchemeService extends Service {
             totalItem = this._getTreeNodeCount(item.dependencies || [], totalItem)
         })
         return totalItem
-    }
-
-    /**
-     * 比较两个带有资源ID实体是否同属一个资源对象
-     * @param resourceA
-     * @param resourceB
-     * @returns {boolean}
-     * @private
-     */
-    _isEqualResource(resourceA, resourceB) {
-        return resourceA.resourceId === resourceB.resourceId
-    }
-
-    /**
-     * 去重
-     * @param resources
-     * @returns {*}
-     * @private
-     */
-    _sortedUniqResoure(resources) {
-        return lodash.sortedUniqBy(resources, x => x.resourceId)
     }
 }
 

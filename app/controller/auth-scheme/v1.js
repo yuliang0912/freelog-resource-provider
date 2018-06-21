@@ -190,7 +190,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
 
-        await ctx.service.authSchemeService.deleteAuthScheme(authSchemeId, authScheme.resourceId)
+        await ctx.service.authSchemeService.deleteAuthScheme(authScheme.toObject())
             .then(data => ctx.success(true)).catch(ctx.error)
     }
 }

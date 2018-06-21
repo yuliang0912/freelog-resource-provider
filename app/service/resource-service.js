@@ -5,6 +5,7 @@ const lodash = require('lodash')
 const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
+const resourceEvents = require('../enum/resource-events')
 
 class ResourceService extends Service {
 
@@ -94,11 +95,15 @@ class ResourceService extends Service {
         const resourceObjectKey = `resources/${uploadFileInfo.resourceType}/${resourceInfo.resourceId}`
         resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
 
-        await ctx.helper.resourceAttributeCheck(resourceInfo).then(() => ctx.dal.resourceProvider.createResource(resourceInfo, parentId))
+        await ctx.helper.resourceAttributeCheck(resourceInfo)
+        await ctx.dal.resourceProvider.createResource(resourceInfo, parentId)
 
-        ctx.dal.resourceTreeProvider.createResourceTree(userInfo.userId, resourceInfo.resourceId, parentId).catch(console.error)
-        ctx.dal.uploadFileInfoProvider.deleteOne({sha1, userId: userInfo.userId}).catch(console.error)
-        app.ossClient.copyFile(resourceObjectKey, uploadFileInfo.objectKey).catch(console.error)
+        app.emit(resourceEvents.createResourceEvent, {
+            resourceInfo,
+            resourceObjectKey,
+            uploadObjectKey: uploadFileInfo.objectKey,
+            parentId
+        })
 
         return resourceInfo
     }
