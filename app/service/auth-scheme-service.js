@@ -53,10 +53,14 @@ class AuthSchemeService extends Service {
         }
 
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
-        if (authScheme.status === 1 && (!authScheme.policy.length || untreatedResources.length)) {
+        if (authScheme.status === 1 && (!authScheme.policy.length || dutyStatements.length || untreatedResources.length)) {
             ctx.error({
                 msg: "当前状态无法直接发布,请检查是否存在有效策略,以及全部处理好依赖资源",
-                data: {policyCount: authScheme.policy.length, untreatedResources}
+                data: {
+                    policyCount: authScheme.policy.length,
+                    dutyStatementsCount: dutyStatements.length,
+                    untreatedResources
+                }
             })
         }
 
