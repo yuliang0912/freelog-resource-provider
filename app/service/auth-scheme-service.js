@@ -93,8 +93,8 @@ class AuthSchemeService extends Service {
             model.policy = this._policiesHandler({authScheme, policies})
         }
         if (dutyStatements || bubbleResources) {
-            authScheme.dutyStatements = dutyStatements || authScheme.dutyStatements
-            authScheme.bubbleResources = bubbleResources || authScheme.bubbleResources
+            model.dutyStatements = authScheme.dutyStatements = dutyStatements || authScheme.dutyStatements
+            model.bubbleResources = authScheme.bubbleResources = bubbleResources || authScheme.bubbleResources
             const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
             await this._checkStatementAndBubble({authScheme, resourceInfo})
         }

@@ -49,8 +49,7 @@ module.exports = class PolicyController extends Controller {
 
         ctx.validate()
 
-        let authSchemeInfo = await ctx.dal.authSchemeProvider.findById(authSchemeId)
-
+        const authSchemeInfo = await ctx.dal.authSchemeProvider.findById(authSchemeId)
         if (policyStatus === 0 || policyStatus === 1) {
             authSchemeInfo.policy = authSchemeInfo.policy.filter(x => x.status === policyStatus)
         }
@@ -214,7 +213,6 @@ module.exports = class PolicyController extends Controller {
         if (!contractIds.length) {
             return ctx.success([])
         }
-
 
         var contractInfos = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`)
         if (contractStatus) {
