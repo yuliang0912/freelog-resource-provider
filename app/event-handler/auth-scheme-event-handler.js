@@ -17,14 +17,22 @@ module.exports = class ResourceEventHandler {
     async authSchemeStateChangeHandler({authScheme}) {
 
         const {app} = this
+
         //发布授权点
         if (authScheme.status === 1) {
-            await app.dal.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId})
+            await app.dal.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
+                console.error("authSchemeStateChangeHandler-error", error)
+                app.logger.error("authSchemeStateChangeHandler-error", error)
+            })
         }
+
         //废弃授权点
         if (authScheme.status === 4) {
             await app.dal.authSchemeProvider.count({resourceId: authScheme.resourceId, status: 1}).then(count => {
                 return count < 1 ? app.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: authScheme.resourceId}) : null
+            }).catch(error => {
+                console.error("authSchemeStateChangeHandler-error", error)
+                app.logger.error("authSchemeStateChangeHandler-error", error)
             })
         }
     }

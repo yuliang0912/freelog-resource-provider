@@ -207,13 +207,14 @@ module.exports = class PolicyController extends Controller {
 
         const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
-            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
+            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: {userId: ctx.request.userId}})
         }
 
         const contractIds = authScheme.associatedContracts.map(x => x.contractId)
         if (!contractIds.length) {
             return ctx.success([])
         }
+
 
         var contractInfos = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${contractIds.toString()}`)
         if (contractStatus) {

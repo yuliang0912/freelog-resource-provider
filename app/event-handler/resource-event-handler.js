@@ -14,8 +14,11 @@ module.exports = class ResourceEventHandler {
      */
     async createResourceTree({resourceInfo, parentId}) {
 
-        await this.app.dal.resourceTreeProvider.createResourceTree(resourceInfo.userId, resourceInfo.resourceId, parentId).catch(error => {
-            console.error("createResourceEvent-createResourceTree-error", error)
+        const {app} = this
+
+        await app.dal.resourceTreeProvider.createResourceTree(resourceInfo.userId, resourceInfo.resourceId, parentId).catch(error => {
+            console.error('createResourceEvent-createResourceTree-error', error)
+            app.logger.error('createResourceEvent-createResourceTree-error', error)
         })
     }
 
@@ -24,11 +27,14 @@ module.exports = class ResourceEventHandler {
      */
     async deleteUploadFileInfo({resourceInfo}) {
 
-        await this.app.dal.uploadFileInfoProvider.deleteOne({
+        const {app} = this
+
+        await app.dal.uploadFileInfoProvider.deleteOne({
             sha1: resourceInfo.resourceId,
             userId: resourceInfo.userId
         }).catch(error => {
             console.error("createResourceEvent-deleteUploadFileInfo-error", error)
+            app.logger.error('createResourceEvent-deleteUploadFileInfo-error', error)
         })
     }
 
@@ -36,8 +42,36 @@ module.exports = class ResourceEventHandler {
      * 复制临时文件到正式文件夹
      */
     async copyFile({resourceObjectKey, uploadObjectKey}) {
-        this.app.ossClient.copyFile(resourceObjectKey, uploadObjectKey).catch(error => {
+
+        const {app} = this
+
+        await app.ossClient.copyFile(resourceObjectKey, uploadObjectKey).catch(error => {
             console.error("createResourceEvent-copyFile-error", error)
+            app.logger.error("createResourceEvent-copyFile-error", error)
+        })
+    }
+
+    /**
+     * 创建插件
+     * @param resourceInfo
+     * @returns {Promise<void>}
+     */
+    async createComponents({resourceInfo}) {
+
+        const {app} = this
+
+        if (resourceInfo.resourceType !== app.resourceType.WIDGET) {
+            return
+        }
+
+        await app.dal.componentsProvider.create({
+            widgetName: resourceInfo.systemMeta.widgetName,
+            version: resourceInfo.systemMeta.version,
+            resourceId: resourceInfo.resourceId,
+            userId: resourceInfo.userId
+        }).catch(error => {
+            console.error('createResourceEvent-createComponents-error', error)
+            app.logger.error('createResourceEvent-createComponents-error', error)
         })
     }
 
@@ -48,9 +82,10 @@ module.exports = class ResourceEventHandler {
     __registerEventHandler__() {
 
         // arguments : {resourceInfo, resourceObjectKey, uploadObjectKey, parentId}
+        this.app.on(resourceEvents.createResourceEvent, (...args) => this.copyFile(...args))
+        this.app.on(resourceEvents.createResourceEvent, (...args) => this.createComponents(...args))
         this.app.on(resourceEvents.createResourceEvent, (...args) => this.createResourceTree(...args))
         this.app.on(resourceEvents.createResourceEvent, (...args) => this.deleteUploadFileInfo(...args))
-        this.app.on(resourceEvents.createResourceEvent, (...args) => this.copyFile(...args))
 
     }
 }
