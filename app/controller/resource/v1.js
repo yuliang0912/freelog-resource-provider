@@ -89,7 +89,7 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
 
-        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['http']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
         }
 
@@ -146,7 +146,7 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
 
-        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['http']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
         }
 
