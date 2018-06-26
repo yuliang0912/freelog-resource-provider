@@ -61,9 +61,7 @@ module.exports = class CollectionController extends Controller {
             .map(x => [x.resourceId, x]).then(list => new Map(list))
 
         await ctx.dal.resourceProvider.getResourceByIdList(Array.from(collectionResources.keys())).then(dataList => {
-            dataList.forEach(item => {
-                item.collectionDate = collectionResources.get(item.resourceId).createDate
-            })
+            dataList.forEach(item => item.collectionDate = collectionResources.get(item.resourceId).createDate)
             result.dataList = dataList
         })
 

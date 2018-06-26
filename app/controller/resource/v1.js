@@ -67,55 +67,12 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async show(ctx) {
-        let resourceIdMatch = new RegExp(`^([0-9a-zA-Z]{40})+(.${ctx.app.resourceAttribute.allAttributes.join('|.')})?$`)
-        let resourceMatch = ctx.checkParams("id").match(resourceIdMatch, 'id格式匹配错误').value
+
+        const resourceId = ctx.checkParams('id').isResourceId().value
+
         ctx.validate(false)
 
-        //etag 缓存后期再实现
-        // ctx.set('Last-Modified', '"W/123"')
-        // ctx.set('ETag', '"123"')
-        // console.log(ctx.header)
-        // console.log(ctx.response.header)
-        // if (ctx.fresh) {
-        //     ctx.status = 304;
-        //     return;
-        // }
-
-        let resourceId = resourceMatch.split('.')[0]
-        let attribute = resourceMatch.split('.')[1]
-        let resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId}).catch(ctx.error)
-
-        if (!resourceInfo) {
-            ctx.error({msg: '未找到资源'})
-        }
-
-        if (!attribute || !resourceInfo) {
-            return ctx.success(resourceInfo)
-        }
-
-        let content = await ctx.curl(resourceInfo.resourceUrl)
-        if (resourceInfo.mimeType === 'application/json') {
-            ctx.success(JSON.parse(content.data.toString())[attribute])
-        } else {
-            ctx.success(content.data.toString())
-        }
-
-        // let resourceInfo = await ctx.validate().service.resourceService
-        //     .getResourceInfo({resourceId})
-        //
-        // if (!resourceInfo) {
-        //     ctx.error('未找到资源')
-        // }
-        //
-        // /**
-        //  * 资源实际展示示例
-        //  */
-        // await ctx.curl(resourceInfo.resourceUrl).then(res => {
-        //     ctx.body = res.data
-        //     ctx.set('Content-Type', resourceInfo.mimeType)
-        //     // ctx.set('etag', file.headers['etag'])
-        //     // ctx.set('last-modified', file.headers['last-modified'])
-        // })
+        await ctx.dal.resourceProvider.getResourceInfo({resourceId}).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -128,9 +85,9 @@ module.exports = class ResourcesController extends Controller {
         const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const parentId = ctx.checkBody('parentId').optional().isResourceId().value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
 
         if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})

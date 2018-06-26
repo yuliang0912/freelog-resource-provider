@@ -11,10 +11,10 @@ const JsonWebToken = require('egg-freelog-base/app/extend/helper/jwt_helper')
 
 module.exports = class ResourceAuthController extends Controller {
 
-    constructor(arg) {
-        super(arg)
-        this.client = new aliOss(arg.app.config.uploadConfig.aliOss)
-        this.resourceAuthJwt = new JsonWebToken(arg.app.config.RasSha256Key.resourceAuth.publicKey)
+    constructor({app}) {
+        super(...arguments)
+        this.client = new aliOss(app.config.uploadConfig.aliOss)
+        this.resourceAuthJwt = new JsonWebToken(app.config.RasSha256Key.resourceAuth.publicKey)
     }
 
     /**

@@ -214,9 +214,9 @@ class ResourceService extends Service {
             ctx.error(err)
         })
 
-        const uploadConfig = lodash.defaultsDeep({}, {aliOss: {bucket: 'freelog-image'}}, config.uploadConfig)
+        const uploadConfig = lodash.defaultsDeep({}, {uploadConfig: {aliOss: {bucket: 'freelog-image'}}}, config)
         const fileUrl = await app.ossClientCustom(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
-            .then(data => data.url.replace('-internal', ''))
+            .then(data => data.url.replace('-internal', '')).catch(console.error)
 
         return fileUrl
     }
