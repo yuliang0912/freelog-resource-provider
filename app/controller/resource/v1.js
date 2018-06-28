@@ -226,7 +226,7 @@ module.exports = class ResourcesController extends Controller {
         const fileUploadAsync = ctx.app.ossClient.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
 
         const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
-            meta: meta,
+            meta: JSON.stringify(meta),
             systemMeta: JSON.stringify(metaInfo.systemMeta),
             resourceUrl: uploadData.url,
             mimeType: metaInfo.systemMeta.mimeType

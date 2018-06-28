@@ -7,6 +7,7 @@ const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 const resourceEvents = require('../enum/resource-events')
 
+
 class ResourceService extends Service {
 
     /**
@@ -205,7 +206,7 @@ class ResourceService extends Service {
      */
     async uploadPreviewImage(fileStream) {
 
-        const {ctx, app, config} = this
+        const {ctx, app} = this
         const fileCheckResult = await ctx.helper.subsidiaryFileCheck({
             fileStream,
             checkType: 'thumbnailImage'
@@ -214,9 +215,8 @@ class ResourceService extends Service {
             ctx.error(err)
         })
 
-        const uploadConfig = lodash.defaultsDeep({}, {uploadConfig: {aliOss: {bucket: 'freelog-image'}}}, config)
-        const fileUrl = await app.ossClientCustom(uploadConfig).putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
-            .then(data => data.url.replace('-internal', '')).catch(console.error)
+        const fileUrl = await app.previewImageOssClient.putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
+            .then(data => data.url.replace('-internal', ''))
 
         return fileUrl
     }
