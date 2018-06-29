@@ -1,7 +1,6 @@
 'use strict'
 
 const uuid = require('uuid')
-const lodash = require('lodash')
 const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')

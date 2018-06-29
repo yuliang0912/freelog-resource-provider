@@ -61,6 +61,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
         })
 
         return this.resourceKnex.transaction(trans => {
+
             const task1 = super.queryChain.transacting(trans).insert(resource)
             const task2 = this.resourceKnex.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
                  VALUES (:resourceId,:resourceName,:lastVersion,:userId,:status,:createDate) ON DUPLICATE KEY UPDATE lastVersion = :lastVersion`,
@@ -72,16 +73,8 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
                     createDate: resource.createDate,
                     status: 1
                 }).transacting(trans).then()
-            const task3 = resource.resourceType === this.app.resourceType.WIDGET ?
-                this.resourceKnex('components').transacting(trans).insert({
-                    widgetName: systemMeta.widgetName,
-                    version: systemMeta.version,
-                    resourceId: resource.resourceId,
-                    userId: resource.userId,
-                    createDate: resource.createDate,
-                }) : Promise.resolve(null)
 
-            return Promise.all([task1, task2, task3]).then(trans.commit).catch(trans.rollback)
+            return Promise.all([task1, task2]).then(trans.commit).catch(trans.rollback)
         })
     }
 
