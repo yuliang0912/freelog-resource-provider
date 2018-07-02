@@ -89,11 +89,12 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
 
+        ctx.allowContentType({type: 'json'}).validate()
+
         if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['http']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
+            ctx.validate()
         }
-
-        ctx.allowContentType({type: 'json'}).validate()
 
         if (parentId) {
             const parentResource = await ctx.dal.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
@@ -146,11 +147,12 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
 
+        ctx.allowContentType({type: 'json'}).validate()
+
         if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['http']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
+            ctx.validate()
         }
-
-        ctx.allowContentType({type: 'json'}).validate()
 
         if (meta === undefined && resourceName === undefined && previewImages === undefined) {
             ctx.error({msg: '缺少有效参数'})

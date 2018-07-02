@@ -6,7 +6,6 @@ const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 const resourceEvents = require('../enum/resource-events')
 
-
 class ResourceService extends Service {
 
     /**

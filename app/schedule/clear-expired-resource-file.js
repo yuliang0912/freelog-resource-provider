@@ -15,7 +15,17 @@ module.exports = class ClearExpiredResourceFile extends Subscription {
         }
     }
 
+    /**
+     * 定时清理掉已经过去30天的临时数据
+     * @returns {Promise<void>}
+     */
     async subscribe() {
-        console.log('定时执行清理过期文件任务')
+
+        const {app} = this
+
+        const currentDate = app.moment().toDate().toLocaleString()
+
+        await app.dal.uploadFileInfoProvider.deleteMany({expireDate: {$lt: currentDate}})
     }
+
 }

@@ -138,6 +138,8 @@ module.exports = app => {
 
         customLoader: [{
             name: 'eventHandler', dir: 'app/event-handler'
+        }, {
+            name: 'router1', dir: 'app/routers'
         }]
     }
 }
