@@ -6,9 +6,7 @@ const path = require('path')
 module.exports = app => {
     return {
         cluster: {
-            listen: {
-                port: 7001
-            }
+            listen: {port: 7001}
         },
 
         keys: '20ab72d9397ff78c5058a106c635f008',

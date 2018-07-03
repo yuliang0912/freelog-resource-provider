@@ -8,4 +8,16 @@ module.exports = class ResourceTreeProvider extends MongoBaseOperation {
         super(app.model.UploadFileInfo)
     }
 
+    create(uploadFileInfo) {
+
+        const condition = {
+            userId: uploadFileInfo.userId,
+            sha1: uploadFileInfo.sha1
+        }
+
+        return super.findOneAndUpdate(condition, {resourceType: uploadFileInfo.resourceType}).then(oldInfo => {
+            return oldInfo ? super.findOne(condition) : super.create(uploadFileInfo)
+        })
+    }
+
 }

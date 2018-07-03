@@ -137,7 +137,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: "最少需要一个有效参数"})
         }
 
-        let authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }

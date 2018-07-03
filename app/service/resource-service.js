@@ -38,15 +38,9 @@ class ResourceService extends Service {
             ctx.error({msg: '资源已经存在,不能上传重复的文件', data: {resourceInfo}})
         }
 
-        await ctx.dal.uploadFileInfoProvider.findOne({
-            userId, sha1: uploadFileInfo.sha1
-        }).then(oldUploadFileInfo => {
-            if (!oldUploadFileInfo) {
-                return ctx.dal.uploadFileInfoProvider.create(uploadFileInfo).catch(ctx.error)
-            }
-        })
-
-        return {sha1: uploadFileInfo.sha1}
+        return ctx.dal.uploadFileInfoProvider.create(uploadFileInfo).then(data => {
+            return {sha1: uploadFileInfo.sha1}
+        }).catch(ctx.error)
     }
 
     /**
