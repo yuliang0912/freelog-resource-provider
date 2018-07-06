@@ -82,7 +82,6 @@ module.exports = class PolicyController extends Controller {
             const result = statementAndBubbleSchema.validate(bubbleResources, statementAndBubbleSchema.bubbleResourcesValidator)
             result.errors.length && ctx.error({msg: '参数bubbleResources格式校验失败', data: result.errors})
         }
-
         if (policies) {
             const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.addPolicySegmentsValidator)
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
