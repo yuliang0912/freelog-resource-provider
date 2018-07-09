@@ -179,13 +179,13 @@ class AuthSchemeService extends Service {
      */
     async _checkStatementAndBubble({authScheme, resourceInfo}) {
 
+        const {ctx} = this
         const {dutyStatements, bubbleResources} = authScheme
         const intersection = lodash.intersectionBy(dutyStatements, bubbleResources, 'resourceId')
         if (intersection.length) {
             ctx.error({msg: '声明与上抛的资源数据中存在交集', data: intersection})
         }
 
-        const {ctx} = this
         const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
         const dutyStatementMap = new Map(dutyStatements.map(x => [x.resourceId, x]))
         const bubbleResourceMap = new Map(bubbleResources.map(x => [x.resourceId, x]))
