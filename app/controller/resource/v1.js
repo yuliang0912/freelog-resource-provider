@@ -188,7 +188,7 @@ module.exports = class ResourcesController extends Controller {
      */
     async list(ctx) {
 
-        const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value
+        const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 1000).value
 
         ctx.validate()
 

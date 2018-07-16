@@ -28,6 +28,7 @@
     "mongoose": "^5.2.1",
     "node-mysql": "^0.4.2",
     "patrun": "^0.5.1",
+    "request": "^2.85.0",
     "semver": "^5.5.0",
     "stream-wormhole": "^1.0.3",
     "uuid": "^3.3.2"

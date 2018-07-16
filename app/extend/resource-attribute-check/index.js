@@ -4,6 +4,7 @@
 'use strict'
 
 const Patrun = require('patrun')
+const lodash = require('lodash')
 const resourceType = require('egg-freelog-base/app/enum/resource_type')
 const widgetNameVersionCheck = require('./widget-name-version-check')
 const resourceDependencyCheck = require('./resource_dependencies_check')
@@ -47,6 +48,8 @@ class ResourceAttributeCheck {
 
             return Promise.all([dependencyCheckTask, checkTask]).then(([dependencyInfo, checkInfo]) => {
                 return {systemMeta: Object.assign({dependencies: []}, dependencyInfo, checkInfo)}
+            }).then(systemMeta => {
+                resourceInfo.systemMeta = lodash.defaultsDeep(systemMeta, resourceInfo.systemMeta)
             })
         }
 
