@@ -68,8 +68,6 @@ module.exports = class ResourcesController extends Controller {
      */
     async show(ctx) {
 
-
-
         const resourceId = ctx.checkParams('id').isResourceId().value
 
         ctx.validate(false)

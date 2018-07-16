@@ -49,7 +49,7 @@ class ResourceAttributeCheck {
             return Promise.all([dependencyCheckTask, checkTask]).then(([dependencyInfo, checkInfo]) => {
                 return {systemMeta: Object.assign({dependencies: []}, dependencyInfo, checkInfo)}
             }).then(systemMeta => {
-                resourceInfo.systemMeta = lodash.defaultsDeep(systemMeta, resourceInfo.systemMeta)
+                resourceInfo.systemMeta = lodash.defaultsDeep(systemMeta.systemMeta, resourceInfo.systemMeta)
             })
         }
 
