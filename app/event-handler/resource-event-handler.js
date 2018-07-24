@@ -46,7 +46,7 @@ module.exports = class ResourceEventHandler {
         const {app} = this
 
         await app.ossClient.copyFile(resourceObjectKey, uploadObjectKey).catch(error => {
-            console.error("createResourceEvent-copyFile-error", error)
+            console.error("createResourceEvent-copyFile-error", error, resourceObjectKey, uploadObjectKey)
             app.logger.error("createResourceEvent-copyFile-error", error, resourceObjectKey, uploadObjectKey)
         })
     }

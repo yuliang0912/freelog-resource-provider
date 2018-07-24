@@ -56,9 +56,8 @@ module.exports = class ResourcesController extends Controller {
             ctx.success({page, pageSize, totalItem, dataList: []})
         }
 
-        await ctx.dal.resourceProvider.getResourceByIdList(respositories.map(t => t.lastVersion)).then(dataList => {
-            ctx.success({page, pageSize, totalItem, dataList})
-        })
+        await ctx.dal.resourceProvider.getResourceByIdList(respositories.map(t => t.lastVersion))
+            .then(dataList => ctx.success({page, pageSize, totalItem, dataList}))
     }
 
     /**
