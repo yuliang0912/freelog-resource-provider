@@ -88,7 +88,9 @@ class FileGeneralCheck {
             fileStream.on('data', chunk => {
                 sha1sum.update(chunk)
                 fileSize += chunk.length
-            }).on('end', () => resolve({sha1: sha1sum.digest('hex'), fileSize, mimeType})).on('error', reject)
+            }).on('end', () => resolve({
+                sha1: sha1sum.digest('hex'), fileSize, mimeType
+            })).on('error', reject)
         })
     }
 }

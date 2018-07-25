@@ -18,7 +18,8 @@ class ResourceService extends Service {
 
         const {ctx, app} = this
         const userId = ctx.request.userId
-        const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
+        const extension = fileStream.filename.substr(fileStream.filename.lastIndexOf('.'))
+        const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}${extension}`.toLowerCase()
         const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
         const fileUploadAsync = app.ossClient.putStream(objectKey, fileStream)
 

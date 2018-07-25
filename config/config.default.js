@@ -47,8 +47,7 @@ module.exports = app => {
             resource: {
                 client: 'mysql',
                 connection: {
-                    host: '192.168.2.239',
-                    user: 'root',
+                    host: 'localhost',
                     password: 'yuliang@@',
                     database: 'fr_resource',
                     charset: 'utf8',
@@ -73,7 +72,7 @@ module.exports = app => {
         },
 
         mongoose: {
-            url: "mongodb://192.168.2.239:27017/resource"
+            url: "mongodb://127.0.0.1:27017/resource"
         },
 
         /**
