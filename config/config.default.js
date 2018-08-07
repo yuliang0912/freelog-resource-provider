@@ -47,7 +47,7 @@ module.exports = app => {
             resource: {
                 client: 'mysql',
                 connection: {
-                    host: 'localhost',
+                    host: '192.168.2.181',
                     password: 'yuliang@@',
                     database: 'fr_resource',
                     charset: 'utf8',

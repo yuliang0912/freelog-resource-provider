@@ -6,6 +6,13 @@ const authSchemeEvents = require('../enum/auth-scheme-events')
 
 class AuthSchemeService extends Service {
 
+    constructor({app}) {
+        super(...arguments)
+        this.resourceProvider = app.dal.resourceProvider
+        this.authSchemeProvider = app.dal.authSchemeProvider
+    }
+
+
     /**
      * 查找授权方案列表
      * @param authSchemeIds
@@ -27,7 +34,7 @@ class AuthSchemeService extends Service {
             condition.status = authSchemeStatus
         }
 
-        return this.ctx.dal.authSchemeProvider.find(condition).then(dataList => this._filterPolicyStatus(dataList, policyStatus))
+        return this.authSchemeProvider.find(condition).then(dataList => this._filterPolicyStatus(dataList, policyStatus))
     }
 
     /**
@@ -43,7 +50,7 @@ class AuthSchemeService extends Service {
      */
     async createAuthScheme({authSchemeName, resourceInfo, policies, languageType, dutyStatements, bubbleResources, isPublish}) {
 
-        const {app, ctx} = this
+        const {app, ctx, authSchemeProvider} = this
 
         resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
 
@@ -72,7 +79,7 @@ class AuthSchemeService extends Service {
             })
         }
 
-        return ctx.dal.authSchemeProvider.create(authScheme).tap(() => app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme}))
+        return authSchemeProvider.create(authScheme).tap(() => app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme}))
     }
 
     /**
@@ -86,7 +93,7 @@ class AuthSchemeService extends Service {
      */
     async updateAuthScheme({authScheme, authSchemeName, policies, dutyStatements, bubbleResources}) {
 
-        const {ctx} = this
+        const {resourceProvider, authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
         if (policies) {
@@ -95,11 +102,11 @@ class AuthSchemeService extends Service {
         if (dutyStatements || bubbleResources) {
             model.dutyStatements = authScheme.dutyStatements = dutyStatements || authScheme.dutyStatements
             model.bubbleResources = authScheme.bubbleResources = bubbleResources || authScheme.bubbleResources
-            const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+            const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
             await this._checkStatementAndBubble({authScheme, resourceInfo})
         }
 
-        return ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
+        return authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
     }
 
     /**
@@ -108,7 +115,7 @@ class AuthSchemeService extends Service {
      */
     async batchSignContracts({authScheme}) {
 
-        const {ctx, app} = this
+        const {ctx, app, resourceProvider, authSchemeProvider} = this
 
         if (authScheme.status !== 0) {
             ctx.error({msg: '只有初始状态的授权方案才能发布', data: {currentStatus: authScheme.status}})
@@ -117,7 +124,7 @@ class AuthSchemeService extends Service {
             ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
         }
 
-        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
         if (untreatedResources.length) {
             ctx.error({msg: '声明与上抛的数据不全,无法发布', data: {untreatedResources}})
@@ -148,7 +155,7 @@ class AuthSchemeService extends Service {
             contractId: x.contractId
         }))
 
-        await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {
+        await authSchemeProvider.update({_id: authScheme.authSchemeId}, {
             status: 1,
             associatedContracts,
             dutyStatements: Array.from(dutyStatementMap.values()),
@@ -165,8 +172,8 @@ class AuthSchemeService extends Service {
      */
     async deleteAuthScheme(authScheme) {
 
-        const {ctx, app} = this
-        await ctx.dal.authSchemeProvider.update({_id: authScheme.authSchemeId}, {status: 4}).then(() => {
+        const {app, authSchemeProvider} = this
+        await authSchemeProvider.update({_id: authScheme.authSchemeId}, {status: 4}).then(() => {
             app.emit(authSchemeEvents.deleteAuthSchemeEvent, {authScheme: Object.assign(authScheme, {status: 4})})
         })
         return true
@@ -179,7 +186,7 @@ class AuthSchemeService extends Service {
      */
     async _checkStatementAndBubble({authScheme, resourceInfo}) {
 
-        const {ctx} = this
+        const {ctx, authSchemeProvider} = this
         const {dutyStatements, bubbleResources} = authScheme
         const intersection = lodash.intersectionBy(dutyStatements, bubbleResources, 'resourceId')
         if (intersection.length) {
@@ -189,7 +196,7 @@ class AuthSchemeService extends Service {
         const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
         const dutyStatementMap = new Map(dutyStatements.map(x => [x.resourceId, x]))
         const bubbleResourceMap = new Map(bubbleResources.map(x => [x.resourceId, x]))
-        const authSchemeInfoMap = await ctx.dal.authSchemeProvider.find({_id: {$in: authSchemeIds}}).then(dataList => {
+        const authSchemeInfoMap = await authSchemeProvider.find({_id: {$in: authSchemeIds}}).then(dataList => {
             return new Map(dataList.map(x => [x._id.toString(), x]))
         })
 
@@ -248,7 +255,7 @@ class AuthSchemeService extends Service {
      * 检查是否存在有效的授权方案
      */
     isExistValidAuthScheme(resourceId) {
-        return this.ctx.dal.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
+        return this.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
     }
 
     /**
