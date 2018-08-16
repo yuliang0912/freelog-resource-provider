@@ -5,7 +5,7 @@
 
 'use strict'
 
-const Controller = require('egg').Controller;
+const Controller = require('egg').Controller
 const sendToWormhole = require('stream-wormhole');
 
 module.exports = class ResourcesController extends Controller {

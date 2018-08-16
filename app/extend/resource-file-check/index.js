@@ -82,7 +82,10 @@ class FileGeneralCheck {
 
         let fileSize = 0
         const sha1sum = crypto.createHash('sha1')
-        const mimeType = mime.getType(fileStream.filename)
+        var mimeType = mime.getType(fileStream.filename)
+        if (!mimeType) {
+            mimeType = fileStream.mimeType
+        }
 
         return new Promise((resolve, reject) => {
             fileStream.on('data', chunk => {
