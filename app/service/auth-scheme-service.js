@@ -106,16 +106,15 @@ class AuthSchemeService extends Service {
             await this._checkStatementAndBubble({authScheme, resourceInfo})
         }
 
-        return authSchemeProvider.update({_id: authScheme.authSchemeId}, model)
+        return authSchemeProvider.updateOne({_id: authScheme.authSchemeId}, model)
     }
 
     /**
      * 授权点批量签约
-     * @returns {Promise<void>}
      */
     async batchSignContracts({authScheme}) {
 
-        const {ctx, app, resourceProvider, authSchemeProvider} = this
+        const {ctx, app, resourceProvider} = this
 
         if (authScheme.status !== 0) {
             ctx.error({msg: '只有初始状态的授权方案才能发布', data: {currentStatus: authScheme.status}})
@@ -126,12 +125,14 @@ class AuthSchemeService extends Service {
 
         const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
+
         if (untreatedResources.length) {
             ctx.error({msg: '声明与上抛的数据不全,无法发布', data: {untreatedResources}})
         }
 
         var contracts = []
         const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
+        console.log(contracts, dutyStatementMap)
         if (dutyStatementMap.size) {
             contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
                 method: 'post',
@@ -155,12 +156,11 @@ class AuthSchemeService extends Service {
             contractId: x.contractId
         }))
 
-        await authSchemeProvider.update({_id: authScheme.authSchemeId}, {
-            status: 1,
-            associatedContracts,
-            dutyStatements: Array.from(dutyStatementMap.values()),
+        await authScheme.updateOne({
+            status: 1, associatedContracts, dutyStatements: Array.from(dutyStatementMap.values()),
         }).then(() => {
-            app.emit(authSchemeEvents.releaseAuthSchemeEvent, {authScheme: Object.assign(authScheme, {status: 1})})
+            authScheme.status = 1
+            app.emit(authSchemeEvents.releaseAuthSchemeEvent, {authScheme})
         })
 
         return contracts
@@ -171,10 +171,9 @@ class AuthSchemeService extends Service {
      * @param authSchemeId
      */
     async deleteAuthScheme(authScheme) {
-
-        const {app, authSchemeProvider} = this
-        await authSchemeProvider.update({_id: authScheme.authSchemeId}, {status: 4}).then(() => {
-            app.emit(authSchemeEvents.deleteAuthSchemeEvent, {authScheme: Object.assign(authScheme, {status: 4})})
+        await authScheme.updateOne({status: 4}).then(() => {
+            authScheme.status = 4
+            this.app.emit(authSchemeEvents.deleteAuthSchemeEvent, {authScheme})
         })
         return true
     }
@@ -230,7 +229,7 @@ class AuthSchemeService extends Service {
             }
         })
 
-        recursion(resourceInfo.systemMeta.dependencies)
+        recursion(resourceInfo.systemMeta.dependencies || [])
 
         const invalidStatements = dutyStatements.filter(x => !x.validate)
         if (invalidStatements.length) {

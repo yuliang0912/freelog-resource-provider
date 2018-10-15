@@ -6,6 +6,9 @@ module.exports = class ResourceEventHandler {
 
     constructor(app) {
         this.app = app
+        this.resourceTreeProvider = app.dal.resourceTreeProvider
+        this.uploadFileInfoProvider = app.dal.uploadFileInfoProvider
+        this.componentsProvider = app.dal.componentsProvider
         this.__registerEventHandler__()
     }
 
@@ -14,9 +17,9 @@ module.exports = class ResourceEventHandler {
      */
     async createResourceTree({resourceInfo, parentId}) {
 
-        const {app} = this
+        const {app, resourceTreeProvider} = this
 
-        await app.dal.resourceTreeProvider.createResourceTree(resourceInfo.userId, resourceInfo.resourceId, parentId).catch(error => {
+        await resourceTreeProvider.createResourceTree(resourceInfo.userId, resourceInfo.resourceId, parentId).catch(error => {
             console.error('createResourceEvent-createResourceTree-error', error)
             app.logger.error('createResourceEvent-createResourceTree-error', error)
         })
@@ -27,9 +30,9 @@ module.exports = class ResourceEventHandler {
      */
     async deleteUploadFileInfo({resourceInfo}) {
 
-        const {app} = this
+        const {app, uploadFileInfoProvider} = this
 
-        await app.dal.uploadFileInfoProvider.deleteOne({
+        await uploadFileInfoProvider.deleteOne({
             sha1: resourceInfo.resourceId,
             userId: resourceInfo.userId
         }).catch(error => {
@@ -58,13 +61,13 @@ module.exports = class ResourceEventHandler {
      */
     async createComponents({resourceInfo}) {
 
-        const {app} = this
+        const {app, componentsProvider} = this
 
         if (resourceInfo.resourceType !== app.resourceType.WIDGET) {
             return
         }
 
-        await app.dal.componentsProvider.create({
+        await componentsProvider.create({
             widgetName: resourceInfo.systemMeta.widgetName,
             version: resourceInfo.systemMeta.version,
             resourceId: resourceInfo.resourceId,

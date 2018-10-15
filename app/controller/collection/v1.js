@@ -91,7 +91,7 @@ module.exports = class CollectionController extends Controller {
         const resourceId = ctx.checkParams('id').isResourceId().value
         ctx.validate()
 
-        await ctx.dal.collectionProvider.update({resourceId, userId: ctx.request.userId}, {status: 1})
+        await ctx.dal.collectionProvider.updateOne({resourceId, userId: ctx.request.userId}, {status: 1})
             .then(ret => ctx.success(ret.nModified > 0)).catch(ctx.error)
     }
 }

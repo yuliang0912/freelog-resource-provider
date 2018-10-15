@@ -145,7 +145,7 @@ module.exports = class PolicyController extends Controller {
         }
 
         await ctx.service.authSchemeService.updateAuthScheme({
-            authScheme: authScheme.toObject(), authSchemeName, policies, dutyStatements, bubbleResources
+            authScheme, authSchemeName, policies, dutyStatements, bubbleResources
         }).then(() => {
             return ctx.dal.authSchemeProvider.findById(authSchemeId)
         }).then(ctx.success).catch(ctx.error)
@@ -168,9 +168,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: "授权方案状态校验失败", data: {authSchemeStatus: authScheme.status}})
         }
 
-        await ctx.service.authSchemeService.batchSignContracts({
-            authScheme: authScheme.toObject()
-        }).then(ctx.success)
+        await ctx.service.authSchemeService.batchSignContracts({authScheme}).then(ctx.success)
     }
 
     /**
@@ -188,7 +186,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
 
-        await ctx.service.authSchemeService.deleteAuthScheme(authScheme.toObject())
+        await ctx.service.authSchemeService.deleteAuthScheme(authScheme)
             .then(data => ctx.success(true)).catch(ctx.error)
     }
 

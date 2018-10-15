@@ -44,9 +44,10 @@ module.exports = class ResourceEventHandler {
     __registerEventHandler__() {
 
         // arguments : {authScheme}
-        this.app.on(authSchemeEvents.createAuthSchemeEvent, (...args) => this.authSchemeStateChangeHandler(...args))
-        this.app.on(authSchemeEvents.releaseAuthSchemeEvent, (...args) => this.authSchemeStateChangeHandler(...args))
-        this.app.on(authSchemeEvents.deleteAuthSchemeEvent, (...args) => this.authSchemeStateChangeHandler(...args))
+        this.authSchemeStateChangeHandler = this.authSchemeStateChangeHandler.bind(this)
+        this.app.on(authSchemeEvents.createAuthSchemeEvent, this.authSchemeStateChangeHandler)
+        this.app.on(authSchemeEvents.releaseAuthSchemeEvent, this.authSchemeStateChangeHandler)
+        this.app.on(authSchemeEvents.deleteAuthSchemeEvent, this.authSchemeStateChangeHandler)
 
     }
 }

@@ -1,22 +1,14 @@
 'use strict'
 
+const lodash = require('lodash')
+
 module.exports = app => {
 
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return {
-                resourceId: ret.resourceId,
-                resourceName: ret.resourceName,
-                resourceType: ret.resourceType,
-                authorId: ret.authorId,
-                authorName: ret.authorName,
-                userId: ret.userId,
-                createDate: ret.createDate,
-                updateDate: ret.updateDate,
-                status: ret.status
-            }
+            return lodash.omit(ret, ['_id'])
         }
     }
 

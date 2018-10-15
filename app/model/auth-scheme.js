@@ -1,28 +1,14 @@
 'use strict'
 
+const lodash = require('lodash')
+
 module.exports = app => {
 
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return {
-                authSchemeId: ret._id.toString(),
-                authSchemeName: ret.authSchemeName,
-                resourceId: ret.resourceId,
-                dependCount: ret.dependCount,
-                statementState: ret.statementState,
-                policy: ret.policy,
-                languageType: ret.languageType,
-                bubbleResources: ret.bubbleResources,
-                dutyStatements: ret.dutyStatements,
-                statementCoverageRate: ret.statementCoverageRate,
-                associatedContracts: ret.associatedContracts,
-                contractCoverageRate: ret.contractCoverageRate,
-                userId: ret.userId,
-                serialNumber: ret.serialNumber,
-                status: ret.status
-            }
+            return Object.assign({authSchemeId: doc.id}, lodash.omit(ret, ['_id']))
         }
     }
 
@@ -64,6 +50,10 @@ module.exports = app => {
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
         toJSON: toObjectOptions,
         toObject: toObjectOptions
+    })
+
+    AuthSchemeSchema.virtual('authSchemeId').get(function () {
+        return this.id
     })
 
     AuthSchemeSchema.index({resourceId: 1, userId: 1, status: 1});

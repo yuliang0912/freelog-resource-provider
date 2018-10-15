@@ -7,8 +7,6 @@
 const lodash = require('lodash')
 const resourceStatus = require('../enum/resource_status')
 const resourceAttribute = require('../enum/resource_attribute')
-const restfulWebApi = require('./restful-web-api/index')
-const restfulWebApiKey = Symbol('app#restfulWebApiKey')
 const previewImageOssKey = Symbol("resource#previewImageOssKey")
 
 
@@ -35,16 +33,5 @@ module.exports = {
             this.__cacheMap__.set(previewImageOssKey, this.ossClientCustom(uploadConfig))
         }
         return this.__cacheMap__.get(previewImageOssKey)
-    },
-
-    /**
-     * restful-base-url
-     * @returns {*}
-     */
-    get webApi() {
-        if (!this.__cacheMap__.has(restfulWebApiKey)) {
-            this.__cacheMap__.set(restfulWebApiKey, new restfulWebApi(this.config))
-        }
-        return this.__cacheMap__.get(restfulWebApiKey)
     },
 }

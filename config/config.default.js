@@ -47,7 +47,8 @@ module.exports = app => {
             resource: {
                 client: 'mysql',
                 connection: {
-                    host: '192.168.2.181',
+                    host: '127.0.0.1',
+                    user: 'root',
                     password: 'yuliang@@',
                     database: 'fr_resource',
                     charset: 'utf8',
@@ -133,10 +134,6 @@ module.exports = app => {
             }
         },
 
-        customLoader: [{
-            name: 'eventHandler', dir: 'app/event-handler'
-        }, {
-            name: 'router1', dir: 'app/routers'
-        }]
+        customLoader: ['app/event-handler']
     }
 }

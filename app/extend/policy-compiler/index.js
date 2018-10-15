@@ -1,5 +1,6 @@
 'use strict'
 
+const lodash = require('lodash')
 const crypto = require('crypto')
 const Patrun = require('patrun')
 const {validator} = require('egg-freelog-base/app/extend/application')
@@ -61,13 +62,7 @@ class PolicyCompiler {
      */
     _policySegmentIdGenerate(policySegment) {
 
-        const signObject = {
-            users: policySegment.users,
-            fsmDescription: policySegment.fsmDescription,
-            activatedStates: policySegment.activatedStates,
-            initialState: policySegment.initialState,
-            teminateState: policySegment.teminateState
-        }
+        const signObject = lodash.pick(policySegment, ['authorizedObjects', 'fsmStates', 'fsmDeclarations'])
 
         const targetSignText = JSON.stringify(signObject).replace(/\s/g, "").toLowerCase()
 
