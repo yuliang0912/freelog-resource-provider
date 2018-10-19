@@ -110,10 +110,10 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
      * 获取资源仓储记录
      * @param condition
      */
-    getRespositories(condition, page, pageSize) {
+    getRepositories(condition, page, pageSize) {
 
         if (!super.type.object(condition)) {
-            return Promise.reject(new Error("getRespositories:condition must be object"))
+            return Promise.reject(new Error("getRepositories:condition must be object"))
         }
 
         return this.resourceKnex('respositories').where(condition)

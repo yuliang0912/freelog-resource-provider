@@ -7,13 +7,13 @@
     "framework": "egg-freelog-base"
   },
   "dependencies": {
-    "@freelog/resource-policy-lang": "0.0.25",
+    "@freelog/resource-policy-lang": "0.0.31",
     "ali-oss": "^4.15.1",
     "bluebird": "^3.5.2",
     "busboy": "^0.2.14",
     "cheerio": "^1.0.0-rc.2",
     "egg": "^2.12.0",
-    "egg-freelog-base": "^1.1.65",
+    "egg-freelog-base": "^1.1.66",
     "egg-freelog-database": "^1.0.12",
     "egg-scripts": "^2.10.0",
     "file-type": "^7.7.1",
@@ -39,12 +39,7 @@
   },
   "scripts": {
     "start": "egg-scripts start --workers=1",
-    "stop": "egg-scripts stop",
-    "test": "npm run lint -- --fix && npm run test-local",
-    "test-local": "egg-bin test",
-    "cov": "egg-bin cov",
-    "ci": "npm run lint && npm run cov",
-    "autod": "autod"
+    "stop": "egg-scripts stop"
   },
   "ci": {
     "version": "8, 9"

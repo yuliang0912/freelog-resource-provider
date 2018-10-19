@@ -50,7 +50,7 @@ module.exports = class ResourcesController extends Controller {
         const totalItem = await ctx.dal.resourceProvider.getResourceCount(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            respositories = await ctx.dal.resourceProvider.getRespositories(condition, page, pageSize).catch(ctx.error)
+            respositories = await ctx.dal.resourceProvider.getRepositories(condition, page, pageSize).catch(ctx.error)
         }
         if (respositories.length === 0) {
             ctx.success({page, pageSize, totalItem, dataList: []})

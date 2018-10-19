@@ -3,6 +3,7 @@
 const lodash = require('lodash')
 const Service = require('egg').Service
 const authSchemeEvents = require('../enum/auth-scheme-events')
+const {ApplicationError, LogicError} = require('egg-freelog-base/error')
 
 class AuthSchemeService extends Service {
 
@@ -69,13 +70,10 @@ class AuthSchemeService extends Service {
 
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
         if (authScheme.status === 1 && (!authScheme.policy.length || dutyStatements.length || untreatedResources.length)) {
-            ctx.error({
-                msg: "当前状态无法直接发布,请检查是否存在有效策略,以及全部处理好依赖资源",
-                data: {
-                    policyCount: authScheme.policy.length,
-                    dutyStatementsCount: dutyStatements.length,
-                    untreatedResources
-                }
+            throw new LogicError('当前状态无法直接发布,请检查是否存在有效策略,以及全部处理好依赖资源', {
+                policyCount: authScheme.policy.length,
+                dutyStatementsCount: dutyStatements.length,
+                untreatedResources
             })
         }
 
@@ -117,22 +115,22 @@ class AuthSchemeService extends Service {
         const {ctx, app, resourceProvider} = this
 
         if (authScheme.status !== 0) {
-            ctx.error({msg: '只有初始状态的授权方案才能发布', data: {currentStatus: authScheme.status}})
+            throw new ApplicationError('只有初始状态的授权方案才能发布', {currentStatus: authScheme.status})
         }
         if (!authScheme.policy.length) {
-            ctx.error({msg: '授权方案缺少策略,无法发布', data: {currentStatus: authScheme.status}})
+            throw new ApplicationError('授权方案缺少策略,无法发布', {currentStatus: authScheme.status})
         }
 
         const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
 
         if (untreatedResources.length) {
-            ctx.error({msg: '声明与上抛的数据不全,无法发布', data: {untreatedResources}})
+            throw new LogicError('声明与上抛的数据不全,无法发布', {untreatedResources})
         }
 
         var contracts = []
         const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
-        console.log(contracts, dutyStatementMap)
+
         if (dutyStatementMap.size) {
             contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
                 method: 'post',
@@ -180,7 +178,7 @@ class AuthSchemeService extends Service {
 
     /**
      * 检查上抛和声明的数据是否在上抛树上,而且依赖关系正确
-     * @returns {Promise<void>} 返回未处理的上抛(没声明也没显示上抛)
+     * 返回未处理的上抛(没声明也没显示上抛)
      * @private
      */
     async _checkStatementAndBubble({authScheme, resourceInfo}) {
@@ -189,7 +187,7 @@ class AuthSchemeService extends Service {
         const {dutyStatements, bubbleResources} = authScheme
         const intersection = lodash.intersectionBy(dutyStatements, bubbleResources, 'resourceId')
         if (intersection.length) {
-            ctx.error({msg: '声明与上抛的资源数据中存在交集', data: intersection})
+            throw new LogicError('声明与上抛的资源数据中存在交集', intersection)
         }
 
         const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
@@ -205,10 +203,7 @@ class AuthSchemeService extends Service {
                 || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId) // && x.status === 1)
         })
         if (validateFailedStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId以及他们的状态是否符合条件',
-                data: validateFailedStatements
-            })
+            throw new ApplicationError('dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId以及他们的状态是否符合条件', validateFailedStatements)
         }
 
         const untreatedResources = []
@@ -233,18 +228,12 @@ class AuthSchemeService extends Service {
 
         const invalidStatements = dutyStatements.filter(x => !x.validate)
         if (invalidStatements.length) {
-            ctx.error({
-                msg: 'dutyStatements数据校验失败,存在无效的声明',
-                data: {invalidStatements: invalidStatements.map(x => new Object({resourceId: x.resourceId}))}
-            })
+            throw new ApplicationError('dutyStatements数据校验失败,存在无效的声明', {invalidStatements: invalidStatements.map(x => new Object({resourceId: x.resourceId}))})
         }
 
         const invalidBubbleResources = bubbleResources.filter(x => !x.validate)
         if (invalidBubbleResources.length) {
-            ctx.error({
-                msg: 'bubbleResources中存在无效上抛',
-                data: invalidBubbleResources
-            })
+            throw new ApplicationError('bubbleResources中存在无效上抛', invalidBubbleResources)
         }
 
         return untreatedResources
