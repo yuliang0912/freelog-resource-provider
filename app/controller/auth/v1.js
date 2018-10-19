@@ -40,6 +40,7 @@ module.exports = class ResourceAuthController extends Controller {
             ctx.error({msg: '未能找到资源'})
         }
 
+
         const objectKey = resourceInfo.resourceUrl.replace(/^http:\/\/freelog-shenzhen.oss-cn-shenzhen(-internal){0,1}.aliyuncs.com/, '')
 
         response['expires'] = 60
