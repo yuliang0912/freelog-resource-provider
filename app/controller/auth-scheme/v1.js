@@ -11,6 +11,11 @@ const batchOperationPolicySchema = require('../../extend/json-schema/batch-opera
 
 module.exports = class PolicyController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.authSchemeProvider = app.dal.authSchemeProvider
+    }
+
     /**
      * 获取policyList
      * @param ctx
@@ -49,7 +54,7 @@ module.exports = class PolicyController extends Controller {
 
         ctx.validate()
 
-        const authSchemeInfo = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        const authSchemeInfo = await this.authSchemeProvider.findById(authSchemeId)
         if (policyStatus === 0 || policyStatus === 1) {
             authSchemeInfo.policy = authSchemeInfo.policy.filter(x => x.status === policyStatus)
         }
@@ -94,7 +99,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: 'resourceId错误或者没有权限'})
         }
 
-        await ctx.dal.authSchemeProvider.count({resourceId}).then(count => {
+        await this.authSchemeProvider.count({resourceId}).then(count => {
             count >= 100 && ctx.error({msg: '同一个资源授权点最多只能创建20个'})
         })
 
@@ -136,7 +141,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: "最少需要一个有效参数"})
         }
 
-        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
@@ -147,7 +152,7 @@ module.exports = class PolicyController extends Controller {
         await ctx.service.authSchemeService.updateAuthScheme({
             authScheme, authSchemeName, policies, dutyStatements, bubbleResources
         }).then(() => {
-            return ctx.dal.authSchemeProvider.findById(authSchemeId)
+            return this.authSchemeProvider.findById(authSchemeId)
         }).then(ctx.success).catch(ctx.error)
     }
 
@@ -160,7 +165,7 @@ module.exports = class PolicyController extends Controller {
         const authSchemeId = ctx.checkParams('authSchemeId').isMongoObjectId('id格式错误').value
         ctx.validate()
 
-        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
@@ -181,7 +186,7 @@ module.exports = class PolicyController extends Controller {
         const authSchemeId = ctx.checkParams('id').isMongoObjectId('authSchemeId格式错误').value
         ctx.validate()
 
-        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
@@ -201,7 +206,7 @@ module.exports = class PolicyController extends Controller {
         const contractStatus = ctx.checkQuery('contractStatus').optional().toInt().in([1, 2, 3]).value
         ctx.validate()
 
-        const authScheme = await ctx.dal.authSchemeProvider.findById(authSchemeId)
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: {userId: ctx.request.userId}})
         }

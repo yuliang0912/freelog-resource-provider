@@ -7,7 +7,7 @@
     "framework": "egg-freelog-base"
   },
   "dependencies": {
-    "@freelog/resource-policy-lang": "0.0.31",
+    "@freelog/resource-policy-lang": "0.0.33",
     "ali-oss": "^4.15.1",
     "bluebird": "^3.5.2",
     "busboy": "^0.2.14",

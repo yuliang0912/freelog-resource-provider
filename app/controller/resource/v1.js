@@ -10,6 +10,11 @@ const sendToWormhole = require('stream-wormhole');
 
 module.exports = class ResourcesController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.resourceProvider = app.dal.resourceProvider
+    }
+
     /**
      * 资源仓库
      * @param ctx
@@ -29,7 +34,7 @@ module.exports = class ResourcesController extends Controller {
             condition.resourceType = resourceType
         }
 
-        await ctx.dal.resourceProvider.searchPageList(condition, keyWords, page, pageSize).then(({totalItem, dataList}) => {
+        await this.resourceProvider.searchPageList(condition, keyWords, page, pageSize).then(({totalItem, dataList}) => {
             ctx.success({page, pageSize, totalItem, dataList})
         })
     }
@@ -45,18 +50,18 @@ module.exports = class ResourcesController extends Controller {
         const pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
         ctx.validate()
 
-        var respositories = []
+        var repositories = []
         const condition = {userId: ctx.request.userId}
-        const totalItem = await ctx.dal.resourceProvider.getResourceCount(condition)
+        const totalItem = await this.resourceProvider.getResourceCount(condition)
 
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            respositories = await ctx.dal.resourceProvider.getRepositories(condition, page, pageSize).catch(ctx.error)
+            repositories = await this.resourceProvider.getRepositories(condition, page, pageSize).catch(ctx.error)
         }
-        if (respositories.length === 0) {
+        if (repositories.length === 0) {
             ctx.success({page, pageSize, totalItem, dataList: []})
         }
 
-        await ctx.dal.resourceProvider.getResourceByIdList(respositories.map(t => t.lastVersion))
+        await this.resourceProvider.getResourceByIdList(repositories.map(t => t.lastVersion))
             .then(dataList => ctx.success({page, pageSize, totalItem, dataList}))
     }
 
@@ -71,7 +76,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.validate(false)
 
-        await ctx.dal.resourceProvider.getResourceInfo({resourceId}).then(ctx.success).catch(ctx.error)
+        await this.resourceProvider.getResourceInfo({resourceId}).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -96,7 +101,7 @@ module.exports = class ResourcesController extends Controller {
         }
 
         if (parentId) {
-            const parentResource = await ctx.dal.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
+            const parentResource = await this.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
             if (!parentResource || parentResource.userId !== ctx.request.userId) {
                 ctx.error({msg: 'parentId错误,或者没有权限引用'})
             }
@@ -157,7 +162,7 @@ module.exports = class ResourcesController extends Controller {
             ctx.error({msg: '缺少有效参数'})
         }
 
-        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
+        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
         if (!resourceInfo) {
             ctx.error({msg: '未找到有效资源'})
         }
@@ -189,7 +194,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.validate()
 
-        await ctx.dal.resourceProvider.getResourceByIdList(resourceIds).then(ctx.success).catch(ctx.error)
+        await this.resourceProvider.getResourceByIdList(resourceIds).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -211,7 +216,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
 
-        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
+        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
         }
@@ -236,7 +241,7 @@ module.exports = class ResourcesController extends Controller {
             ctx.error(err)
         })
 
-        await ctx.dal.resourceProvider.updateResourceInfo(updateResourceInfo, {resourceId}).then(() => {
+        await this.resourceProvider.updateResourceInfo(updateResourceInfo, {resourceId}).then(() => {
             resourceInfo.meta = JSON.parse(updateResourceInfo.meta)
             resourceInfo.systemMeta = JSON.parse(updateResourceInfo.systemMeta)
             resourceInfo.resourceUrl = updateResourceInfo.resourceUrl
