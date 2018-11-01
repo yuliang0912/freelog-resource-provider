@@ -4,6 +4,12 @@ const Controller = require('egg').Controller;
 
 module.exports = class CollectionController extends Controller {
 
+    constructor({app}) {
+        super(...arguments)
+        this.resourceProvider = app.dal.resourceProvider
+        this.collectionProvider = app.dal.collectionProvider
+    }
+
     /**
      * 创建资源收藏
      * @param ctx
@@ -15,12 +21,12 @@ module.exports = class CollectionController extends Controller {
 
         ctx.validate()
 
-        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
+        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
         }
 
-        await ctx.dal.collectionProvider.createResourceCollection({
+        await this.collectionProvider.createResourceCollection({
             resourceId,
             resourceName: resourceInfo.resourceName,
             resourceType: resourceInfo.resourceType,
@@ -51,16 +57,16 @@ module.exports = class CollectionController extends Controller {
             condition.resourceName = new RegExp(keyWords)
         }
 
-        const totalItem = await ctx.dal.collectionProvider.count(condition)
+        const totalItem = await this.collectionProvider.count(condition)
         const result = {page, pageSize, totalItem, dataList: []}
         if (totalItem <= (page - 1) * pageSize) {
             return ctx.success(result)
         }
 
-        const collectionResources = await ctx.dal.collectionProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
+        const collectionResources = await this.collectionProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
             .map(x => [x.resourceId, x]).then(list => new Map(list))
 
-        await ctx.dal.resourceProvider.getResourceByIdList(Array.from(collectionResources.keys())).then(dataList => {
+        await this.resourceProvider.getResourceByIdList(Array.from(collectionResources.keys())).then(dataList => {
             dataList.forEach(item => item.collectionDate = collectionResources.get(item.resourceId).createDate)
             result.dataList = dataList
         })
@@ -78,7 +84,7 @@ module.exports = class CollectionController extends Controller {
         const resourceId = ctx.checkParams('id').isResourceId().value
         ctx.validate()
 
-        await ctx.dal.collectionProvider.findOne({resourceId, status: 0}).then(ctx.success).catch(ctx.error)
+        await this.collectionProvider.findOne({resourceId, status: 0}).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -91,7 +97,7 @@ module.exports = class CollectionController extends Controller {
         const resourceId = ctx.checkParams('id').isResourceId().value
         ctx.validate()
 
-        await ctx.dal.collectionProvider.updateOne({resourceId, userId: ctx.request.userId}, {status: 1})
+        await this.collectionProvider.updateOne({resourceId, userId: ctx.request.userId}, {status: 1})
             .then(ret => ctx.success(ret.nModified > 0)).catch(ctx.error)
     }
 }

@@ -6,6 +6,8 @@ module.exports = class ResourceEventHandler {
 
     constructor(app) {
         this.app = app
+        this.resourceProvider = app.dal.resourceProvider
+        this.authSchemeProvider = app.dal.authSchemeProvider
         this.__registerEventHandler__()
     }
 
@@ -20,7 +22,7 @@ module.exports = class ResourceEventHandler {
 
         //发布授权点
         if (authScheme.status === 1) {
-            await app.dal.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
+            await this.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
                 console.error("authSchemeStateChangeHandler-error", error)
                 app.logger.error("authSchemeStateChangeHandler-error", error)
             })
@@ -28,7 +30,7 @@ module.exports = class ResourceEventHandler {
 
         //废弃授权点
         if (authScheme.status === 4) {
-            await app.dal.authSchemeProvider.count({resourceId: authScheme.resourceId, status: 1}).then(count => {
+            await this.authSchemeProvider.count({resourceId: authScheme.resourceId, status: 1}).then(count => {
                 return count < 1 ? app.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: authScheme.resourceId}) : null
             }).catch(error => {
                 console.error("authSchemeStateChangeHandler-error", error)
@@ -43,7 +45,6 @@ module.exports = class ResourceEventHandler {
      */
     __registerEventHandler__() {
 
-        // arguments : {authScheme}
         this.authSchemeStateChangeHandler = this.authSchemeStateChangeHandler.bind(this)
         this.app.on(authSchemeEvents.createAuthSchemeEvent, this.authSchemeStateChangeHandler)
         this.app.on(authSchemeEvents.releaseAuthSchemeEvent, this.authSchemeStateChangeHandler)

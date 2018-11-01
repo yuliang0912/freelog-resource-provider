@@ -25,7 +25,6 @@ class DutyStatementsSchemaValidator extends FreelogCommonJsonSchema {
         return super.getSchema('/bubbleResourceArraySchema')
     }
 
-
     /**
      * 初始化函数
      * @private

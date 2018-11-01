@@ -253,7 +253,7 @@ module.exports = class PolicyController extends Controller {
      */
     async schemeAuthTreeContractIds(ctx) {
 
-        const authSchemeIds = ctx.checkQuery('authSchemeIds').isSplitMongoObjectId().value
+        const authSchemeIds = ctx.checkQuery('authSchemeIds').isSplitMongoObjectId().toSplitArray().value
         ctx.validate()
 
         const contracts = await ctx.dal.schemeAuthTreeProvider.find({_id: {$in: authSchemeIds}})
