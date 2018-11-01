@@ -222,4 +222,42 @@ module.exports = class PolicyController extends Controller {
         }
         ctx.success(contractInfos)
     }
+
+    /**
+     * 授权方案的授权树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async schemeAuthTree(ctx) {
+
+        const authSchemeId = ctx.checkParams('authSchemeId').isMongoObjectId('authSchemeId格式错误').value
+        ctx.validate()
+
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
+        if (!authScheme || authScheme.status !== 1) {
+            ctx.error({msg: "未找到授权方案或者授权方案还未发布", data: {authScheme}})
+        }
+
+        var authTree = await ctx.dal.schemeAuthTreeProvider.findOne({authSchemeId})
+        if (!authTree && authScheme.associatedContracts.length) {
+            authTree = await ctx.service.authSchemeService._updateSchemeAuthTree(authScheme)
+        }
+
+        ctx.success(authTree)
+    }
+
+    /**
+     * 获取授权方案中所有的授权合同ID
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async schemeAuthTreeContractIds(ctx) {
+
+        const authSchemeIds = ctx.checkQuery('authSchemeIds').isSplitMongoObjectId().value
+        ctx.validate()
+
+        const contracts = await ctx.dal.schemeAuthTreeProvider.find({_id: {$in: authSchemeIds}})
+
+        ctx.success(contracts)
+    }
 }

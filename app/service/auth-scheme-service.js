@@ -11,8 +11,8 @@ class AuthSchemeService extends Service {
         super(...arguments)
         this.resourceProvider = app.dal.resourceProvider
         this.authSchemeProvider = app.dal.authSchemeProvider
+        this.schemeAuthTreeProvider = app.dal.schemeAuthTreeProvider
     }
-
 
     /**
      * 查找授权方案列表
@@ -76,6 +76,8 @@ class AuthSchemeService extends Service {
                 untreatedResources
             })
         }
+
+        await this._updateSchemeAuthTree(authScheme)
 
         return authSchemeProvider.create(authScheme).tap(() => app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme}))
     }
@@ -158,8 +160,11 @@ class AuthSchemeService extends Service {
             status: 1, associatedContracts, dutyStatements: Array.from(dutyStatementMap.values()),
         }).then(() => {
             authScheme.status = 1
+            authScheme.associatedContracts = associatedContracts
             app.emit(authSchemeEvents.releaseAuthSchemeEvent, {authScheme})
         })
+
+        await this._updateSchemeAuthTree(authScheme)
 
         return contracts
     }
@@ -177,13 +182,112 @@ class AuthSchemeService extends Service {
     }
 
     /**
+     * 构建授权方案的授权树
+     * @param presentable
+     * @private
+     */
+    async _updateSchemeAuthTree(authScheme) {
+
+        if (authScheme.status !== 1) {
+            return
+        }
+
+        const result = await this._buildContractAuthTree(authScheme.associatedContracts)
+
+        return this.schemeAuthTreeProvider.createOrUpdateAuthTree({
+            authSchemeId: authScheme.authSchemeId,
+            resourceId: authScheme.resourceId,
+            authTree: this._flattenAuthTree(result)
+        })
+    }
+
+    /**
+     * 平铺授权树
+     * @param schemeAuthTree
+     * @private
+     */
+    _flattenAuthTree(schemeAuthTree) {
+
+        const dataList = []
+
+        const recursion = (children, parentAuthSchemeId = '') => {
+            children.forEach(x => {
+                let {deep, contractId, authSchemeId, resourceId, children} = x
+                dataList.push({contractId, authSchemeId, resourceId, parentAuthSchemeId, deep})
+                children.length && recursion(children, authSchemeId)
+            })
+        }
+
+        recursion(schemeAuthTree)
+
+        return dataList
+    }
+
+    /**
+     * 生产合同的构建树
+     * @param contracts
+     * @private
+     */
+    async _buildContractAuthTree(associatedContracts = [], deep = 0) {
+
+        if (!associatedContracts.length) {
+            return []
+        }
+
+        const dataList = []
+        const authSchemeIds = associatedContracts.map(x => x.authSchemeId)
+        const authSchemeMap = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}})
+            .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
+
+        if (associatedContracts.length !== authSchemeMap.size) {
+            throw new ApplicationError('授权树数据完整性校验失败')
+        }
+
+        for (let i = 0, j = associatedContracts.length; i < j; i++) {
+            let {authSchemeId, contractId} = associatedContracts[i]
+            let currentAuthScheme = authSchemeMap.get(authSchemeId)
+            dataList.push({
+                deep,
+                authSchemeId,
+                contractId,
+                resourceId: currentAuthScheme.resourceId,
+                children: await this._buildContractAuthTree(currentAuthScheme.associatedContracts, deep + 1)
+            })
+        }
+
+        return dataList
+    }
+
+    /**
+     * 检查重签授权
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _checkReContractAuth(authSchemeIds) {
+
+        const contractIds = []
+        const recursion = async (authSchemeIds) => {
+            if (!authSchemeIds.length) {
+                return
+            }
+            const _authSchemeIds = []
+            const authSchemeInfos = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}})
+            authSchemeInfos.forEach(authSchemeInfo => authSchemeInfo.dutyStatements.forEach(dutyStatement => {
+                contractIds.push(dutyStatement.contractId)
+                _authSchemeIds.push(dutyStatement.authSchemeId)
+            }))
+            return recursion(_authSchemeIds)
+        }
+        await recursion(authSchemeIds)
+    }
+
+    /**
      * 检查上抛和声明的数据是否在上抛树上,而且依赖关系正确
      * 返回未处理的上抛(没声明也没显示上抛)
      * @private
      */
     async _checkStatementAndBubble({authScheme, resourceInfo}) {
 
-        const {ctx, authSchemeProvider} = this
         const {dutyStatements, bubbleResources} = authScheme
         const intersection = lodash.intersectionBy(dutyStatements, bubbleResources, 'resourceId')
         if (intersection.length) {
@@ -193,7 +297,7 @@ class AuthSchemeService extends Service {
         const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
         const dutyStatementMap = new Map(dutyStatements.map(x => [x.resourceId, x]))
         const bubbleResourceMap = new Map(bubbleResources.map(x => [x.resourceId, x]))
-        const authSchemeInfoMap = await authSchemeProvider.find({_id: {$in: authSchemeIds}}).then(dataList => {
+        const authSchemeInfoMap = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}}).then(dataList => {
             return new Map(dataList.map(x => [x._id.toString(), x]))
         })
 

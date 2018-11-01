@@ -24,6 +24,11 @@ module.exports = app => {
     //授权点关联的合同信息
     router.get('/v1/resources/authSchemes/associatedContracts/:authSchemeId', authScheme.v1.associatedContracts)
 
+    //获取授权方案的授权树
+    router.get('/v1/resources/authSchemes/schemeAuthTree/schemeAuthTreeContractIds', authScheme.v1.schemeAuthTreeContractIds)
+    router.get('/v1/resources/authSchemes/schemeAuthTree/:authSchemeId', authScheme.v1.schemeAuthTree)
+
+
     //获取资源依赖树
     router.get('/v1/resources/getResourceDependencyTree/:resourceId', resource.v1.getResourceDependencyTree)
 
