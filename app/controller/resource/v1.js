@@ -27,7 +27,7 @@ module.exports = class ResourcesController extends Controller {
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
         const keyWords = ctx.checkQuery("keyWords").optional().decodeURIComponent().value
 
-        ctx.validate()
+        ctx.validate(false)
 
         const condition = {status: 2}
         if (resourceType) {
