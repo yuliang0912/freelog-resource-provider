@@ -347,7 +347,7 @@ class AuthSchemeService extends Service {
      * 检查是否存在有效的授权方案
      */
     isExistValidAuthScheme(resourceId) {
-        return this.authSchemeProvider.count({resourceId, status: 1}).then(count => count > 0)
+        return this.authSchemeProvider.count({resourceId, status: {$in: [0, 1]}}).then(count => count > 0)
     }
 
     /**
