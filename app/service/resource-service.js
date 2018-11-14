@@ -6,7 +6,12 @@ const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 const resourceEvents = require('../enum/resource-events')
 
-class ResourceService extends Service {
+module.exports = class ResourceService extends Service {
+
+    constructor({app}) {
+        super(...arguments)
+        this.resourceProvider = app.dal.resourceProvider
+    }
 
     /**
      * 上传资源文件(暂存)
@@ -16,10 +21,10 @@ class ResourceService extends Service {
      */
     async uploadResourceFile({fileStream, resourceType}) {
 
-        const {ctx, app} = this
+        const {ctx, app, resourceProvider} = this
         const userId = ctx.request.userId
-        const extension = fileStream.filename.substr(fileStream.filename.lastIndexOf('.'))
-        const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}${extension}`.toLowerCase()
+        //const extension = fileStream.filename.substr(fileStream.filename.lastIndexOf('.'))
+        const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
         const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
         const fileUploadAsync = app.ossClient.putStream(objectKey, fileStream)
 
@@ -34,7 +39,7 @@ class ResourceService extends Service {
             ctx.error(err)
         })
 
-        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId: uploadFileInfo.sha1}).catch(ctx.error)
+        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: uploadFileInfo.sha1}).catch(ctx.error)
         if (resourceInfo) {
             ctx.error({msg: '资源已经存在,不能上传重复的文件', data: {resourceInfo}})
         }
@@ -51,14 +56,13 @@ class ResourceService extends Service {
      * @param parentId
      * @param meta
      * @param fileStream
-     * @returns {Promise<void>}
      */
     async createResource({sha1, resourceName, parentId, meta, description, previewImages}) {
 
-        const {ctx, app} = this
+        const {ctx, app, resourceProvider} = this
         const userInfo = ctx.request.identityInfo.userInfo
 
-        await ctx.dal.resourceProvider.getResourceInfo({resourceId: sha1}).then(existResourceInfo => {
+        await resourceProvider.getResourceInfo({resourceId: sha1}).then(existResourceInfo => {
             existResourceInfo && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: {existResourceInfo}})
         })
 
@@ -90,7 +94,7 @@ class ResourceService extends Service {
         resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
 
         await ctx.helper.resourceAttributeCheck(resourceInfo)
-        await ctx.dal.resourceProvider.createResource(resourceInfo, parentId)
+        await resourceProvider.createResource(resourceInfo, parentId)
 
         app.emit(resourceEvents.createResourceEvent, {
             resourceInfo,
@@ -110,7 +114,7 @@ class ResourceService extends Service {
      */
     async updateResource({resourceInfo, model}) {
 
-        const {ctx, app} = this
+        const {ctx, app, resourceProvider} = this
 
         if (model.meta && Array.isArray(model.meta.dependencies)
             && !this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
@@ -134,7 +138,7 @@ class ResourceService extends Service {
             model.meta = JSON.stringify(model.meta)
         }
 
-        return ctx.dal.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
+        return resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
     }
 
     /**
@@ -145,8 +149,8 @@ class ResourceService extends Service {
      */
     async getResourceDependencyTree(resourceId, deep = 0) {
 
-        const {ctx} = this
-        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({resourceId})
+        const {ctx, resourceProvider} = this
+        const resourceInfo = await resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             ctx.error({msg: '未找到有效资源'})
         }
@@ -164,7 +168,6 @@ class ResourceService extends Service {
     /**
      * 构建依赖树(后面可以对tree做同级合并,优化查询次数)
      * @param resourceIds
-     * @returns {Promise<void>}
      * @private
      */
     async buildDependencyTree(dependencies, currDeep = 1, maxDeep = 0) {
@@ -173,7 +176,7 @@ class ResourceService extends Service {
             return []
         }
         const resourceIds = dependencies.map(item => item.resourceId)
-        return this.ctx.dal.resourceProvider.getResourceByIdList(resourceIds).map(async item => new Object({
+        return this.resourceProvider.getResourceByIdList(resourceIds).map(async item => new Object({
             resourceId: item.resourceId,
             resourceName: item.resourceName,
             resourceType: item.resourceType,
@@ -189,7 +192,7 @@ class ResourceService extends Service {
      * @returns {Promise<*>}
      */
     async updateResourceStatus(resourceId, status) {
-        return this.ctx.dal.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
+        return this.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
     }
 
     /**
@@ -242,6 +245,4 @@ class ResourceService extends Service {
         return first === second
     }
 }
-
-module.exports = ResourceService
 
