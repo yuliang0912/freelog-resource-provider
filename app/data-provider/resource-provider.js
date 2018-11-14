@@ -149,12 +149,15 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
         if (condition) {
             baseQuery.where(condition)
         }
-        if (keyWords) {
-            baseQuery.where('resourceName', 'like', `%${keyWords}%`).orWhere('resourceId', 'like', `%${keyWords}%`)
-        }
-        if (!condition.resourceType && keyWords) {
-            baseQuery.orWhere('resourceType', 'like', `${keyWords}%`)
-        }
+        baseQuery.where(function () {
+            if (keyWords) {
+                this.where('resourceName', 'like', `%${keyWords}%`).orWhere('resourceId', 'like', `%${keyWords}%`)
+            }
+            if (!condition.resourceType && keyWords) {
+                this.orWhere('resourceType', 'like', `${keyWords}%`)
+            }
+        })
+
         const countTask = baseQuery.clone().count("* as count").first()
         const listTask = baseQuery.clone().select().orderBy("createDate", "desc")
         if (pageSize) {

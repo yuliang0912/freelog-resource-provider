@@ -68,7 +68,7 @@ module.exports = app => {
                 },
                 acquireConnectionTimeout: 500, //每次查询等待的超时时间(从连接池拿可用的connection的超时时间)
                 //idleTimeoutMillis: 3000, //连接空闲移除连接池的时间
-                debug: false
+                debug: true
             }
         },
 
