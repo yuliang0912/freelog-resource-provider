@@ -159,7 +159,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
         })
 
         const countTask = baseQuery.clone().count("* as count").first()
-        const listTask = baseQuery.clone().select().orderBy("createDate", "desc")
+        const listTask = baseQuery.clone().select().orderBy("updateDate", "desc")
         if (pageSize) {
             listTask.limit(pageSize)
         }
