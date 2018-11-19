@@ -1,4 +1,4 @@
-FROM daocloud.io/node:8.11.1
+FROM node:10.5.0
 
 MAINTAINER yuliang <yuliang@ciwong.com>
 
