@@ -30,7 +30,6 @@ module.exports = class ResourceAuthController extends Controller {
         ctx.validate(false)
 
         const authResult = this.resourceAuthJwt.verifyJwt(jwt.replace(/^bearer /i, ""))
-
         if (!authResult.isVerify) {
             ctx.error({msg: 'json-web-token校验失败', data: authResult})
         }
@@ -39,7 +38,6 @@ module.exports = class ResourceAuthController extends Controller {
         if (!resourceInfo) {
             ctx.error({msg: '未能找到资源'})
         }
-
 
         const objectKey = resourceInfo.resourceUrl.replace(/^http:\/\/freelog-shenzhen.oss-cn-shenzhen(-internal){0,1}.aliyuncs.com/, '')
 
