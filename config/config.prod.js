@@ -19,7 +19,7 @@ module.exports = {
      * mongoDB配置
      */
     mongoose: {
-        url: "172.18.215.231:27017"
+        url: "mongodb://172.18.215.231:27017/resource"
     },
 
     /**

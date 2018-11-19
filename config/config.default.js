@@ -72,10 +72,6 @@ module.exports = app => {
             }
         },
 
-        mongoose: {
-            url: "mongodb://127.0.0.1:27017/resource"
-        },
-
         /**
          * 上传文件相关配置
          */

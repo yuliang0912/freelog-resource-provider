@@ -24,5 +24,9 @@ module.exports = {
         "updateDate": "2017-11-01T16:24:20.000Z"
     },
 
+    mongoose: {
+        url: "mongodb://127.0.0.1:27017/resource"
+    },
+
     gatewayUrl: "http://127.0.0.1:7008",
 }
