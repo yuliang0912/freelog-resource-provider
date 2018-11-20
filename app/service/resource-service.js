@@ -212,9 +212,9 @@ module.exports = class ResourceService extends Service {
         })
 
         const fileUrl = await app.previewImageOssClient.putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
-            .then(data => data.url.replace('-internal', ''))
+            .then(data => data.url)
 
-        return fileUrl
+        return fileUrl.replace(/^http:\/\/freelog-image.oss-cn-shenzhen(-internal)?.aliyuncs.com\//i, "https://image.freelog.com/")
     }
 
     /**

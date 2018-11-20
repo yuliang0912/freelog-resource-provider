@@ -36,7 +36,7 @@ module.exports = app => {
     router.post('/v1/resources/uploadResourceFile', resource.v1.uploadResourceFile)
 
     //上传资源预览图
-    router.post('/v1/resources/upoladPreviewImage', '/v1/resources/upoladPreviewImage', resource.v1.upoladPreviewImage)
+    router.post('/v1/resources/uploadPreviewImage', '/v1/resources/uploadPreviewImage', resource.v1.uploadPreviewImage)
 
     //更新资源内容(开发版)
     router.post('/v1/resources/updateResourceContext/:resourceId', resource.v1.updateResourceContext)

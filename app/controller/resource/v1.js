@@ -95,7 +95,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['http']}))) {
+        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
             ctx.validate()
         }
@@ -153,7 +153,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['http']}))) {
+        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
             ctx.validate()
         }
@@ -277,7 +277,7 @@ module.exports = class ResourcesController extends Controller {
      * @param ctx
      * @returns {Promise<void>}
      */
-    async upoladPreviewImage(ctx) {
+    async uploadPreviewImage(ctx) {
 
         const fileStream = await ctx.getFileStream()
         if (!fileStream || !fileStream.filename) {
