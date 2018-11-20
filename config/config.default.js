@@ -122,7 +122,7 @@ module.exports = app => {
             pageUrl: '/public/404.html',
         },
 
-        gatewayUrl: "http://api.freelog.com",
+        gatewayUrl: "https://api.freelog.com",
 
         RasSha256Key: {
             resourceAuth: {
