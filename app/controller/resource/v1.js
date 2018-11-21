@@ -192,7 +192,7 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 1000).value
 
-        ctx.validate()
+        ctx.validate(false)
 
         await this.resourceProvider.getResourceByIdList(resourceIds).then(ctx.success).catch(ctx.error)
     }
