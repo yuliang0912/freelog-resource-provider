@@ -251,7 +251,7 @@ module.exports = class ResourcesController extends Controller {
 
         if (resourceInfo.resourceType === ctx.app.resourceType.WIDGET) {
             await ctx.dal.componentsProvider.create({
-                widgetName: resourceInfo.systemMeta.widgetName,
+                widgetName: resourceInfo.systemMeta.widgetName || '',
                 version: resourceInfo.systemMeta.version,
                 resourceId: resourceInfo.resourceId,
                 userId: resourceInfo.userId
