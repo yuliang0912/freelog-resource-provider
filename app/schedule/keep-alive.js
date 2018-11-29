@@ -14,6 +14,7 @@ module.exports = class KeepAlive extends Subscription {
     }
 
     async subscribe() {
-        await this.app.dal.resourceProvider.findOne({}).catch(console.error)
+        const port = this.app.config.cluster.listen.port
+        return this.app.curl(`http://localhost:${port}/v1/resources/warehouse?page=1`).catch(console.error)
     }
 }
