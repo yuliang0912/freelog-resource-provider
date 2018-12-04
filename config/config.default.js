@@ -63,7 +63,7 @@ module.exports = app => {
                         return next()
                     },
                 },
-                pool: {max: 10, min: 2},
+                pool: {max: 8, min: 1},
                 acquireConnectionTimeout: 800,
                 debug: false
             }
