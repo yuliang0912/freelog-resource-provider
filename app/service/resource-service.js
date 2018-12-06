@@ -229,7 +229,8 @@ module.exports = class ResourceService extends Service {
             return ''
         }
         const removeHtmlTag = (input) => input.replace(/<[a-zA-Z0-9]+? [^<>]*?>|<\/[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?\/>|\r|\n/ig, "")
-        return ctx.helper.stringExpand.cutString(removeHtmlTag(unescape(removeHtmlTag(resourceDescription))), 100)
+
+        return ctx.helper.stringExpand.cutString(ctx.helper.htmlDecode(removeHtmlTag(resourceDescription)), 100)
     }
 
     /**
