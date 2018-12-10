@@ -25,7 +25,7 @@
     "lodash": "^4.17.11",
     "mime": "^2.4.0",
     "moment": "^2.22.2",
-    "mongoose": "^5.3.14",
+    "mongoose": "^5.3.15",
     "mysql": "^2.16.0",
     "node-mysql": "^0.4.2",
     "patrun": "^1.0.0",
