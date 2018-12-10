@@ -63,7 +63,7 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
         return this.resourceKnex.transaction(trans => {
 
             const task1 = super.queryChain.transacting(trans).insert(resource)
-            const task2 = this.resourceKnex.raw(`INSERT INTO respositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
+            const task2 = this.resourceKnex.raw(`INSERT INTO repositories(resourceId,resourceName,lastVersion,userId,status,createDate) 
                  VALUES (:resourceId,:resourceName,:lastVersion,:userId,:status,:createDate) ON DUPLICATE KEY UPDATE lastVersion = :lastVersion`,
                 {
                     resourceId: parentId || resource.resourceId,
@@ -116,25 +116,10 @@ module.exports = class ResourceProvider extends KnexBaseOperation {
             return Promise.reject(new Error("getRepositories:condition must be object"))
         }
 
-        return this.resourceKnex('respositories').where(condition)
+        return this.resourceKnex('repositories').where(condition)
             .limit(pageSize).offset((page - 1) * pageSize)
             .orderBy('createDate', 'desc')
             .select()
-    }
-
-    /**
-     * 更新资源库
-     * @param model
-     * @param condition
-     * @returns {*}
-     */
-    updateRespository(model, condition) {
-
-        if (!super.type.object(model)) {
-            return Promise.reject(new Error("model must be object"))
-        }
-
-        return this.resourceKnex('respositories').update(model).where(condition)
     }
 
     /**
