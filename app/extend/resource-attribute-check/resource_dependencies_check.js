@@ -3,6 +3,7 @@
 const lodash = require('lodash')
 const globalInfo = require('egg-freelog-base/globalInfo')
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
+const {ApplicationError, LogicError} = require('egg-freelog-base/error')
 
 class ResourceDependenciceCheck {
 
@@ -27,14 +28,17 @@ class ResourceDependenciceCheck {
             return {resourceId: item.resourceId, resourceName: item.resourceName}
         })
         if (resourceList.length !== dependencies.length) {
-            throw new Error(`dependencies中存在无效的依赖资源.(${dependencies.toString()})`)
+            throw new ApplicationError(`dependencies中存在无效的依赖资源.(${dependencies.toString()})`, {dependencies})
+        }
+        if (resourceList.some(resource => (resource.purpose & 1) !== 1)) {
+            throw new ApplicationError(`dependencies中存在无法获得再签约授权的依赖资源`, {resourceList})
         }
 
         const allSubDependencies = dependencies.slice()
         const checkResult = await this._checkCircleDependency(resourceId, dependencies, allSubDependencies)
 
         if (checkResult) {
-            throw new Error(`依赖中存在循环引用`)
+            throw new ApplicationError(`依赖中存在循环引用`)
         }
 
         return {dependencies: resourceList, dependCount: lodash.flattenDeep(allSubDependencies).length}
