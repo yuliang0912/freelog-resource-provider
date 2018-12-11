@@ -71,6 +71,7 @@ module.exports = class ResourceEventHandler {
             return
         }
         const purpose = await this._getResourcePurpose(authScheme.resourceId)
+        console.log("purpose", purpose, authScheme)
         return this.resourceProvider.updateResourceInfo({
             status: 2, purpose
         }, {resourceId: authScheme.resourceId}).catch(error => {
