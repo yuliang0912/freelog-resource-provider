@@ -103,6 +103,9 @@ class AuthSchemeService extends Service {
 
         if (policies) {
             model.policy = this._policiesHandler({authScheme, policies})
+            if (authScheme.status === 1 && !model.policy.some(x => x.status === 1)) {
+                throw new ApplicationError('已经发布的授权方案最少需要一个有效的授权策略')
+            }
         }
         if (dutyStatements || bubbleResources) {
             model.dutyStatements = authScheme.dutyStatements = dutyStatements || authScheme.dutyStatements
@@ -128,8 +131,8 @@ class AuthSchemeService extends Service {
         if (authScheme.status !== 0) {
             throw new ApplicationError('只有初始状态的授权方案才能发布', {currentStatus: authScheme.status})
         }
-        if (!authScheme.policy.length) {
-            throw new ApplicationError('授权方案缺少策略,无法发布', {currentStatus: authScheme.status})
+        if (!authScheme.policy.some(x => x.status === 1)) {
+            throw new ApplicationError('授权方案缺少有效授权策略,无法发布', {currentStatus: authScheme.status})
         }
 
         const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
