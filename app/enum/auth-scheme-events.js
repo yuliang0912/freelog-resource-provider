@@ -15,10 +15,14 @@ module.exports = {
      * 发布授权点事件
      */
     releaseAuthSchemeEvent: Symbol('authScheme#releaseAuthSchemeEvent'),
-    
+
     /**
      * 删除授权点事件
      */
     deleteAuthSchemeEvent: Symbol('authScheme#deleteAuthSchemeEvent'),
 
+    /**
+     * 授权策略变更事件
+     */
+    authPolicyModifyEvent: Symbol('authScheme#authPolicyModifyEvent')
 }

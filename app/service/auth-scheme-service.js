@@ -79,7 +79,12 @@ class AuthSchemeService extends Service {
 
         await this._updateSchemeAuthTree(authScheme)
 
-        return authSchemeProvider.create(authScheme).tap(() => app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme}))
+        return authSchemeProvider.create(authScheme).tap(() => {
+            app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme})
+            if (policies) {
+                app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme})
+            }
+        })
     }
 
     /**
@@ -106,7 +111,11 @@ class AuthSchemeService extends Service {
             await this._checkStatementAndBubble({authScheme, resourceInfo})
         }
 
-        return authSchemeProvider.updateOne({_id: authScheme.authSchemeId}, model)
+        return authSchemeProvider.updateOne({_id: authScheme.authSchemeId}, model).tap(() => {
+            if (policies) {
+                this.app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme})
+            }
+        })
     }
 
     /**

@@ -12,34 +12,6 @@ module.exports = class ResourceEventHandler {
     }
 
     /**
-     * 授权点状态变更处理
-     * @param authScheme
-     * @returns {Promise<void>}
-     */
-    async authSchemeStateChangeHandler({authScheme}) {
-
-        const {app} = this
-
-        //发布授权点
-        if (authScheme.status === 1) {
-            await this.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
-                console.error("authSchemeStateChangeHandler-error", error)
-                app.logger.error("authSchemeStateChangeHandler-error", error)
-            })
-        }
-
-        //废弃授权点
-        if (authScheme.status === 4) {
-            await this.authSchemeProvider.count({resourceId: authScheme.resourceId, status: 1}).then(count => {
-                return count < 1 ? app.dal.resourceProvider.updateResourceInfo({status: 1}, {resourceId: authScheme.resourceId}) : null
-            }).catch(error => {
-                console.error("authSchemeStateChangeHandler-error", error)
-                app.logger.error("authSchemeStateChangeHandler-error", error)
-            })
-        }
-    }
-
-    /**
      * 删除授权方案
      * @param authScheme
      * @returns {Promise<void>}
@@ -70,11 +42,19 @@ module.exports = class ResourceEventHandler {
         if (authScheme.status !== 1) {
             return
         }
+        return this.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
+            console.error("authSchemeStateChangeHandler-error", error)
+            app.logger.error("authSchemeStateChangeHandler-error", error)
+        })
+    }
+
+    /**
+     * 授权策略变更事件处理
+     * @returns {Promise<void>}
+     */
+    async authPolicyModifyEventHandler({authScheme}) {
         const purpose = await this._getResourcePurpose(authScheme.resourceId)
-        console.log("purpose", purpose, authScheme)
-        return this.resourceProvider.updateResourceInfo({
-            status: 2, purpose
-        }, {resourceId: authScheme.resourceId}).catch(error => {
+        this.resourceProvider.updateResourceInfo({purpose}, {resourceId: authScheme.resourceId}).catch(error => {
             console.error("authSchemeStateChangeHandler-error", error)
             app.logger.error("authSchemeStateChangeHandler-error", error)
         })
@@ -109,7 +89,8 @@ module.exports = class ResourceEventHandler {
     __registerEventHandler__() {
         this.app.on(authSchemeEvents.createAuthSchemeEvent, function () {
         })
-        this.app.on(authSchemeEvents.releaseAuthSchemeEvent, this.releaseAuthSchemeEventHandler.bind(this))
         this.app.on(authSchemeEvents.deleteAuthSchemeEvent, this.deleteAuthSchemeEventHandler.bind(this))
+        this.app.on(authSchemeEvents.authPolicyModifyEvent, this.authPolicyModifyEventHandler.bind(this))
+        this.app.on(authSchemeEvents.releaseAuthSchemeEvent, this.releaseAuthSchemeEventHandler.bind(this))
     }
 }
