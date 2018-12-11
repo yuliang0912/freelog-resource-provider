@@ -73,6 +73,9 @@ module.exports = class ResourceEventHandler {
                 return
             }
             authScheme.policy.forEach(policy => {
+                if (policy.status != 1) {
+                    return
+                }
                 if (policy.policyText.toLowerCase().includes('presentable')) {
                     purpose = purpose | 2
                 }
