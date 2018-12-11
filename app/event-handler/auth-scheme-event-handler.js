@@ -30,7 +30,7 @@ module.exports = class ResourceEventHandler {
 
         await this.resourceProvider.updateResourceInfo(model, {resourceId: authScheme.resourceId}).catch(error => {
             console.error("authSchemeStateChangeHandler-error", error)
-            app.logger.error("authSchemeStateChangeHandler-error", error)
+            this.app.logger.error("authSchemeStateChangeHandler-error", error)
         })
     }
 
@@ -44,7 +44,7 @@ module.exports = class ResourceEventHandler {
         }
         return this.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
             console.error("authSchemeStateChangeHandler-error", error)
-            app.logger.error("authSchemeStateChangeHandler-error", error)
+            this.app.logger.error("authSchemeStateChangeHandler-error", error)
         })
     }
 
@@ -53,10 +53,12 @@ module.exports = class ResourceEventHandler {
      * @returns {Promise<void>}
      */
     async authPolicyModifyEventHandler({authScheme}) {
+
         const purpose = await this._getResourcePurpose(authScheme.resourceId)
+
         this.resourceProvider.updateResourceInfo({purpose}, {resourceId: authScheme.resourceId}).catch(error => {
             console.error("authSchemeStateChangeHandler-error", error)
-            app.logger.error("authSchemeStateChangeHandler-error", error)
+            this.app.logger.error("authSchemeStateChangeHandler-error", error)
         })
     }
 
@@ -87,6 +89,7 @@ module.exports = class ResourceEventHandler {
      * @private
      */
     __registerEventHandler__() {
+
         this.app.on(authSchemeEvents.createAuthSchemeEvent, function () {
         })
         this.app.on(authSchemeEvents.deleteAuthSchemeEvent, this.deleteAuthSchemeEventHandler.bind(this))
