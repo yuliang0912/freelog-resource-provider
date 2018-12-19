@@ -5,7 +5,7 @@ const globalInfo = require('egg-freelog-base/globalInfo')
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 const {ApplicationError, LogicError} = require('egg-freelog-base/error')
 
-class ResourceDependenciceCheck {
+class ResourceDependencyCheck {
 
     /**
      * 检查依赖
@@ -25,7 +25,7 @@ class ResourceDependenciceCheck {
         }
 
         const resourceList = await globalInfo.app.dal.resourceProvider.getResourceByIdList(dependencies).map(item => {
-            return {resourceId: item.resourceId, resourceName: item.resourceName}
+            return lodash.pick(item, ['resourceId', 'resourceName', 'purpose'])
         })
         if (resourceList.length !== dependencies.length) {
             throw new ApplicationError(`dependencies中存在无效的依赖资源.(${dependencies.toString()})`, {dependencies})
@@ -57,7 +57,6 @@ class ResourceDependenciceCheck {
             return false
         }
 
-        console.log(resourceId, dependencies)
         if (resourceId && dependencies.some(x => x === resourceId)) {
             return true
         }
@@ -78,4 +77,4 @@ class ResourceDependenciceCheck {
     }
 }
 
-module.exports = new ResourceDependenciceCheck()
+module.exports = new ResourceDependencyCheck()

@@ -85,10 +85,11 @@ module.exports = class ResourceEventHandler {
     __registerEventHandler__() {
 
         // arguments : {resourceInfo, resourceObjectKey, uploadObjectKey, parentId}
-        this.app.on(resourceEvents.createResourceEvent, (...args) => this.copyFile(...args))
-        this.app.on(resourceEvents.createResourceEvent, (...args) => this.createComponents(...args))
-        this.app.on(resourceEvents.createResourceEvent, (...args) => this.createResourceTree(...args))
-        this.app.on(resourceEvents.createResourceEvent, (...args) => this.deleteUploadFileInfo(...args))
+
+        this.app.on(resourceEvents.createResourceEvent, this.copyFile.bind(this))
+        this.app.on(resourceEvents.createResourceEvent, this.createComponents.bind(this))
+        this.app.on(resourceEvents.createResourceEvent, this.createResourceTree.bind(this))
+        this.app.on(resourceEvents.createResourceEvent, this.deleteUploadFileInfo.bind(this))
 
     }
 }
