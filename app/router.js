@@ -41,6 +41,8 @@ module.exports = app => {
     //更新资源内容(开发版)
     router.post('/v1/resources/updateResourceContext/:resourceId', resource.v1.updateResourceContext)
 
+    router.get('/v1/resources/:resourceId/download', resource.v1.download)
+
     /**
      * 资源授权方案(授权点)
      */

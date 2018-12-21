@@ -80,6 +80,26 @@ module.exports = class ResourcesController extends Controller {
     }
 
     /**
+     * 下载资源(内部测试用)
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async download(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value
+
+        ctx.validate(false)
+
+        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
+
+        const result = await ctx.curl(resourceInfo.resourceUrl, {streaming: true})
+        ctx.attachment(resourceInfo.resourceId)
+        Object.keys(result.headers).forEach(key => ctx.set(key, result.headers[key]))
+        ctx.body = result.res
+        ctx.set('content-type', resourceInfo.mimeType)
+    }
+
+    /**
      * 创建资源
      * @param ctx fileStream WIKI: https://eggjs.org/zh-cn/basics/controller.html
      * @returns {Promise.<void>}

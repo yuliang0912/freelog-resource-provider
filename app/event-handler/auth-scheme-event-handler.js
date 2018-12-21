@@ -39,10 +39,15 @@ module.exports = class ResourceEventHandler {
      * @param authScheme
      */
     async releaseAuthSchemeEventHandler({authScheme}) {
-        if (authScheme.status !== 1) {
+
+        const {status, resourceId} = authScheme
+        if (status !== 1) {
             return
         }
-        return this.resourceProvider.updateResourceInfo({status: 2}, {resourceId: authScheme.resourceId}).catch(error => {
+
+        const purpose = await this._getResourcePurpose(resourceId)
+
+        return this.resourceProvider.updateResourceInfo({status: 2, purpose}, {resourceId}).catch(error => {
             console.error("authSchemeStateChangeHandler-error", error)
             this.app.logger.error("authSchemeStateChangeHandler-error", error)
         })
