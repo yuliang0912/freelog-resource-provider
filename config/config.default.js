@@ -35,7 +35,7 @@ module.exports = app => {
             enable: true,
         },
 
-        middleware: ['errorHandler', 'identiyAuthentication'], //
+        middleware: ['errorHandler', 'identityAuthentication'], //
 
         /**
          * DB-mysql相关配置
