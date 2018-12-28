@@ -169,6 +169,8 @@ module.exports = class ResourcesController extends Controller {
      */
     async update(ctx) {
 
+        console.log('update', ctx.url, ctx.method)
+
         const resourceId = ctx.checkParams("id").isResourceId().value
         const meta = ctx.checkBody('meta').optional().isObject().value
         const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
