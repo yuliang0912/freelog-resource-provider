@@ -71,9 +71,6 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async show(ctx) {
-
-        console.log('show', ctx.url, ctx.method)
-
         const resourceId = ctx.checkParams('id').isResourceId().value
 
         ctx.validate(false)
@@ -107,9 +104,6 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async create(ctx) {
-
-        console.log('create', ctx.url, ctx.method)
-
         const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const parentId = ctx.checkBody('parentId').optional().isResourceId().value
@@ -168,8 +162,6 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async update(ctx) {
-
-        console.log('update', ctx.url, ctx.method)
 
         const resourceId = ctx.checkParams("id").isResourceId().value
         const meta = ctx.checkBody('meta').optional().isObject().value
