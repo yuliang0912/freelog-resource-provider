@@ -6,7 +6,7 @@
 
 module.exports = {
 
-    middleware: ['errorHandler', 'localUserIdentity'],
+    //middleware: ['errorHandler', 'localUserIdentity'],
 
     /**
      * 本地开发环境身份信息
@@ -26,7 +26,5 @@ module.exports = {
 
     mongoose: {
         url: "mongodb://127.0.0.1:27017/resource"
-    },
-
-    gatewayUrl: "http://127.0.0.1:7008",
+    }
 }

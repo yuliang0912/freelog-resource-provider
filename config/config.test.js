@@ -41,7 +41,5 @@ module.exports = {
             internal: true,
         },
         amzS3: {}
-    },
-
-    gatewayUrl: "http://172.18.215.229:6895/test",
+    }
 }
