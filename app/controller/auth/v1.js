@@ -24,7 +24,7 @@ module.exports = class ResourceAuthController extends Controller {
      */
     async getResource(ctx) {
 
-        const jwt = ctx.checkHeader('authorization').exist().notEmpty().value
+        const jwt = ctx.checkHeader('resource-signature').exist().notEmpty().value
         const response = ctx.checkHeader('response').optional().toJson().default({}).value
 
         ctx.validate(false)

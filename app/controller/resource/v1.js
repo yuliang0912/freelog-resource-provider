@@ -273,7 +273,7 @@ module.exports = class ResourcesController extends Controller {
                 version: resourceInfo.systemMeta.version,
                 resourceId: resourceInfo.resourceId,
                 userId: resourceInfo.userId
-            }).catch(console.error)
+            })
         }
     }
 
