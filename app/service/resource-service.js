@@ -5,6 +5,7 @@ const moment = require('moment')
 const Service = require('egg').Service
 const sendToWormhole = require('stream-wormhole')
 const resourceEvents = require('../enum/resource-events')
+const {ApplicationError} = require('egg-freelog-base/error')
 
 module.exports = class ResourceService extends Service {
 
@@ -23,7 +24,6 @@ module.exports = class ResourceService extends Service {
 
         const {ctx, app, resourceProvider} = this
         const userId = ctx.request.userId
-        //const extension = fileStream.filename.substr(fileStream.filename.lastIndexOf('.'))
         const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
         const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
         const fileUploadAsync = app.ossClient.putStream(objectKey, fileStream)
@@ -34,19 +34,17 @@ module.exports = class ResourceService extends Service {
             resourceFileUrl: uploadData.url,
             systemMeta: metaInfo.systemMeta,
             expireDate: moment().add(30, "day").toDate()
-        })).catch(err => {
+        })).catch(error => {
             sendToWormhole(fileStream)
-            ctx.error(err)
+            throw new ApplicationError(error.toString(), error)
         })
 
-        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: uploadFileInfo.sha1}).catch(ctx.error)
+        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: uploadFileInfo.sha1})
         if (resourceInfo) {
-            ctx.error({msg: '资源已经存在,不能上传重复的文件', data: {resourceInfo}})
+            throw new ApplicationError('资源已经存在,不能上传重复的文件', {resourceInfo})
         }
 
-        return ctx.dal.uploadFileInfoProvider.create(uploadFileInfo).then(data => {
-            return {sha1: uploadFileInfo.sha1}
-        }).catch(ctx.error)
+        return ctx.dal.uploadFileInfoProvider.create(uploadFileInfo).then(() => new Object({sha1: uploadFileInfo.sha1}))
     }
 
     /**
@@ -60,31 +58,33 @@ module.exports = class ResourceService extends Service {
     async createResource({sha1, resourceName, parentId, meta, description, previewImages}) {
 
         const {ctx, app, resourceProvider} = this
-        const userInfo = ctx.request.identityInfo.userInfo
+        const {userInfo} = ctx.request.identityInfo
+        const {userId, userName, nickname} = userInfo
 
         await resourceProvider.getResourceInfo({resourceId: sha1}).then(existResourceInfo => {
-            existResourceInfo && ctx.error({msg: '资源已经被创建,不能创建重复的资源', data: {existResourceInfo}})
+            if (existResourceInfo) {
+                throw new ApplicationError('资源已经被创建,不能创建重复的资源', {existResourceInfo})
+            }
         })
 
-        const uploadFileInfo = await ctx.dal.uploadFileInfoProvider.findOne({sha1, userId: userInfo.userId})
+        const uploadFileInfo = await ctx.dal.uploadFileInfoProvider.findOne({sha1, userId})
         if (!uploadFileInfo) {
-            ctx.error({msg: '参数sha1校验失败,未能找到对应的资源文件信息'})
+            throw new ApplicationError('参数sha1校验失败,未能找到对应的资源文件信息', {sha1, userId})
         }
 
         const resourceInfo = {
-            meta,
+            meta, userId,
             resourceId: sha1,
             status: app.resourceStatus.NORMAL,
             resourceType: uploadFileInfo.resourceType,
             systemMeta: uploadFileInfo.systemMeta,
-            userId: userInfo.userId,
-            userName: userInfo.userName || userInfo.nickname,
+            userName: userName || nickname,
             resourceName: resourceName === undefined ?
                 ctx.helper.stringExpand.cutString(uploadFileInfo.systemMeta.sha1, 10) :
                 ctx.helper.stringExpand.cutString(resourceName, 80),
             mimeType: uploadFileInfo.systemMeta.mimeType,
             previewImages: previewImages,
-            description: app.type.nullOrUndefined(description) ? '' : description,
+            description: description === null || description === undefined ? '' : description,
             intro: this._getResourceIntroFromDescription(description),
             createDate: moment().toDate(),
             updateDate: moment().toDate()
@@ -116,22 +116,25 @@ module.exports = class ResourceService extends Service {
 
         const {ctx, app, resourceProvider} = this
 
-        if (model.meta && Array.isArray(model.meta.dependencies)
-            && !this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
-            if (await ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
-                ctx.error({msg: '当前资源已经存在未废弃的授权方案,必须全部废弃才能修改资源依赖'})
+        if (model.meta && Array.isArray(model.meta.dependencies)) {
+            if (!this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
+                throw new ApplicationError('资源依赖不允许修改')
             }
-            const dependencies = await ctx.helper.resourceDependencyCheck({
-                dependencies: model.meta.dependencies,
-                resourceId: resourceInfo.resourceId
-            }).catch(ctx.error)
-            model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
-            model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
+            // 此处逻辑已经变动.以后会用资源版本来解决依赖问题,而不是直接变动依赖 (2019-01-07)
+            // if (await ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
+            //     ctx.error({msg: '当前资源已经存在未废弃的授权方案,必须全部废弃才能修改资源依赖'})
+            // }
+            // const dependencies = await ctx.helper.resourceDependencyCheck({
+            //     dependencies: model.meta.dependencies,
+            //     resourceId: resourceInfo.resourceId
+            // })
+            // model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
+            // model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
         }
-        if (!app.type.nullOrUndefined(model.description)) {
+        if (model.description !== null && model.description !== undefined) {
             model.intro = this._getResourceIntroFromDescription(model.description)
         }
-        if (model.previewImages) {
+        if (Array.isArray(model.previewImages)) {
             model.previewImages = JSON.stringify(model.previewImages)
         }
         if (model.meta) {
@@ -152,7 +155,7 @@ module.exports = class ResourceService extends Service {
         const {ctx, resourceProvider} = this
         const resourceInfo = await resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
-            ctx.error({msg: '未找到有效资源'})
+            throw new ApplicationError('未找到有效资源', {resourceId})
         }
 
         const dependencies = resourceInfo.systemMeta.dependencies || []
@@ -206,9 +209,9 @@ module.exports = class ResourceService extends Service {
         const fileCheckResult = await ctx.helper.subsidiaryFileCheck({
             fileStream,
             checkType: 'thumbnailImage'
-        }).catch(err => {
+        }).catch(error => {
             sendToWormhole(fileStream)
-            ctx.error(err)
+            throw new ApplicationError(error, toString(), {error})
         })
 
         const fileUrl = await app.previewImageOssClient.putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
@@ -224,8 +227,8 @@ module.exports = class ResourceService extends Service {
      */
     _getResourceIntroFromDescription(resourceDescription) {
 
-        const {ctx, app} = this
-        if (app.type.nullOrUndefined(resourceDescription)) {
+        const {ctx} = this
+        if (resourceDescription === undefined || resourceDescription === null) {
             return ''
         }
         const removeHtmlTag = (input) => input.replace(/<[a-zA-Z0-9]+? [^<>]*?>|<\/[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?\/>|\r|\n/ig, "")

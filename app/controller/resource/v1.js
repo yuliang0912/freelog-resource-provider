@@ -143,7 +143,6 @@ module.exports = class ResourcesController extends Controller {
 
         const fileStream = await ctx.getFileStream()
         ctx.request.body = fileStream.fields
-
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value
         if (!fileStream || !fileStream.filename) {
             ctx.errors.push({file: 'Can\'t found upload file'})

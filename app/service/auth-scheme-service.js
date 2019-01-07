@@ -144,7 +144,6 @@ class AuthSchemeService extends Service {
 
         var contracts = []
         const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
-
         if (dutyStatementMap.size) {
             contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
                 method: 'post',
@@ -158,7 +157,7 @@ class AuthSchemeService extends Service {
                     }))
                 },
                 dataType: 'json'
-            }).catch(ctx.error)
+            })
         }
 
         contracts.forEach(x => dutyStatementMap.get(x.targetId).contractId = x.contractId)
@@ -309,9 +308,8 @@ class AuthSchemeService extends Service {
         const authSchemeIds = dutyStatements.map(item => item.authSchemeId)
         const dutyStatementMap = new Map(dutyStatements.map(x => [x.resourceId, x]))
         const bubbleResourceMap = new Map(bubbleResources.map(x => [x.resourceId, x]))
-        const authSchemeInfoMap = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}}).then(dataList => {
-            return new Map(dataList.map(x => [x._id.toString(), x]))
-        })
+        const authSchemeInfoMap = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}})
+            .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
 
         const validateFailedStatements = dutyStatements.filter(statement => {
             let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)

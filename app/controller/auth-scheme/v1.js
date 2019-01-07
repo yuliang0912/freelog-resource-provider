@@ -136,8 +136,7 @@ module.exports = class PolicyController extends Controller {
             const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
         }
-
-        if (authSchemeName === undefined && policies === undefined && dutyStatements === undefined) {
+        if ([authSchemeName, policies, dutyStatements].every(x => x === undefined)) {
             ctx.error({msg: "最少需要一个有效参数"})
         }
 
