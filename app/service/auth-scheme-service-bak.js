@@ -5,7 +5,6 @@ const Service = require('egg').Service
 const authSchemeEvents = require('../enum/auth-scheme-events')
 const {ApplicationError, LogicError} = require('egg-freelog-base/error')
 
-
 class AuthSchemeService extends Service {
 
     constructor({app}) {
@@ -40,37 +39,126 @@ class AuthSchemeService extends Service {
     }
 
     /**
-     * 授权方案批量签约
-     * @param authScheme
-     * @returns {Promise<*>}
-     * @constructor
+     * 创建授权点
+     * @param authSchemeName
+     * @param resourceInfo
+     * @param policies
+     * @param languageType
+     * @param dutyStatements
+     * @param bubbleResources
+     * @param isPublish
+     * @returns {Promise<PromiseLike<T> | Promise<T>>}
      */
-    async batchSignContracts(authScheme) {
+    async createAuthScheme({authSchemeName, resourceInfo, policies, languageType, dutyStatements, bubbleResources, isPublish}) {
 
-        const {ctx, app, resourceProvider} = this
-        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+        const {app, ctx, authSchemeProvider} = this
+
+        resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
+
+        const authScheme = {
+            policy: [],
+            status: isPublish ? 1 : 0,
+            userId: ctx.request.userId,
+            resourceId: resourceInfo.resourceId,
+            authSchemeName, languageType, dutyStatements, bubbleResources,
+            dependCount: resourceInfo.systemMeta.dependCount || resourceInfo.systemMeta.dependencies.length,
+        }
+
+        if (policies) {
+            authScheme.policy = this._policiesHandler({authScheme, policies})
+        }
 
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
+        if (authScheme.status === 1 && (!authScheme.policy.length || dutyStatements.length || untreatedResources.length)) {
+            throw new LogicError('当前状态无法直接发布,请检查是否存在有效策略,以及全部处理好依赖资源', {
+                policyCount: authScheme.policy.length,
+                dutyStatementsCount: dutyStatements.length,
+                untreatedResources
+            })
+        }
+
+        await this._updateSchemeAuthTree(authScheme)
+
+        return authSchemeProvider.create(authScheme).tap(() => {
+            app.emit(authSchemeEvents.createAuthSchemeEvent, {authScheme})
+            if (policies) {
+                app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme})
+            }
+        })
+    }
+
+    /**
+     * 更新授权方案
+     * @param authScheme
+     * @param authSchemeName
+     * @param policies
+     * @param dutyStatements
+     * @param bubbleResources
+     * @returns {Promise<Promise<void>|IDBRequest|void>}
+     */
+    async updateAuthScheme({authScheme, authSchemeName, policies, dutyStatements, bubbleResources}) {
+
+        const {resourceProvider, authSchemeProvider} = this
+        const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
+
+        if (policies) {
+            model.policy = this._policiesHandler({authScheme, policies})
+            if (authScheme.status === 1 && !model.policy.some(x => x.status === 1)) {
+                throw new ApplicationError('已经发布的授权方案最少需要一个有效的授权策略')
+            }
+        }
+        if (dutyStatements || bubbleResources) {
+            model.dutyStatements = authScheme.dutyStatements = dutyStatements || authScheme.dutyStatements
+            model.bubbleResources = authScheme.bubbleResources = bubbleResources || authScheme.bubbleResources
+            const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+            await this._checkStatementAndBubble({authScheme, resourceInfo})
+        }
+
+        return authSchemeProvider.updateOne({_id: authScheme.authSchemeId}, model).tap(() => {
+            if (policies) {
+                this.app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme})
+            }
+        })
+    }
+
+    /**
+     * 授权点批量签约
+     */
+    async batchSignContracts({authScheme}) {
+
+        const {ctx, app, resourceProvider} = this
+
+        if (authScheme.status !== 0) {
+            throw new ApplicationError('只有初始状态的授权方案才能发布', {currentStatus: authScheme.status})
+        }
+        if (!authScheme.policy.some(x => x.status === 1)) {
+            throw new ApplicationError('授权方案缺少有效授权策略,无法发布', {currentStatus: authScheme.status})
+        }
+
+        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
+        const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
+
         if (untreatedResources.length) {
             throw new LogicError('声明与上抛的数据不全,无法发布', {untreatedResources})
         }
-        //如果没有声明数据,则表示全部上抛
-        if (!authScheme.dutyStatements.length) {
-            return authScheme.updateOne({bubbleResources: authScheme.bubbleResources})
-        }
 
+        var contracts = []
         const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
-        const contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
-            method: 'post', contentType: 'json', dataType: 'json',
-            data: {
-                partyTwo: authScheme.authSchemeId,
-                contractType: app.contractType.ResourceToResource,
-                signObjects: authScheme.dutyStatements.map(x => new Object({
-                    targetId: x.authSchemeId,
-                    segmentId: x.policySegmentId
-                }))
-            }
-        })
+        if (dutyStatementMap.size) {
+            contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateAuthSchemeContracts`, {
+                method: 'post',
+                contentType: 'json',
+                data: {
+                    partyTwo: authScheme.authSchemeId,
+                    contractType: app.contractType.ResourceToResource,
+                    signObjects: authScheme.dutyStatements.map(x => new Object({
+                        targetId: x.authSchemeId,
+                        segmentId: x.policySegmentId
+                    }))
+                },
+                dataType: 'json'
+            })
+        }
 
         contracts.forEach(x => dutyStatementMap.get(x.targetId).contractId = x.contractId)
 
@@ -79,45 +167,29 @@ class AuthSchemeService extends Service {
             contractId: x.contractId
         }))
 
-        return this.authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, {
-            associatedContracts,
-            bubbleResources: authScheme.bubbleResources,
-            dutyStatements: Array.from(dutyStatementMap.values())
-        }, {new: true})
+        await authScheme.updateOne({
+            status: 1, associatedContracts, dutyStatements: Array.from(dutyStatementMap.values()),
+        }).then(() => {
+            authScheme.status = 1
+            authScheme.associatedContracts = associatedContracts
+            app.emit(authSchemeEvents.releaseAuthSchemeEvent, {authScheme})
+        })
+
+        await this._updateSchemeAuthTree(authScheme)
+
+        return contracts
     }
 
     /**
-     * 更新授权方案
-     * @param authScheme
-     * @param authSchemeName
-     * @param policies
-     * @param isOnline
-     * @returns {Promise<Promise<void>|IDBRequest|void>}
+     * 删除授权方案
+     * @param authSchemeId
      */
-    async updateAuthScheme({authScheme, authSchemeName, policies, isOnline}) {
-
-        const {authSchemeProvider} = this
-        const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
-
-        if (policies) {
-            model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
-        }
-
-        if (isOnline === 1) {
-            if (authScheme.dependCount > 0 && !authScheme.dutyStatements.length && !authScheme.bubbleResources.length) {
-                throw new ApplicationError('授权方案暂未处理依赖资源,无法启用上线')
-            }
-            if (!authScheme.policy.some(x => x.status === 1)) {
-                throw new ApplicationError('授权方案缺少有效的授权策略,无法启用上线')
-            }
-            model.status = isOnline ? 1 : 0
-        }
-
-        return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).tap(() => {
-            if (policies !== undefined && isOnline !== undefined) {
-                this.app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme})
-            }
+    async deleteAuthScheme(authScheme) {
+        await authScheme.updateOne({status: 4}).then(() => {
+            authScheme.status = 4
+            this.app.emit(authSchemeEvents.deleteAuthSchemeEvent, {authScheme})
         })
+        return true
     }
 
     /**
@@ -125,7 +197,7 @@ class AuthSchemeService extends Service {
      * @param presentable
      * @private
      */
-    async updateSchemeAuthTree(authScheme) {
+    async _updateSchemeAuthTree(authScheme) {
 
         if (authScheme.status !== 1) {
             return
@@ -198,6 +270,29 @@ class AuthSchemeService extends Service {
     }
 
     /**
+     * 检查重签授权
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _checkReContractAuth(authSchemeIds) {
+
+        const contractIds = []
+        const recursion = async (authSchemeIds) => {
+            if (!authSchemeIds.length) {
+                return
+            }
+            const _authSchemeIds = []
+            const authSchemeInfos = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}})
+            authSchemeInfos.forEach(authSchemeInfo => authSchemeInfo.dutyStatements.forEach(dutyStatement => {
+                contractIds.push(dutyStatement.contractId)
+                _authSchemeIds.push(dutyStatement.authSchemeId)
+            }))
+            return recursion(_authSchemeIds)
+        }
+        await recursion(authSchemeIds)
+    }
+
+    /**
      * 检查上抛和声明的数据是否在上抛树上,而且依赖关系正确
      * 返回未处理的上抛(没声明也没显示上抛)
      * @private
@@ -216,11 +311,10 @@ class AuthSchemeService extends Service {
         const authSchemeInfoMap = await this.authSchemeProvider.find({_id: {$in: authSchemeIds}})
             .then(dataList => new Map(dataList.map(x => [x.authSchemeId, x])))
 
-        //声明处理的数据中,引用的授权方案存在,资源主体一致并且启用.引用的策略存在并且上线
         const validateFailedStatements = dutyStatements.filter(statement => {
-            const authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
-            return !authScheme || authScheme.resourceId !== statement.resourceId || authScheme.status !== 1
-                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId && x.status === 1)
+            let authScheme = statement.authSchemeInfo = authSchemeInfoMap.get(statement.authSchemeId)
+            return !authScheme || authScheme.resourceId !== statement.resourceId // || authScheme.status !== 1
+                || !authScheme.policy.some(x => x.segmentId === statement.policySegmentId) // && x.status === 1)
         })
         if (validateFailedStatements.length) {
             throw new ApplicationError('dutyStatements数据校验失败,请检查resourceId与authSchemeId,policySegmentId以及他们的状态是否符合条件', validateFailedStatements)
@@ -257,6 +351,13 @@ class AuthSchemeService extends Service {
         }
 
         return untreatedResources
+    }
+
+    /**
+     * 检查是否存在有效的授权方案
+     */
+    isExistValidAuthScheme(resourceId) {
+        return this.authSchemeProvider.count({resourceId, status: {$in: [0, 1]}}).then(count => count > 0)
     }
 
     /**

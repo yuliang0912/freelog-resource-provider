@@ -59,9 +59,10 @@ module.exports = class ResourceEventHandler {
      */
     async authPolicyModifyEventHandler({authScheme}) {
 
-        const purpose = await this._getResourcePurpose(authScheme.resourceId)
+        const {resourceId} = authScheme
+        const purpose = await this._getResourcePurpose(resourceId)
 
-        this.resourceProvider.updateResourceInfo({purpose}, {resourceId: authScheme.resourceId}).catch(error => {
+        this.resourceProvider.updateResourceInfo({purpose}, {resourceId}).catch(error => {
             console.error("authSchemeStateChangeHandler-error", error)
             this.app.logger.error("authSchemeStateChangeHandler-error", error)
         })
@@ -98,6 +99,7 @@ module.exports = class ResourceEventHandler {
      */
     __registerEventHandler__() {
 
+        //目前只有策略变更事件了.后续清理
         this.app.on(authSchemeEvents.createAuthSchemeEvent, function () {
         })
         this.app.on(authSchemeEvents.deleteAuthSchemeEvent, this.deleteAuthSchemeEventHandler.bind(this))

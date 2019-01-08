@@ -167,15 +167,16 @@ module.exports = class ResourcesController extends Controller {
         const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (previewImages && previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
             ctx.validate()
         }
 
-        if (meta === undefined && resourceName === undefined && previewImages === undefined) {
+        if ([meta, resourceName, description, isOnline, previewImages].every(x => x === undefined)) {
             ctx.error({msg: '缺少有效参数'})
         }
 
@@ -184,21 +185,9 @@ module.exports = class ResourcesController extends Controller {
             ctx.error({msg: '未找到有效资源'})
         }
 
-        const model = {}
-        if (meta) {
-            model.meta = meta
-        }
-        if (resourceName) {
-            model.resourceName = resourceName
-        }
-        if (description) {
-            model.description = description
-        }
-        if (previewImages) {
-            model.previewImages = previewImages
-        }
-
-        await ctx.service.resourceService.updateResource({resourceInfo, model}).then(ctx.success).catch(ctx.error)
+        await ctx.service.resourceService.updateResource({
+            resourceInfo, meta, resourceName, description, previewImages, isOnline
+        }).then(ctx.success)
     }
 
     /**
@@ -276,7 +265,6 @@ module.exports = class ResourcesController extends Controller {
         }
     }
 
-
     /**
      * 获取资源依赖树
      * @param ctx
@@ -303,4 +291,5 @@ module.exports = class ResourcesController extends Controller {
 
         await ctx.service.resourceService.uploadPreviewImage(fileStream).then(ctx.success).catch(ctx.error)
     }
+
 }

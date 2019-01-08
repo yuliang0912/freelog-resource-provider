@@ -19,7 +19,7 @@ module.exports = app => {
     router.get('/v1/resources/auth/getResource', auth.v1.getResource)
 
     //批量签约(for授权点)
-    router.put('/v1/resources/authSchemes/batchSignContracts/:authSchemeId', authScheme.v1.batchSignContracts)
+    router.put('/v1/resources/authSchemes/:authSchemeId/batchSignContracts', authScheme.v1.batchSignContracts)
 
     //授权点关联的合同信息
     router.get('/v1/resources/authSchemes/associatedContracts/:authSchemeId', authScheme.v1.associatedContracts)

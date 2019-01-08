@@ -71,9 +71,28 @@ module.exports = class PolicyController extends Controller {
 
         const resourceId = ctx.checkBody('resourceId').isResourceId().value
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
+        const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
+        const languageType = ctx.checkBody('languageType').optional().in(['freelog_policy_lang']).default('freelog_policy_lang').value
+        const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).default([]).value
+        const bubbleResources = ctx.checkBody('bubbleResources').optional().isArray().len(0, 100).default([]).value
+        const isPublish = ctx.checkBody('isPublish').optional().in([0, 1]).default(0).value
+
         ctx.allowContentType({type: 'json'}).validate()
 
-        const resourceInfo = await ctx.dal.resourceProvider.findOne({
+        if (dutyStatements) {
+            const result = statementAndBubbleSchema.validate(dutyStatements, statementAndBubbleSchema.dutyStatementsValidator)
+            result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
+        }
+        if (bubbleResources) {
+            const result = statementAndBubbleSchema.validate(bubbleResources, statementAndBubbleSchema.bubbleResourcesValidator)
+            result.errors.length && ctx.error({msg: '参数bubbleResources格式校验失败', data: result.errors})
+        }
+        if (policies) {
+            const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.addPolicySegmentsValidator)
+            result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
+        }
+
+        const resourceInfo = await ctx.dal.resourceProvider.getResourceInfo({
             resourceId, userId: ctx.request.userId
         })
         if (!resourceInfo) {
@@ -81,58 +100,14 @@ module.exports = class PolicyController extends Controller {
         }
 
         await this.authSchemeProvider.count({resourceId}).then(count => {
-            count >= 20 && ctx.error({msg: '同一个资源最多只能创建20个授权方案'})
+            count >= 100 && ctx.error({msg: '同一个资源授权点最多只能创建20个'})
         })
 
-        resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
-
-        const authScheme = {
-            policy: [], userId: ctx.request.userId,
-            resourceId: resourceInfo.resourceId,
-            authSchemeName, dutyStatements: [], bubbleResources: [],
-            dependCount: resourceInfo.systemMeta.dependCount || resourceInfo.systemMeta.dependencies.length,
-        }
-
-        await this.authSchemeProvider.create(authScheme).then(ctx.success)
-    }
-
-    /**
-     * 处理上抛与声明,并签约
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async batchSignContracts(ctx) {
-
-        const authSchemeId = ctx.checkParams('authSchemeId').isMongoObjectId('authSchemeId格式错误').value
-        const dutyStatements = ctx.checkBody('dutyStatements').exist().isArray().len(0, 200).value
-        const bubbleResources = ctx.checkBody('bubbleResources').exist().isArray().len(0, 200).value
-        ctx.validate()
-
-        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
-        if (!authScheme || authScheme.userId !== ctx.request.userId) {
-            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
-        }
-        if (!authScheme.dependCount) {
-            ctx.error({msg: '授权方案的主体资源不存在依赖项,无法签约', data: {authScheme}})
-        }
-        //后期可以考虑处理不改动上抛的情况下,只重新选择同一方案下的策略.目前下游授权树已经生成,上游授权方案不能随意变动
-        if (authScheme.dutyStatements.length || authScheme.bubbleResources.length) {
-            ctx.error({msg: '授权方案签约完成以后暂不允许变动', data: {authScheme}})
-        }
-
-        const dutyStatementValidateResult = statementAndBubbleSchema.validate(dutyStatements, statementAndBubbleSchema.dutyStatementsValidator)
-        if (dutyStatementValidateResult.errors.length) {
-            ctx.error({msg: '参数dutyStatements格式校验失败', data: dutyStatementValidateResult.errors})
-        }
-        const bubbleResourceValidateResult = statementAndBubbleSchema.validate(bubbleResources, statementAndBubbleSchema.bubbleResourcesValidator)
-        if (bubbleResourceValidateResult.errors.length) {
-            ctx.error({msg: '参数bubbleResources格式校验失败', data: bubbleResourceValidateResult.errors})
-        }
-
-        authScheme.dutyStatements = dutyStatements
-        authScheme.bubbleResources = bubbleResources
-
-        await ctx.service.authSchemeService.AuthSchemeSignContracts(authScheme).then(ctx.success)
+        await ctx.service.authSchemeService.createAuthScheme({
+            authSchemeName, resourceInfo, languageType, isPublish,
+            dutyStatements, bubbleResources,
+            policies: {addPolicySegments: policies},
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
@@ -144,27 +119,79 @@ module.exports = class PolicyController extends Controller {
         const authSchemeId = ctx.checkParams('id').isMongoObjectId('id格式错误').value
         const authSchemeName = ctx.checkBody('authSchemeName').optional().type("string").len(2, 100).trim().value
         const policies = ctx.checkBody('policies').optional().value //base64编码之后的字符串
-        const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
-
+        //注意:dutyStatements和bubbleResources参数不能默认[].否则代表清空
+        const dutyStatements = ctx.checkBody('dutyStatements').optional().isArray().len(0, 100).value
+        const bubbleResources = ctx.checkBody('bubbleResources').optional().isArray().len(0, 100).value
         ctx.allowContentType({type: 'json'}).validate()
 
-        if ([authSchemeName, policies, isOnline].every(x => x === undefined)) {
-            ctx.error({msg: "最少需要一个有效参数"})
+        if (dutyStatements) {
+            const result = statementAndBubbleSchema.validate(dutyStatements, statementAndBubbleSchema.dutyStatementsValidator)
+            result.errors.length && ctx.error({msg: '参数dutyStatements格式校验失败', data: result.errors})
         }
-
+        if (bubbleResources) {
+            const result = statementAndBubbleSchema.validate(bubbleResources, statementAndBubbleSchema.bubbleResourcesValidator)
+            result.errors.length && ctx.error({msg: '参数bubbleResources格式校验失败', data: result.errors})
+        }
         if (policies) {
             const result = batchOperationPolicySchema.validate(policies, batchOperationPolicySchema.authSchemePolicyValidator)
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
+        }
+        if ([authSchemeName, policies, dutyStatements].every(x => x === undefined)) {
+            ctx.error({msg: "最少需要一个有效参数"})
         }
 
         const authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
+        if (authScheme.status === 1 && (dutyStatements || bubbleResources)) {
+            ctx.error({msg: "授权方案已经发布,声明与上抛数据不允许改动"})
+        }
 
         await ctx.service.authSchemeService.updateAuthScheme({
-            authScheme, authSchemeName, policies, isOnline
-        }).then(ctx.success)
+            authScheme, authSchemeName, policies, dutyStatements, bubbleResources
+        }).then(() => {
+            return this.authSchemeProvider.findById(authSchemeId)
+        }).then(ctx.success).catch(ctx.error)
+    }
+
+    /**
+     * 批量签约
+     * @returns {Promise<void>}
+     */
+    async batchSignContracts(ctx) {
+
+        const authSchemeId = ctx.checkParams('authSchemeId').isMongoObjectId('id格式错误').value
+        ctx.validate()
+
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
+        if (!authScheme || authScheme.userId !== ctx.request.userId) {
+            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
+        }
+        if (authScheme.status !== 0) {
+            ctx.error({msg: "授权方案状态校验失败", data: {authSchemeStatus: authScheme.status}})
+        }
+
+        await ctx.service.authSchemeService.batchSignContracts({authScheme}).then(ctx.success)
+    }
+
+    /**
+     * 删除授权方案(不可恢复)
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async destroy(ctx) {
+
+        const authSchemeId = ctx.checkParams('id').isMongoObjectId('authSchemeId格式错误').value
+        ctx.validate()
+
+        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
+        if (!authScheme || authScheme.userId !== ctx.request.userId) {
+            ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
+        }
+
+        await ctx.service.authSchemeService.deleteAuthScheme(authScheme)
+            .then(data => ctx.success(true)).catch(ctx.error)
     }
 
     /**
@@ -207,14 +234,12 @@ module.exports = class PolicyController extends Controller {
 
         const authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.status !== 1) {
-            ctx.error({msg: "未找到授权方案或者授权方案还未启用", data: {authScheme}})
+            ctx.error({msg: "未找到授权方案或者授权方案还未发布", data: {authScheme}})
         }
 
         var authTree = await ctx.dal.schemeAuthTreeProvider.findOne({authSchemeId})
         if (!authTree && authScheme.associatedContracts.length) {
-            authTree = await ctx.service.authSchemeService.updateAuthScheme(authScheme)
-        } else if (!authTree) {
-            authTree = {authSchemeId, resourceId: authScheme.resourceId, authTree: [], status: 0}
+            authTree = await ctx.service.authSchemeService._updateSchemeAuthTree(authScheme)
         }
 
         ctx.success(authTree)
