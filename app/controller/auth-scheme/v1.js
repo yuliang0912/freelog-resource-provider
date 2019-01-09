@@ -131,7 +131,7 @@ module.exports = class PolicyController extends Controller {
         authScheme.dutyStatements = dutyStatements
         authScheme.bubbleResources = bubbleResources
 
-        await ctx.service.authSchemeService.AuthSchemeSignContracts(authScheme).then(ctx.success)
+        await ctx.service.authSchemeService.batchSignContracts(authScheme).then(ctx.success)
     }
 
     /**
