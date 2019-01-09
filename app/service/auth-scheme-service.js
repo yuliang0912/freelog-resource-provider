@@ -113,10 +113,11 @@ class AuthSchemeService extends Service {
             model.status = isOnline ? 1 : 0
         }
 
-        return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).tap(() => {
-            if (policies !== undefined && isOnline !== undefined) {
-                this.app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme})
+        return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).then(model => {
+            if (policies !== undefined || isOnline !== undefined) {
+                this.app.emit(authSchemeEvents.authPolicyModifyEvent, {authScheme: model})
             }
+            return model
         })
     }
 
