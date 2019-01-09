@@ -73,9 +73,8 @@ module.exports = class PolicyController extends Controller {
         const authSchemeName = ctx.checkBody('authSchemeName').type("string").len(2, 100).trim().value
         ctx.allowContentType({type: 'json'}).validate()
 
-        const resourceInfo = await ctx.dal.resourceProvider.findOne({
-            resourceId, userId: ctx.request.userId
-        })
+        const {userId} = ctx.request
+        const resourceInfo = await ctx.dal.resourceProvider.findOne({resourceId, userId})
         if (!resourceInfo) {
             ctx.error({msg: 'resourceId错误或者没有权限'})
         }
@@ -87,7 +86,7 @@ module.exports = class PolicyController extends Controller {
         resourceInfo.systemMeta.dependencies = resourceInfo.systemMeta.dependencies || []
 
         const authScheme = {
-            policy: [], userId: ctx.request.userId,
+            policy: [], userId,
             resourceId: resourceInfo.resourceId,
             authSchemeName, dutyStatements: [], bubbleResources: [],
             dependCount: resourceInfo.systemMeta.dependCount || resourceInfo.systemMeta.dependencies.length,

@@ -126,13 +126,8 @@ module.exports = class ResourcesController extends Controller {
         }
 
         await ctx.service.resourceService.createResource({
-            sha1,
-            resourceName,
-            parentId,
-            meta,
-            description,
-            previewImages
-        }).then(ctx.success).catch(ctx.error)
+            sha1, resourceName, parentId, meta, description, previewImages
+        }).then(ctx.success)
     }
 
     /**

@@ -145,7 +145,7 @@ module.exports = class ResourceService extends Service {
             model.meta = JSON.stringify(model.meta)
         }
         if (isOnline === 0) {
-            model.status = 0
+            model.status = 1
         }
         else if (isOnline === 1) {
             const count = await this.authSchemeProvider.count({resourceId: resourceInfo.resourceId, status: 1})
