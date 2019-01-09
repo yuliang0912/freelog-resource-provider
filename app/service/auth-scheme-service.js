@@ -110,7 +110,10 @@ class AuthSchemeService extends Service {
             if (!authScheme.policy.some(x => x.status === 1)) {
                 throw new ApplicationError('授权方案缺少有效的授权策略,无法启用上线')
             }
-            model.status = isOnline ? 1 : 0
+            model.status = 1
+        }
+        else if (isOnline === 0) {
+            model.status = 0
         }
 
         return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).then(model => {
