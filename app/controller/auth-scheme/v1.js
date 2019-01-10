@@ -107,7 +107,7 @@ module.exports = class PolicyController extends Controller {
         const bubbleResources = ctx.checkBody('bubbleResources').exist().isArray().len(0, 200).value
         ctx.validate()
 
-        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
+        let authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
@@ -128,6 +128,7 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: '参数bubbleResources格式校验失败', data: bubbleResourceValidateResult.errors})
         }
 
+        authScheme = authScheme.toObject()
         authScheme.dutyStatements = dutyStatements
         authScheme.bubbleResources = bubbleResources
 
@@ -156,13 +157,13 @@ module.exports = class PolicyController extends Controller {
             result.errors.length && ctx.error({msg: '参数policies格式校验失败', data: result.errors})
         }
 
-        const authScheme = await this.authSchemeProvider.findById(authSchemeId)
+        let authScheme = await this.authSchemeProvider.findById(authSchemeId)
         if (!authScheme || authScheme.userId !== ctx.request.userId) {
             ctx.error({msg: "未找到授权方案或者授权方案与用户不匹配", data: ctx.request.userId})
         }
 
         await ctx.service.authSchemeService.updateAuthScheme({
-            authScheme, authSchemeName, policies, isOnline
+            authScheme: authScheme.toObject(), authSchemeName, policies, isOnline
         }).then(ctx.success)
     }
 

@@ -231,20 +231,20 @@ class AuthSchemeService extends Service {
         }
 
         const untreatedResources = []
-        const recursion = (resources) => resources.forEach(item => {
-            let dutyStatement = dutyStatementMap.get(item.resourceId)
-            let bubbleResource = bubbleResourceMap.get(item.resourceId)
+        const recursion = (resources) => resources.forEach(({resourceId, resourceName}) => {
+            let dutyStatement = dutyStatementMap.get(resourceId)
+            let bubbleResource = bubbleResourceMap.get(resourceId)
             if (bubbleResource) {
                 bubbleResource.validate = true
-                bubbleResource.resourceName = item.resourceName
+                bubbleResource.resourceName = resourceName === undefined ? '' : resourceName
             }
             else if (dutyStatement) {
                 dutyStatement.validate = true
-                dutyStatement.resourceName = item.resourceName
+                dutyStatement.resourceName = resourceName === undefined ? '' : resourceName
                 recursion(authSchemeInfoMap.get(dutyStatement.authSchemeId).bubbleResources)
             }
             else {
-                untreatedResources.push(item)
+                untreatedResources.push(...arguments)
             }
         })
 
