@@ -56,7 +56,7 @@ class AuthSchemeService extends Service {
         }
         //如果没有声明数据,则表示全部上抛
         if (!authScheme.dutyStatements.length) {
-            return schemeAuthTreeProvider.updateOne({_id: authScheme.authSchemeId}, {bubbleResources: authScheme.bubbleResources})
+            return this.authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, {bubbleResources: authScheme.bubbleResources}, {new: true})
         }
 
         const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))
