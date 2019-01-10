@@ -99,21 +99,22 @@ class AuthSchemeService extends Service {
         const {authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
+        if (isOnline !== undefined) {
+            model.status = authScheme.status = isOnline ? 1 : 0
+        }
         if (policies) {
             model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
+            if (authScheme.status === 1 && !authScheme.policy.some(x => x.status === 1)) {
+                throw new ApplicationError('已启用的授权方案最少需要一个有效的授权策略')
+            }
         }
-
-        if (isOnline === 1) {
+        if (isOnline) {
             if (authScheme.dependCount > 0 && !authScheme.dutyStatements.length && !authScheme.bubbleResources.length) {
                 throw new ApplicationError('授权方案暂未处理依赖资源,无法启用上线')
             }
             if (!authScheme.policy.some(x => x.status === 1)) {
                 throw new ApplicationError('授权方案缺少有效的授权策略,无法启用上线')
             }
-            model.status = 1
-        }
-        else if (isOnline === 0) {
-            model.status = 0
         }
 
         return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).then(model => {
