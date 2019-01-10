@@ -13,7 +13,7 @@ module.exports = app => {
     }
 
     const CollectionSchema = new mongoose.Schema({
-        resourceId: {type: String, required: true, unique: true},
+        resourceId: {type: String, required: true},
         resourceName: {type: String, required: true},
         resourceType: {type: String, required: true},
         authorId: {type: Number, required: true},
@@ -27,7 +27,7 @@ module.exports = app => {
         toObject: toObjectOptions
     })
 
-    CollectionSchema.index({userId: 1});
+    CollectionSchema.index({resourceId: 1, userId: 1}, {unique: true});
 
     return mongoose.model('collection', CollectionSchema)
 }

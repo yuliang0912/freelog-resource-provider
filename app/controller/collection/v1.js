@@ -84,7 +84,11 @@ module.exports = class CollectionController extends Controller {
         const resourceId = ctx.checkParams('id').isResourceId().value
         ctx.validate()
 
-        await this.collectionProvider.findOne({resourceId, status: 0}).then(ctx.success).catch(ctx.error)
+        await this.collectionProvider.findOne({
+            resourceId,
+            userId: ctx.request.userId,
+            status: 0
+        }).then(ctx.success).catch(ctx.error)
     }
 
     /**
