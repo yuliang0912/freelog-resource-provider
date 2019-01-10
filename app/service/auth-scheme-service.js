@@ -47,7 +47,7 @@ class AuthSchemeService extends Service {
      */
     async batchSignContracts(authScheme) {
 
-        const {ctx, app, resourceProvider} = this
+        const {ctx, app, resourceProvider, schemeAuthTreeProvider} = this
         const resourceInfo = await resourceProvider.getResourceInfo({resourceId: authScheme.resourceId})
 
         const untreatedResources = await this._checkStatementAndBubble({authScheme, resourceInfo})
@@ -56,7 +56,7 @@ class AuthSchemeService extends Service {
         }
         //如果没有声明数据,则表示全部上抛
         if (!authScheme.dutyStatements.length) {
-            return authScheme.updateOne({bubbleResources: authScheme.bubbleResources})
+            return schemeAuthTreeProvider.updateOne({_id: authScheme.authSchemeId}, {bubbleResources: authScheme.bubbleResources})
         }
 
         const dutyStatementMap = new Map(authScheme.dutyStatements.map(x => [x.authSchemeId, x]))

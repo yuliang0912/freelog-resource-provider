@@ -33,6 +33,7 @@ module.exports = app => {
 
         bodyParser: {
             enable: true,
+            enableTypes: ['json', 'form', 'text']
         },
 
         middleware: ['errorHandler', 'identityAuthentication'], //
