@@ -103,6 +103,6 @@ module.exports = class CollectionController extends Controller {
 
         await this.collectionProvider.deleteOne({
             resourceId, userId: ctx.request.userId
-        }).then(ret => (ret.ok > 0))
+        }).then(ret => ctx.success(ret.ok > 0))
     }
 }
