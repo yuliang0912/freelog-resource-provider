@@ -10,6 +10,7 @@ module.exports = app => {
         resourceType: {type: String, required: true},
         objectKey: {type: String, required: true},
         resourceFileUrl: {type: String, required: true},
+        resourceFileName: {type: String, required: false, default: ''},
         systemMeta: {},
         expireDate: {type: Date, required: true},
         status: {type: Number, default: 0, required: true}, // 0:初始状态 1:已使用

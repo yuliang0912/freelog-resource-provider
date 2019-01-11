@@ -1,7 +1,9 @@
 'use strict'
 
 const semver = require('semver')
+const lodash = require('lodash')
 const globalInfo = require('egg-freelog-base/globalInfo')
+const {ApplicationError} = require('egg-freelog-base/error')
 const commonRegex = require('egg-freelog-base/app/extend/helper/common_regex')
 
 class WidgetNameAndVersionCheck {
@@ -10,19 +12,20 @@ class WidgetNameAndVersionCheck {
      * 检查插件资源(命名全局唯一,版本检测)
      * @param meta
      * @param userId
-     * @returns {Promise<void>}
      */
-    async check({meta, userId}) {
+    async check({widgetInfo, userId}) {
 
-        if (!Reflect.has(meta, 'widgetName')) {
-            throw new Error("meta中必须包含widgetName属性")
+        if (!widgetInfo || lodash.isEqual(widgetInfo, {})) {
+            throw new ApplicationError('插件资源缺失widgetName和version属性')
+        }
+        if (!Reflect.has(widgetInfo, 'widgetName')) {
+            throw new Error("插件资源缺失widgetName属性")
+        }
+        if (!Reflect.has(widgetInfo, 'version')) {
+            throw new Error("插件资源缺失version属性")
         }
 
-        if (!Reflect.has(meta, 'version')) {
-            throw new Error("meta中必须包含version属性")
-        }
-
-        let {widgetName, version} = meta
+        let {widgetName, version} = widgetInfo
 
         if (!commonRegex.widgetName.test(widgetName)) {
             throw new Error("widgetName命名不符合规范")
@@ -41,9 +44,6 @@ class WidgetNameAndVersionCheck {
         if (lastWidget && !semver.gt(version, lastWidget.version)) {
             throw new Error(`version:${version}必须大于${lastWidget.version}`)
         }
-
-        Reflect.deleteProperty(meta, 'version')
-        Reflect.deleteProperty(meta, 'widgetName')
 
         return {widgetName, version}
     }

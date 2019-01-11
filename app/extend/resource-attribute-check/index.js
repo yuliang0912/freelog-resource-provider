@@ -19,7 +19,7 @@ class ResourceAttributeCheck {
      * 资源meta信息检查
      * @param resourceInfo
      */
-    main(resourceInfo) {
+    main(resourceInfo, attachInfo) {
 
         const checkHandlerFn = this.handlerPatrun.find({resourceType: resourceInfo.resourceType})
 
@@ -27,7 +27,7 @@ class ResourceAttributeCheck {
             return Promise.resolve({systemMeta: {}})
         }
 
-        return checkHandlerFn(resourceInfo)
+        return checkHandlerFn(resourceInfo, attachInfo)
     }
 
     /**
@@ -39,10 +39,10 @@ class ResourceAttributeCheck {
 
         const patrun = Patrun()
 
-        const checkBuild = (checkTask, resourceInfo) => {
+        const checkBuild = (checkTask, resourceInfo, attachInfo) => {
 
             const dependencyCheckTask = resourceDependencyCheck.check({
-                dependencies: resourceInfo.dependencies,
+                dependencies: attachInfo.dependencies,
                 resourceId: resourceInfo.resourceId
             })
 
@@ -57,20 +57,20 @@ class ResourceAttributeCheck {
         /**
          * 默认检查依赖
          */
-        patrun.add({}, (resourceInfo) => checkBuild(undefined, resourceInfo))
+        patrun.add({}, (resourceInfo, attachInfo) => checkBuild(undefined, resourceInfo, attachInfo))
 
 
         /**
          * WIDGET检查依赖和widget名称和版本信息
          */
-        patrun.add({resourceType: resourceType.WIDGET}, (resourceInfo) => {
+        patrun.add({resourceType: resourceType.WIDGET}, (resourceInfo, attachInfo) => {
 
             const widgetNameVersionCheckTask = widgetNameVersionCheck.check({
-                meta: resourceInfo.meta,
+                widgetInfo: attachInfo.widgetInfo,
                 userId: resourceInfo.userId
             })
 
-            return checkBuild(widgetNameVersionCheckTask, resourceInfo)
+            return checkBuild(widgetNameVersionCheckTask, resourceInfo, attachInfo)
         })
 
         return patrun

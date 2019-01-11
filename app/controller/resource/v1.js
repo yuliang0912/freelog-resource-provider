@@ -112,6 +112,7 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
+        const widgetInfo = ctx.checkBody('widgetInfo').optional().default({}).isObject().value
 
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -121,14 +122,14 @@ module.exports = class ResourcesController extends Controller {
         }
 
         if (parentId) {
-            const parentResource = await this.resourceProvider.getResourceInfo({resourceId: parentId}).catch(ctx.error)
+            const parentResource = await this.resourceProvider.getResourceInfo({resourceId: parentId})
             if (!parentResource || parentResource.userId !== ctx.request.userId) {
                 ctx.error({msg: 'parentId错误,或者没有权限引用'})
             }
         }
 
         await ctx.service.resourceService.createResource({
-            sha1, resourceName, parentId, meta, description, previewImages, dependencies
+            sha1, resourceName, parentId, meta, description, previewImages, dependencies, widgetInfo
         }).then(ctx.success)
     }
 
@@ -150,7 +151,7 @@ module.exports = class ResourcesController extends Controller {
         await ctx.service.resourceService.uploadResourceFile({
             fileStream,
             resourceType
-        }).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success)
     }
 
     /**

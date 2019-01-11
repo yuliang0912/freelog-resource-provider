@@ -36,6 +36,7 @@ module.exports = class ResourceService extends Service {
             sha1: metaInfo.systemMeta.sha1,
             resourceFileUrl: uploadData.url,
             systemMeta: metaInfo.systemMeta,
+            resourceFileName: fileStream.filename,
             expireDate: moment().add(30, "day").toDate()
         })).catch(error => {
             sendToWormhole(fileStream)
@@ -58,7 +59,7 @@ module.exports = class ResourceService extends Service {
      * @param meta
      * @param fileStream
      */
-    async createResource({sha1, resourceName, parentId, meta, description, previewImages, dependencies}) {
+    async createResource({sha1, resourceName, parentId, meta, description, previewImages, dependencies, widgetInfo}) {
 
         const {ctx, app, resourceProvider} = this
         const {userInfo} = ctx.request.identityInfo
@@ -76,7 +77,7 @@ module.exports = class ResourceService extends Service {
         }
 
         const resourceInfo = {
-            meta, userId, dependencies,
+            meta, userId,
             resourceId: sha1,
             status: app.resourceStatus.NORMAL,
             resourceType: uploadFileInfo.resourceType,
@@ -96,8 +97,8 @@ module.exports = class ResourceService extends Service {
         const resourceObjectKey = `resources/${uploadFileInfo.resourceType}/${resourceInfo.resourceId}`
         resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
 
-        await ctx.helper.resourceAttributeCheck(resourceInfo)
-        delete resourceInfo.dependencies
+        const attachInfo = {dependencies, widgetInfo}
+        await ctx.helper.resourceAttributeCheck(resourceInfo, attachInfo)
         await resourceProvider.createResource(resourceInfo, parentId)
 
         app.emit(resourceEvents.createResourceEvent, {
