@@ -12,7 +12,7 @@ const resourceDependencyCheck = require('./resource_dependencies_check')
 class ResourceAttributeCheck {
 
     constructor() {
-        this.handlerPatrun = this._registerCheckHanlder()
+        this.handlerPatrun = this._registerCheckHandler()
     }
 
     /**
@@ -35,14 +35,14 @@ class ResourceAttributeCheck {
      * @returns {*}
      * @private
      */
-    _registerCheckHanlder() {
+    _registerCheckHandler() {
 
         const patrun = Patrun()
 
         const checkBuild = (checkTask, resourceInfo) => {
 
             const dependencyCheckTask = resourceDependencyCheck.check({
-                dependencies: resourceInfo.meta.dependencies,
+                dependencies: resourceInfo.dependencies,
                 resourceId: resourceInfo.resourceId
             })
 

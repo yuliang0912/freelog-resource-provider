@@ -104,12 +104,14 @@ module.exports = class ResourcesController extends Controller {
      * @returns {Promise.<void>}
      */
     async create(ctx) {
+
         const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const parentId = ctx.checkBody('parentId').optional().isResourceId().value
         const resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
@@ -126,7 +128,7 @@ module.exports = class ResourcesController extends Controller {
         }
 
         await ctx.service.resourceService.createResource({
-            sha1, resourceName, parentId, meta, description, previewImages
+            sha1, resourceName, parentId, meta, description, previewImages, dependencies
         }).then(ctx.success)
     }
 

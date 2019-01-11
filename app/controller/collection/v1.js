@@ -33,7 +33,7 @@ module.exports = class CollectionController extends Controller {
             authorId: resourceInfo.userId,
             authorName: resourceInfo.userName,
             userId: ctx.request.userId
-        }).then(ctx.success).catch(ctx.error)
+        }).then(ctx.success)
     }
 
     /**
@@ -101,7 +101,8 @@ module.exports = class CollectionController extends Controller {
         const resourceId = ctx.checkParams('id').isResourceId().value
         ctx.validate()
 
-        await this.collectionProvider.updateOne({resourceId, userId: ctx.request.userId}, {status: 1})
-            .then(ret => ctx.success(ret.nModified > 0)).catch(ctx.error)
+        await this.collectionProvider.deleteOne({
+            resourceId, userId: ctx.request.userId
+        }).then(ret => (ret.ok > 0))
     }
 }

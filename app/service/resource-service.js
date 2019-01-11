@@ -58,7 +58,7 @@ module.exports = class ResourceService extends Service {
      * @param meta
      * @param fileStream
      */
-    async createResource({sha1, resourceName, parentId, meta, description, previewImages}) {
+    async createResource({sha1, resourceName, parentId, meta, description, previewImages, dependencies}) {
 
         const {ctx, app, resourceProvider} = this
         const {userInfo} = ctx.request.identityInfo
@@ -76,7 +76,7 @@ module.exports = class ResourceService extends Service {
         }
 
         const resourceInfo = {
-            meta, userId,
+            meta, userId, dependencies,
             resourceId: sha1,
             status: app.resourceStatus.NORMAL,
             resourceType: uploadFileInfo.resourceType,
@@ -97,6 +97,7 @@ module.exports = class ResourceService extends Service {
         resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
 
         await ctx.helper.resourceAttributeCheck(resourceInfo)
+        delete resourceInfo.dependencies
         await resourceProvider.createResource(resourceInfo, parentId)
 
         app.emit(resourceEvents.createResourceEvent, {
@@ -117,22 +118,6 @@ module.exports = class ResourceService extends Service {
      */
     async updateResource({resourceInfo, meta, resourceName, description, previewImages, isOnline}) {
 
-        // if (model.meta && Array.isArray(model.meta.dependencies)) {
-        //     if (!this._dependenciesCompare(model.meta.dependencies, resourceInfo.systemMeta.dependencies)) {
-        //         throw new ApplicationError('资源依赖不允许修改')
-        //     }
-        // 此处逻辑已经变动.以后会用资源版本来解决依赖问题,而不是直接变动依赖 (2019-01-07)
-        // if (await ctx.service.authSchemeService.isExistValidAuthScheme(resourceInfo.resourceId)) {
-        //     ctx.error({msg: '当前资源已经存在未废弃的授权方案,必须全部废弃才能修改资源依赖'})
-        // }
-        // const dependencies = await ctx.helper.resourceDependencyCheck({
-        //     dependencies: model.meta.dependencies,
-        //     resourceId: resourceInfo.resourceId
-        // })
-        // model.systemMeta = JSON.stringify(Object.assign(resourceInfo.systemMeta, dependencies))
-        // model.status = 1 //资源更新依赖,则资源直接下架,需要重新发布授权方案才可以上线
-        //}
-
         const model = {}
         if (lodash.isString(description)) {
             model.description = description
@@ -144,17 +129,15 @@ module.exports = class ResourceService extends Service {
         if (lodash.isObject(meta)) {
             model.meta = JSON.stringify(model.meta)
         }
-        if (isOnline === 0) {
-            model.status = 1
+        if (lodash.isInteger(isOnline)) {
+            model.status = isOnline ? 2 : 1
         }
-        else if (isOnline === 1) {
+        if (isOnline === 1) {
             const count = await this.authSchemeProvider.count({resourceId: resourceInfo.resourceId, status: 1})
             if (count < 1) {
                 throw new ApplicationError(`资源不存在已启用的授权方案,无法发布上线`)
             }
-            model.status = 2
         }
-
         return this.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
     }
 
@@ -166,8 +149,7 @@ module.exports = class ResourceService extends Service {
      */
     async getResourceDependencyTree(resourceId, deep = 0) {
 
-        const {ctx, resourceProvider} = this
-        const resourceInfo = await resourceProvider.getResourceInfo({resourceId})
+        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             throw new ApplicationError('未找到有效资源', {resourceId})
         }
