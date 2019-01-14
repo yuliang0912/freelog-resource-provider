@@ -27,6 +27,7 @@ module.exports = class PolicyController extends Controller {
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitResourceId().toSplitArray().len(1, 50).value
         const authSchemeStatus = ctx.checkQuery('authSchemeStatus').optional().toInt().in([0, 1, 4]).value
         const policyStatus = ctx.checkQuery('policyStatus').default(1).optional().toInt().in([0, 1, 2]).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().value
 
         ctx.validate()
 
@@ -34,11 +35,17 @@ module.exports = class PolicyController extends Controller {
             ctx.error({msg: '接口最少需要一个有效参数'})
         }
 
+        var projectionStr = null
+        if (projection && projection.length) {
+            projectionStr = projection.join(' ')
+        }
+
         await ctx.service.authSchemeService.findAuthSchemeList({
             authSchemeIds,
             resourceIds,
             authSchemeStatus,
-            policyStatus
+            policyStatus,
+            projection: projectionStr
         }).then(ctx.success)
     }
 

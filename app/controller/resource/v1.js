@@ -287,7 +287,7 @@ module.exports = class ResourcesController extends Controller {
             ctx.error({msg: 'Can\'t found upload file'})
         }
 
-        await ctx.service.resourceService.uploadPreviewImage(fileStream).then(ctx.success).catch(ctx.error)
+        await ctx.service.resourceService.uploadPreviewImage(fileStream).then(ctx.success)
     }
 
 }

@@ -17,7 +17,7 @@
     "egg-freelog-database": "^1.0.14",
     "egg-scripts": "^2.11.0",
     "file-type": "^7.7.1",
-    "image-size": "^0.6.3",
+    "image-size": "^0.7.1",
     "is-type-of": "^1.2.1",
     "jsonschema": "^1.2.4",
     "knex": "^0.15.2",

@@ -7,7 +7,7 @@ const chreeio = require('cheerio')
 const fileCheckBase = require('../fileCheckBase')
 const globalInfo = require('egg-freelog-base/globalInfo')
 const resourceType = require('egg-freelog-base/app/enum/resource_type')
-
+const {ApplicationError} = require('egg-freelog-base/error')
 
 module.exports = class PageBuildFileCheck extends fileCheckBase {
 
@@ -16,15 +16,17 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
      * @param fileStream
      * @returns {Promise<any>}
      */
-    check({fileStream}) {
+    async check({fileStream}) {
 
-        return new Promise((resolve, reject) => {
+        const fileBuffer = await new Promise((resolve, reject) => {
             let chunks = []
             fileStream
                 .on('data', chunk => chunks.push(chunk))
                 .on('end', () => resolve(Buffer.concat(chunks)))
                 .on('error', reject)
-        }).then(fileBuffer => this._checkFileContentAndGetWidgets(fileBuffer))
+        })
+
+        return this._checkFileContentAndGetWidgets(fileBuffer)
     }
 
     /**
@@ -43,16 +45,12 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
         }
 
         const widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIdList(widgets).where({
-            status: 2,
-            resourceType: resourceType.WIDGET
-        }).map(item => new Object({
-            resourceId: item.resourceId,
-            resourceName: item.resourceName,
-        }))
+            status: 2, resourceType: resourceType.WIDGET
+        }).map(item => lodash.pick(item, ['resourceId', 'resourceName']))
 
         const diffResource = lodash.difference(widgets, widgetResources.map(item => item.resourceId))
         if (diffResource.length) {
-            throw new Error(`widgetIds:${diffResource.toString()} is not widget resource`)
+            throw new ApplicationError(`widgetIds:${diffResource.toString()} is not widget resource`)
         }
 
         return {widgets: widgetResources}

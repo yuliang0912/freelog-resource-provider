@@ -23,7 +23,7 @@ class AuthSchemeService extends Service {
      * @param policyStatus
      * @returns {PromiseLike<void> | Promise<void>}
      */
-    findAuthSchemeList({authSchemeIds, resourceIds, authSchemeStatus, policyStatus}) {
+    findAuthSchemeList({authSchemeIds, resourceIds, authSchemeStatus, policyStatus, projection}) {
 
         const condition = {}
         if (authSchemeIds) {
@@ -36,7 +36,7 @@ class AuthSchemeService extends Service {
             condition.status = authSchemeStatus
         }
 
-        return this.authSchemeProvider.find(condition).then(dataList => this._filterPolicyStatus(dataList, policyStatus))
+        return this.authSchemeProvider.find(condition, projection).then(dataList => this._filterPolicyStatus(dataList, policyStatus))
     }
 
     /**
@@ -99,7 +99,7 @@ class AuthSchemeService extends Service {
         const {authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
-        if (isOnline !== undefined) {
+        if (lodash.isInteger(isOnline)) {
             model.status = authScheme.status = isOnline ? 1 : 0
         }
         if (policies) {
@@ -273,9 +273,11 @@ class AuthSchemeService extends Service {
      */
     _filterPolicyStatus(dataList, policyStatus) {
 
-        if (policyStatus === 1 || policyStatus === 0) {
+        if (Array.isArray(dataList) && (policyStatus === 1 || policyStatus === 0)) {
             dataList.forEach(item => {
-                item.policy = item.policy.filter(x => x.status === policyStatus)
+                if (item.policy) {
+                    item.policy = item.policy.filter(x => x.status === policyStatus)
+                }
             })
         }
 

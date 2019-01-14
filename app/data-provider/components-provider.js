@@ -14,14 +14,6 @@ module.exports = class ComponentsProvider extends KnexBaseOperation {
         this.app = app
     }
 
-    /**
-     * 查找一条
-     * @param condition
-     * @returns {Promise<never>}
-     */
-    findOne(condition) {
-        return super.findOne(condition).orderBy("createDate", "desc")
-    }
 
     /**
      * 创建web components

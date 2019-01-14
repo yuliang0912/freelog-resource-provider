@@ -8,7 +8,6 @@ const sendToWormhole = require('stream-wormhole')
 const resourceEvents = require('../enum/resource-events')
 const {ApplicationError} = require('egg-freelog-base/error')
 
-
 module.exports = class ResourceService extends Service {
 
     constructor({app}) {
@@ -83,13 +82,11 @@ module.exports = class ResourceService extends Service {
             resourceType: uploadFileInfo.resourceType,
             systemMeta: uploadFileInfo.systemMeta,
             userName: userName || nickname,
-            resourceName: resourceName === undefined ?
-                ctx.helper.stringExpand.cutString(uploadFileInfo.systemMeta.sha1, 10) :
-                ctx.helper.stringExpand.cutString(resourceName, 80),
             mimeType: uploadFileInfo.systemMeta.mimeType,
             previewImages: previewImages,
             description: description === null || description === undefined ? '' : description,
             intro: this._getResourceIntroFromDescription(description),
+            resourceName: this._buildResourceName(sha1, resourceName, uploadFileInfo.resourceFileName),
             createDate: moment().toDate(),
             updateDate: moment().toDate()
         }
@@ -224,13 +221,15 @@ module.exports = class ResourceService extends Service {
      */
     _getResourceIntroFromDescription(resourceDescription) {
 
-        const {ctx} = this
         if (resourceDescription === undefined || resourceDescription === null) {
             return ''
         }
+
         const removeHtmlTag = (input) => input.replace(/<[a-zA-Z0-9]+? [^<>]*?>|<\/[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?>|<[a-zA-Z0-9]+?\/>|\r|\n/ig, "")
 
-        return ctx.helper.stringExpand.cutString(ctx.helper.htmlDecode(removeHtmlTag(resourceDescription)), 100)
+        return lodash.truncate(lodash.unescape(removeHtmlTag(resourceDescription)), {
+            length: 100, omission: ''
+        })
     }
 
     /**
@@ -243,6 +242,19 @@ module.exports = class ResourceService extends Service {
         const first = metaDependencies.sort().toString()
         const second = systemMetaDependencies.map(t => t.resourceId).sort().toString()
         return first === second
+    }
+
+    /**
+     * 构建资源名称
+     * @private
+     */
+    _buildResourceName(sha1, resourceName, resourceFileName) {
+
+        var value = lodash.isString(resourceName) ? resourceName : lodash.isString(resourceFileName) ? resourceFileName : sha1
+        if (!value.length) {
+            value = sha1
+        }
+        return lodash.truncate(value, {length: 40, omission: ''})
     }
 }
 
