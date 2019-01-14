@@ -164,12 +164,12 @@ module.exports = class ResourcesController extends Controller {
         const meta = ctx.checkBody('meta').optional().isObject().value
         const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
         const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
 
         ctx.allowContentType({type: 'json'}).validate()
 
-        if (previewImages && previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (Array.isArray(previewImages) && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
             ctx.validate()
         }
