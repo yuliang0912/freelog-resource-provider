@@ -108,7 +108,7 @@ module.exports = class ResourcesController extends Controller {
         const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const parentId = ctx.checkBody('parentId').optional().isResourceId().value
-        const resourceName = ctx.checkBody('resourceName').optional().len(4, 60).value
+        const resourceName = ctx.checkBody('resourceName').optional().len(3, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
@@ -162,7 +162,7 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceId = ctx.checkParams("id").isResourceId().value
         const meta = ctx.checkBody('meta').optional().isObject().value
-        const resourceName = ctx.checkBody('resourceName').optional().type('string').len(4, 60).value
+        const resourceName = ctx.checkBody('resourceName').optional().type('string').len(3, 60).value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
         const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value

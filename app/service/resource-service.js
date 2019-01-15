@@ -121,6 +121,9 @@ module.exports = class ResourceService extends Service {
             model.description = description
             model.intro = this._getResourceIntroFromDescription(model.description)
         }
+        if (lodash.isString(resourceName)) {
+            model.resourceName = resourceName
+        }
         if (lodash.isArray(previewImages)) {
             model.previewImages = JSON.stringify(previewImages)
         }
