@@ -11,7 +11,7 @@ const resourceTypes = require('egg-freelog-base/app/enum/resource_type')
 class FileGeneralCheck {
 
     constructor() {
-        this.handlerPatrun = this._registerCheckHanlder()
+        this.handlerPatrun = this._registerCheckHandler()
     }
 
     /**
@@ -38,7 +38,7 @@ class FileGeneralCheck {
      * @returns {*}
      * @private
      */
-    _registerCheckHanlder() {
+    _registerCheckHandler() {
 
         const patrun = Patrun()
 

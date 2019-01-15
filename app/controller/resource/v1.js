@@ -5,6 +5,7 @@
 
 'use strict'
 
+const lodash = require('lodash')
 const Controller = require('egg').Controller
 const sendToWormhole = require('stream-wormhole');
 
@@ -211,7 +212,6 @@ module.exports = class ResourcesController extends Controller {
         const fileStream = await ctx.getFileStream()
         ctx.request.body = fileStream.fields
 
-        const meta = ctx.checkBody('meta').toJson().value
         const resourceId = ctx.checkParams("resourceId").isResourceId().value
 
         if (!fileStream || !fileStream.filename) {
@@ -220,7 +220,7 @@ module.exports = class ResourcesController extends Controller {
 
         ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
 
-        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
+        var resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
         if (!resourceInfo) {
             ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
         }
@@ -228,39 +228,24 @@ module.exports = class ResourcesController extends Controller {
         const fileName = ctx.helper.uuid.v4().replace(/-/g, '')
 
         const fileCheckAsync = ctx.helper.resourceFileCheck({
-            fileStream,
-            resourceType: resourceInfo.resourceType,
-            meta,
-            userId: ctx.request.userId
+            fileStream, resourceType: resourceInfo.resourceType, userId: ctx.request.userId
         })
-        const fileUploadAsync = ctx.app.ossClient.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
 
-        const updateResourceInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
-            meta: JSON.stringify(meta),
-            systemMeta: JSON.stringify(metaInfo.systemMeta),
-            resourceUrl: uploadData.url,
-            mimeType: metaInfo.systemMeta.mimeType
-        })).catch(err => {
+        const fileUploadAsync = ctx.app.ossClient.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
+        const model = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
+            const systemMeta = lodash.defaultsDeep({dependencies: resourceInfo.systemMeta.dependencies}, metaInfo.systemMeta, resourceInfo.systemMeta)
+            return {
+                systemMeta: JSON.stringify(systemMeta),
+                resourceUrl: uploadData.url,
+                mimeType: systemMeta.mimeType
+            }
+        }).catch(err => {
             sendToWormhole(fileStream)
             ctx.error(err)
         })
 
-        await this.resourceProvider.updateResourceInfo(updateResourceInfo, {resourceId}).then(() => {
-            resourceInfo.meta = JSON.parse(updateResourceInfo.meta)
-            resourceInfo.systemMeta = JSON.parse(updateResourceInfo.systemMeta)
-            resourceInfo.resourceUrl = updateResourceInfo.resourceUrl
-            resourceInfo.mimeType = updateResourceInfo.mimeType
-            ctx.success(resourceInfo)
-        }).catch(ctx.error)
-
-        if (resourceInfo.resourceType === ctx.app.resourceType.WIDGET) {
-            await ctx.dal.componentsProvider.create({
-                widgetName: resourceInfo.systemMeta.widgetName || '',
-                version: resourceInfo.systemMeta.version,
-                resourceId: resourceInfo.resourceId,
-                userId: resourceInfo.userId
-            })
-        }
+        await this.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
+        await this.resourceProvider.getResourceInfo({resourceId}).then(ctx.success)
     }
 
     /**
