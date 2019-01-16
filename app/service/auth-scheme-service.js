@@ -99,21 +99,27 @@ class AuthSchemeService extends Service {
         const {authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
-        if (lodash.isInteger(isOnline)) {
-            model.status = authScheme.status = isOnline ? 1 : 0
-        }
-        if (policies) {
-            model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
-            if (authScheme.status === 1 && !authScheme.policy.some(x => x.status === 1)) {
-                throw new ApplicationError('已启用的授权方案最少需要一个有效的授权策略')
+        if (isOnline === 0) {
+            const result = await this._offlineCheck(authScheme.authSchemeId, authScheme.resourceId)
+            if (!result) {
+                throw new ApplicationError('已上架的资源最少需要一个启用的授权方案')
             }
+            model.status = authScheme.status = 0
         }
-        if (isOnline) {
+        else if (isOnline === 1) {
             if (authScheme.dependCount > 0 && !authScheme.dutyStatements.length && !authScheme.bubbleResources.length) {
                 throw new ApplicationError('授权方案暂未处理依赖资源,无法启用上线')
             }
             if (!authScheme.policy.some(x => x.status === 1)) {
                 throw new ApplicationError('授权方案缺少有效的授权策略,无法启用上线')
+            }
+            model.status = authScheme.status = 1
+        }
+        
+        if (policies) {
+            model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
+            if (authScheme.status === 1 && !authScheme.policy.some(x => x.status === 1)) {
+                throw new ApplicationError('已启用的授权方案最少需要一个有效的授权策略')
             }
         }
 
@@ -378,6 +384,24 @@ class AuthSchemeService extends Service {
             totalItem = this._getTreeNodeCount(item.dependencies || [], totalItem)
         })
         return totalItem
+    }
+
+    /**
+     * 下线检测
+     * @param authSchemeId
+     * @param resourceId
+     * @private
+     */
+    async _offlineCheck(authSchemeId, resourceId) {
+        const isExistOnlineAuthScheme = await this.authSchemeProvider.count({
+            resourceId, status: 1, _id: {$ne: authSchemeId}
+        })
+        if (isExistOnlineAuthScheme) {
+            return true
+        }
+        const resourceInfo = await this.resourceProvider.findById(resourceId)
+
+        return resourceInfo.status === 2 ? false : true
     }
 }
 
