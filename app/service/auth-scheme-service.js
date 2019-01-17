@@ -99,6 +99,10 @@ class AuthSchemeService extends Service {
         const {authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
+        //以下4个if不能随意变更位置和调整
+        if (lodash.isInteger(isOnline)) {
+            model.status = authScheme.status = isOnline ? 1 : 0
+        }
         if (isOnline === 0) {
             const result = await this._offlineCheck(authScheme.authSchemeId, authScheme.resourceId)
             if (!result) {
@@ -106,7 +110,13 @@ class AuthSchemeService extends Service {
             }
             model.status = authScheme.status = 0
         }
-        else if (isOnline === 1) {
+        if (policies) {
+            model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
+            if (authScheme.status === 1 && !authScheme.policy.some(x => x.status === 1)) {
+                throw new ApplicationError('已启用的授权方案最少需要一个有效的授权策略')
+            }
+        }
+        if (isOnline === 1) {
             if (authScheme.dependCount > 0 && !authScheme.dutyStatements.length && !authScheme.bubbleResources.length) {
                 throw new ApplicationError('授权方案暂未处理依赖资源,无法启用上线')
             }
@@ -114,13 +124,6 @@ class AuthSchemeService extends Service {
                 throw new ApplicationError('授权方案缺少有效的授权策略,无法启用上线')
             }
             model.status = authScheme.status = 1
-        }
-        
-        if (policies) {
-            model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
-            if (authScheme.status === 1 && !authScheme.policy.some(x => x.status === 1)) {
-                throw new ApplicationError('已启用的授权方案最少需要一个有效的授权策略')
-            }
         }
 
         return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).then(model => {
