@@ -325,7 +325,15 @@ class AuthSchemeService extends Service {
             oldPolicySegments.set(newPolicy.segmentId, newPolicy)
         })
 
-        return Array.from(oldPolicySegments.values())
+        const authSchemePolicy = Array.from(oldPolicySegments.values())
+
+        authSchemePolicy.forEach(({policyText}) => {
+            if (!policyText.toLowerCase().includes('recontractable') && !policyText.toLowerCase().includes('presentable')) {
+                throw new ApplicationError('策略中缺少必要的presentable或recontractable再签约授权')
+            }
+        })
+
+        return authSchemePolicy
     }
 
     /**
