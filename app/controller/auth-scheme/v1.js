@@ -219,7 +219,7 @@ module.exports = class PolicyController extends Controller {
 
         var authTree = await ctx.dal.schemeAuthTreeProvider.findOne({authSchemeId})
         if (!authTree && authScheme.associatedContracts.length) {
-            authTree = await ctx.service.authSchemeService.updateAuthScheme(authScheme)
+            authTree = await ctx.service.authSchemeService.updateSchemeAuthTree(authScheme)
         } else if (!authTree) {
             authTree = {authSchemeId, resourceId: authScheme.resourceId, authTree: [], status: 0}
         }

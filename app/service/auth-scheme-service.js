@@ -95,7 +95,6 @@ class AuthSchemeService extends Service {
      * @returns {Promise<Promise<void>|IDBRequest|void>}
      */
     async updateAuthScheme({authScheme, authSchemeName, policies, isOnline}) {
-
         const {authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
