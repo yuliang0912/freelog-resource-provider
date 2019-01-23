@@ -95,6 +95,7 @@ class AuthSchemeService extends Service {
      * @returns {Promise<Promise<void>|IDBRequest|void>}
      */
     async updateAuthScheme({authScheme, authSchemeName, policies, isOnline}) {
+
         const {authSchemeProvider} = this
         const model = {authSchemeName: authSchemeName || authScheme.authSchemeName}
 
@@ -107,7 +108,6 @@ class AuthSchemeService extends Service {
             if (!result) {
                 throw new ApplicationError('已上架的资源最少需要一个启用的授权方案')
             }
-            model.status = authScheme.status = 0
         }
         if (policies) {
             model.policy = authScheme.policy = this._policiesHandler({authScheme, policies})
@@ -122,7 +122,6 @@ class AuthSchemeService extends Service {
             if (!authScheme.policy.some(x => x.status === 1)) {
                 throw new ApplicationError('授权方案缺少有效的授权策略,无法启用上线')
             }
-            model.status = authScheme.status = 1
         }
 
         return authSchemeProvider.findOneAndUpdate({_id: authScheme.authSchemeId}, model, {new: true}).then(model => {
