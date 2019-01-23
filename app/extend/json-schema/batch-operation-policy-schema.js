@@ -101,6 +101,7 @@ class BatchOperationPolicyJsonSchemaValidator extends FreelogCommonJsonSchema {
          * @returns {boolean}
          */
         super.registerCustomFormats('policyName', (input) => {
+            console.log(input, input.length, input.length >= 2 && input.length < 20)
             return input.length >= 2 && input.length < 20
         })
     }
