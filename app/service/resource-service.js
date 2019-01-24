@@ -128,7 +128,7 @@ module.exports = class ResourceService extends Service {
             model.previewImages = JSON.stringify(previewImages)
         }
         if (lodash.isObject(meta)) {
-            model.meta = JSON.stringify(model.meta)
+            model.meta = JSON.stringify(meta)
         }
         if (lodash.isInteger(isOnline)) {
             model.status = isOnline ? 2 : 1
