@@ -9,11 +9,11 @@ class ThumbnailImageCheck {
      * 图片文件检查
      * @param fileStream
      */
-    async check(fileStream) {
+    async check(ctx, fileStream) {
 
         const fileExt = fileStream.filename.substr(fileStream.filename.lastIndexOf('.') + 1).toLowerCase()
-        if (!['tiff', 'webp', 'jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-            throw new ApplicationError("当前资源不是系统所支持的图片格式(jpg|jpeg|png|gif|tiff|webp)")
+        if (!['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+            throw new ApplicationError(ctx.gettext('resource-image-extension-validate-failed', '(jpg|jpeg|png|gif)'))
         }
 
         const fileBuffer = await new Promise((resolve, reject) => {
@@ -21,7 +21,7 @@ class ThumbnailImageCheck {
             fileStream.on('data', chunk => {
                 fileSize += chunk.length
                 if (fileSize > 31451728) {
-                    return reject(new Error('fileSize must be less than 3MB'))
+                    return reject(new Error(ctx.gettext('resource-file-size-limit-validate-failed', '3MB')))
                 }
                 chunks.push(chunk)
             }).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject)
@@ -29,7 +29,10 @@ class ThumbnailImageCheck {
 
         const {width, height} = sizeOf(fileBuffer)
         if (width > 4096 || height > 4096) {
-            throw new ApplicationError('图片宽高必须小于4096px')
+            throw new ApplicationError(ctx.gettext('resource-image-width-height-limit-validate-failed', '4096px'), {
+                width,
+                height
+            })
         }
 
         return {fileBuffer, fileExt}

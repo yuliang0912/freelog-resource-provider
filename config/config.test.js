@@ -12,20 +12,6 @@ module.exports = {
         }
     },
 
-    knex: {
-        //资源相关DB配置
-        resource: {
-            connection: {
-                host: '172.18.215.231',
-                user: 'root',
-                port: 3307,
-                password: 'Ff@233109',
-                database: 'fr_resource',
-            },
-            debug: false
-        }
-    },
-
     /**
      * mongoDB配置
      */

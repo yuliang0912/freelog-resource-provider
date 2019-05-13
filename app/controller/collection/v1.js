@@ -6,7 +6,7 @@ module.exports = class CollectionController extends Controller {
 
     constructor({app}) {
         super(...arguments)
-        this.resourceProvider = app.dal.resourceProvider
+        this.releaseProvider = app.dal.releaseProvider
         this.collectionProvider = app.dal.collectionProvider
     }
 
@@ -17,22 +17,17 @@ module.exports = class CollectionController extends Controller {
      */
     async create(ctx) {
 
-        const resourceId = ctx.checkBody('resourceId').isResourceId().value
+        const releaseId = ctx.checkBody('releaseId').isMongoObjectId().value
 
         ctx.validate()
 
-        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
-        if (!resourceInfo) {
-            ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
-        }
+        const {releaseName, resourceType, userId, username} = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'releaseId'),
+            data: {releaseId}
+        }))
 
-        await this.collectionProvider.createResourceCollection({
-            resourceId,
-            resourceName: resourceInfo.resourceName,
-            resourceType: resourceInfo.resourceType,
-            authorId: resourceInfo.userId,
-            authorName: resourceInfo.userName,
-            userId: ctx.request.userId
+        await this.collectionProvider.createReleaseCollection({
+            releaseId, releaseName, resourceType, authorId: userId, authorName: username, userId: ctx.request.userId
         }).then(ctx.success)
     }
 
@@ -46,15 +41,15 @@ module.exports = class CollectionController extends Controller {
         const page = ctx.checkQuery("page").default(1).gt(0).toInt().value
         const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
-        const keyWords = ctx.checkQuery("keyWords").optional().decodeURIComponent().value
+        const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
         ctx.validate()
 
         let condition = {status: 0, userId: ctx.request.userId}
         if (resourceType) {
             condition.resourceType = resourceType
         }
-        if (keyWords) {
-            condition.resourceName = new RegExp(keyWords)
+        if (keywords) {
+            condition.resourceName = new RegExp(keywords)
         }
 
         const totalItem = await this.collectionProvider.count(condition)
@@ -63,12 +58,17 @@ module.exports = class CollectionController extends Controller {
             return ctx.success(result)
         }
 
-        const collectionResources = await this.collectionProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
-            .map(x => [x.resourceId, x]).then(list => new Map(list))
+        const collectionReleaseMap = await this.collectionProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
+            .map(x => [x.releaseId, x]).then(list => new Map(list))
 
-        await this.resourceProvider.getResourceByIdList(Array.from(collectionResources.keys())).then(dataList => {
-            dataList.forEach(item => item.collectionDate = collectionResources.get(item.resourceId).createDate)
-            result.dataList = dataList
+        await this.releaseProvider.find({_id: {$in: Array.from(collectionReleaseMap.keys())}}).then(dataList => {
+            result.dataList = dataList.map(releaseInfo => {
+                let {releaseId, releaseName, userId, username, latestVersion} = releaseInfo
+                return {
+                    releaseId, releaseName, authorId: userId, authorName: username, latestVersion,
+                    createDate: collectionReleaseMap.get(releaseId).createDate
+                }
+            })
         })
 
         ctx.success(result)
@@ -81,13 +81,12 @@ module.exports = class CollectionController extends Controller {
      */
     async show(ctx) {
 
-        const resourceId = ctx.checkParams('id').isResourceId().value
+        const releaseId = ctx.checkParams('id').isMongoObjectId().value
         ctx.validate()
 
         await this.collectionProvider.findOne({
-            resourceId,
-            userId: ctx.request.userId,
-            status: 0
+            releaseId,
+            userId: ctx.request.userId
         }).then(ctx.success).catch(ctx.error)
     }
 
@@ -98,11 +97,12 @@ module.exports = class CollectionController extends Controller {
      */
     async destroy(ctx) {
 
-        const resourceId = ctx.checkParams('id').isResourceId().value
+        const releaseId = ctx.checkParams('id').isMongoObjectId().value
         ctx.validate()
 
         await this.collectionProvider.deleteOne({
-            resourceId, userId: ctx.request.userId
+            releaseId,
+            userId: ctx.request.userId
         }).then(ret => ctx.success(ret.ok > 0))
     }
 }

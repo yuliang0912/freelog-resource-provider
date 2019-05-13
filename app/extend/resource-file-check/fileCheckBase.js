@@ -1,5 +1,7 @@
 'use strict'
 
+const {ApplicationError} = require('egg-freelog-base/error')
+
 module.exports = class FileCheckBase {
 
     /**
@@ -11,7 +13,7 @@ module.exports = class FileCheckBase {
      * @param userId
      * @returns {Promise<void>}
      */
-    async check({fileStream, resourceName, resourceType, meta, userId}) {
-        throw new Error("This method must be overwritten!");
+    async check(ctx, {fileStream, resourceName, resourceType, meta, userId}) {
+        throw new ApplicationError("This method must be overwritten!");
     }
 }

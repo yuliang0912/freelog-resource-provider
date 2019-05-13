@@ -5,7 +5,6 @@
 const lodash = require('lodash')
 const chreeio = require('cheerio')
 const fileCheckBase = require('../fileCheckBase')
-const globalInfo = require('egg-freelog-base/globalInfo')
 const resourceType = require('egg-freelog-base/app/enum/resource_type')
 const {ApplicationError} = require('egg-freelog-base/error')
 
@@ -13,10 +12,9 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
 
     /**
      * PB文件检查
-     * @param fileStream
      * @returns {Promise<any>}
      */
-    async check({fileStream}) {
+    async check(ctx, {fileStream}) {
 
         const fileBuffer = await new Promise((resolve, reject) => {
             let chunks = []
@@ -26,16 +24,15 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
                 .on('error', reject)
         })
 
-        return this._checkFileContentAndGetWidgets(fileBuffer)
+        return this._checkFileContentAndGetWidgets(ctx, fileBuffer)
     }
 
     /**
      * 检查文件内容,并且获取PB中的查件信息
-     * @param fileBuffer
      * @returns {Promise<*>}
      * @private
      */
-    async _checkFileContentAndGetWidgets(fileBuffer) {
+    async _checkFileContentAndGetWidgets(ctx, fileBuffer) {
 
         const $ = chreeio.load(fileBuffer.toString())
         const widgets = $('[data-widget-src]').map((index, element) => $(element).attr('data-widget-src')).get()
@@ -44,15 +41,15 @@ module.exports = class PageBuildFileCheck extends fileCheckBase {
             return {widgets: []}
         }
 
-        const widgetResources = await globalInfo.app.dataProvider.resourceProvider.getResourceByIdList(widgets).where({
-            status: 2, resourceType: resourceType.WIDGET
-        }).map(item => lodash.pick(item, ['resourceId', 'resourceName']))
+        const widgetReleases = await ctx.dal.releaseProvider.find({
+            _id: {$in: widgets}, resourceType: resourceType.WIDGET
+        })
 
-        const diffResource = lodash.difference(widgets, widgetResources.map(item => item.resourceId))
+        const diffResource = lodash.difference(widgets, widgetReleases.map(item => item.releaseId))
         if (diffResource.length) {
             throw new ApplicationError(`widgetIds:${diffResource.toString()} is not widget resource`)
         }
 
-        return {widgets: widgetResources}
+        return {widgets: widgetReleases.map(x => lodash.pick(x, ['releaseId', 'releaseName']))}
     }
 }

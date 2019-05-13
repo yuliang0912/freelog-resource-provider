@@ -13,13 +13,13 @@ module.exports = app => {
     }
 
     const CollectionSchema = new mongoose.Schema({
-        resourceId: {type: String, required: true},
-        resourceName: {type: String, required: true},
+        releaseId: {type: String, required: true},
+        releaseName: {type: String, required: true},
         resourceType: {type: String, required: true},
         authorId: {type: Number, required: true},
         authorName: {type: String, default: ''},
         userId: {type: Number, required: true},
-        status: {type: Number, default: 0, required: true}
+        status: {type: Number, default: 0, required: true} // 0:正常
     }, {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

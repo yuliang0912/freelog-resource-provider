@@ -7,8 +7,27 @@
 module.exports = {
 
     /**
-     * 创建资源时间
+     * 创建资源事件
      */
     createResourceEvent: Symbol('resource#createResourceEvent'),
 
+    /**
+     * 创建mock资源事件
+     */
+    createMockResourceEvent: Symbol('resource#createMockResourceEvent'),
+
+    /**
+     * 更新mock资源源文件事件
+     */
+    updateMockResourceFileEvent: Symbol('resource#updateMockResourceFileEvent'),
+
+    /**
+     * 创建发行方案事件
+     */
+    createReleaseSchemeEvent: Symbol('release#createReleaseSchemeEvent'),
+
+    /**
+     * 与发行签约事件
+     */
+    signReleaseContractEvent: Symbol('release#signReleaseContractEvent'),
 }

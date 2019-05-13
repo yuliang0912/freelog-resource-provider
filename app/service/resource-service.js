@@ -1,220 +1,89 @@
 'use strict'
 
-const uuid = require('uuid')
-const moment = require('moment')
+const semver = require('semver')
 const lodash = require('lodash')
 const Service = require('egg').Service
-const sendToWormhole = require('stream-wormhole')
-const resourceEvents = require('../enum/resource-events')
 const {ApplicationError} = require('egg-freelog-base/error')
+const {createResourceEvent} = require('../enum/resource-events')
 
 module.exports = class ResourceService extends Service {
 
-    constructor({app}) {
+    constructor({app, request}) {
         super(...arguments)
+        this.userId = request.userId
+        this.releaseProvider = app.dal.releaseProvider
         this.resourceProvider = app.dal.resourceProvider
-        this.authSchemeProvider = app.dal.authSchemeProvider
-    }
-
-    /**
-     * 上传资源文件(暂存)
-     * @param fileStream
-     * @param resourceType
-     * @returns {Promise<void>}
-     */
-    async uploadResourceFile({fileStream, resourceType}) {
-
-        const {ctx, app, resourceProvider} = this
-        const userId = ctx.request.userId
-        const objectKey = `temporary_upload/${ctx.helper.uuid.v4().replace(/-/g, '')}`.toLowerCase()
-        const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
-        const fileUploadAsync = app.ossClient.putStream(objectKey, fileStream)
-
-        const uploadFileInfo = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => new Object({
-            userId, objectKey, resourceType,
-            sha1: metaInfo.systemMeta.sha1,
-            resourceFileUrl: uploadData.url,
-            systemMeta: metaInfo.systemMeta,
-            resourceFileName: fileStream.filename,
-            expireDate: moment().add(30, "day").toDate()
-        })).catch(error => {
-            sendToWormhole(fileStream)
-            throw new ApplicationError(error.toString(), error)
-        })
-
-        const resourceInfo = await resourceProvider.getResourceInfo({resourceId: uploadFileInfo.sha1})
-        if (resourceInfo) {
-            throw new ApplicationError('资源已经存在,不能上传重复的文件', {resourceInfo})
-        }
-
-        return ctx.dal.uploadFileInfoProvider.create(uploadFileInfo).then(() => new Object({sha1: uploadFileInfo.sha1}))
+        this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
     }
 
     /**
      * 创建资源
-     * @param resourceName
-     * @param resourceType
-     * @param parentId
+     * @param uploadFileInfo
+     * @param aliasName
      * @param meta
-     * @param fileStream
-     */
-    async createResource({sha1, resourceName, parentId, meta, description, previewImages, dependencies, widgetInfo}) {
-
-        const {ctx, app, resourceProvider} = this
-        const {userInfo} = ctx.request.identityInfo
-        const {userId, userName, nickname} = userInfo
-
-        await resourceProvider.getResourceInfo({resourceId: sha1}).then(existResourceInfo => {
-            if (existResourceInfo) {
-                throw new ApplicationError('资源已经被创建,不能创建重复的资源', {existResourceInfo})
-            }
-        })
-
-        const uploadFileInfo = await ctx.dal.uploadFileInfoProvider.findOne({sha1, userId})
-        if (!uploadFileInfo) {
-            throw new ApplicationError('参数sha1校验失败,未能找到对应的资源文件信息', {sha1, userId})
-        }
-
-        const resourceInfo = {
-            meta, userId,
-            resourceId: sha1,
-            status: app.resourceStatus.NORMAL,
-            resourceType: uploadFileInfo.resourceType,
-            systemMeta: uploadFileInfo.systemMeta,
-            userName: userName || nickname,
-            mimeType: uploadFileInfo.systemMeta.mimeType,
-            previewImages: previewImages,
-            description: description === null || description === undefined ? '' : description,
-            intro: this._getResourceIntroFromDescription(description),
-            resourceName: this._buildResourceName(sha1, resourceName, uploadFileInfo.resourceFileName),
-            createDate: moment().toDate(),
-            updateDate: moment().toDate()
-        }
-
-        const resourceObjectKey = `resources/${uploadFileInfo.resourceType}/${resourceInfo.resourceId}`
-        resourceInfo.resourceUrl = uploadFileInfo.resourceFileUrl.replace(uploadFileInfo.objectKey, resourceObjectKey)
-
-        const attachInfo = {dependencies, widgetInfo}
-        await ctx.helper.resourceAttributeCheck(resourceInfo, attachInfo)
-        await resourceProvider.createResource(resourceInfo, parentId)
-
-        app.emit(resourceEvents.createResourceEvent, {
-            resourceInfo,
-            resourceObjectKey,
-            uploadObjectKey: uploadFileInfo.objectKey,
-            parentId
-        })
-
-        return resourceInfo
-    }
-
-    /**
-     * 更新资源
-     * @param resourceId
-     * @param model
-     * @returns {Promise<void>}
-     */
-    async updateResource({resourceInfo, meta, resourceName, description, previewImages, isOnline}) {
-
-        const model = {}
-        if (lodash.isString(description)) {
-            model.description = description
-            model.intro = this._getResourceIntroFromDescription(model.description)
-        }
-        if (lodash.isString(resourceName)) {
-            model.resourceName = resourceName
-        }
-        if (lodash.isArray(previewImages)) {
-            model.previewImages = JSON.stringify(previewImages)
-        }
-        if (lodash.isObject(meta)) {
-            model.meta = JSON.stringify(meta)
-        }
-        if (lodash.isInteger(isOnline)) {
-            model.status = isOnline ? 2 : 1
-        }
-        if (isOnline === 1) {
-            const count = await this.authSchemeProvider.count({resourceId: resourceInfo.resourceId, status: 1})
-            if (count < 1) {
-                throw new ApplicationError(`资源不存在已启用的授权方案,无法发布上线`)
-            }
-        }
-        return this.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
-    }
-
-    /**
-     * 获取资源的依赖树
-     * @param resourceId
-     * @param deep
-     * @returns {Promise<void>}
-     */
-    async getResourceDependencyTree(resourceId, deep = 0) {
-
-        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
-        if (!resourceInfo) {
-            throw new ApplicationError('未找到有效资源', {resourceId})
-        }
-
-        const dependencies = resourceInfo.systemMeta.dependencies || []
-
-        return this.buildDependencyTree(dependencies).then(dependencies => new Object({
-            resourceId: resourceInfo.resourceId,
-            resourceName: resourceInfo.resourceName,
-            resourceType: resourceInfo.resourceType,
-            dependencies: dependencies
-        }))
-    }
-
-    /**
-     * 构建依赖树(后面可以对tree做同级合并,优化查询次数)
-     * @param resourceIds
-     * @private
-     */
-    async buildDependencyTree(dependencies, currDeep = 1, maxDeep = 0) {
-
-        if (!dependencies.length || currDeep++ < maxDeep) {
-            return []
-        }
-        const resourceIds = dependencies.map(item => item.resourceId)
-        return this.resourceProvider.getResourceByIdList(resourceIds).map(async item => new Object({
-            resourceId: item.resourceId,
-            resourceName: item.resourceName,
-            resourceType: item.resourceType,
-            dependencies: await this.buildDependencyTree(item.systemMeta.dependencies || [], currDeep, maxDeep)
-        }))
-    }
-
-
-    /**
-     * 更新资源状态
-     * @param resourceId
-     * @param status
+     * @param description
+     * @param previewImages
+     * @param dependencies
      * @returns {Promise<*>}
      */
-    async updateResourceStatus(resourceId, status) {
-        return this.resourceProvider.updateResourceInfo({status}, {resourceId}).then(data => data)
+    async createResource({uploadFileInfo, aliasName, meta, description, previewImages, dependencies}) {
+
+        const {ctx, app, userId} = this
+        const {sha1, resourceType, systemMeta, fileOss} = uploadFileInfo
+
+        await this.resourceProvider.findOne({resourceId: sha1}, 'resourceId').then(model => {
+            if (model) {
+                throw new ApplicationError(ctx.gettext('resource-create-duplicate-error'))
+            }
+        })
+
+        systemMeta.dependencies = lodash.isArray(dependencies) ? dependencies : []
+
+        await this._checkDependency(systemMeta.dependencies)
+
+        const model = {
+            resourceId: sha1, aliasName, meta, userId, previewImages, resourceType, fileOss, systemMeta,
+            description: lodash.isString(description) ? description : '',
+            intro: this.getResourceIntroFromDescription(description)
+        }
+
+        return this.resourceProvider.create(model).tap(resourceInfo => {
+            app.emit(createResourceEvent, {uploadFileInfo, resourceInfo})
+        })
     }
 
     /**
-     * 上床资源预览图
-     * @param fileStream
+     * 更新资源信息
+     * @param resourceInfo
+     * @param aliasName
+     * @param meta
+     * @param description
+     * @param previewImages
+     * @param dependencies
      * @returns {Promise<void>}
      */
-    async uploadPreviewImage(fileStream) {
+    async updateResourceInfo({resourceInfo, aliasName, meta, description, previewImages, dependencies}) {
 
-        const {ctx, app} = this
-        const fileCheckResult = await ctx.helper.subsidiaryFileCheck({
-            fileStream,
-            checkType: 'thumbnailImage'
-        }).catch(error => {
-            sendToWormhole(fileStream)
-            throw new ApplicationError(error, toString(), {error})
-        })
+        var model = {}
+        if (lodash.isObject(meta)) {
+            model.meta = meta
+        }
+        if (lodash.isString(aliasName)) {
+            model.aliasName = aliasName
+        }
+        if (lodash.isString(description)) {
+            model.description = description
+            model.intro = this.getResourceIntroFromDescription(description)
+        }
+        if (lodash.isArray(previewImages)) {
+            model.previewImages = previewImages
+        }
+        if (dependencies) {
+            await this._checkDependency(dependencies)
+            model.dependencies = dependencies
+        }
 
-        const fileUrl = await app.previewImageOssClient.putBuffer(`preview/${uuid.v4()}.${fileCheckResult.fileExt}`, fileCheckResult.fileBuffer)
-            .then(data => data.url)
-
-        return fileUrl.replace(/^http:\/\/freelog-image.oss-cn-shenzhen(-internal)?.aliyuncs.com\//i, "https://image.freelog.com/")
+        return this.resourceProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, model, {new: true})
     }
 
     /**
@@ -222,9 +91,9 @@ module.exports = class ResourceService extends Service {
      * @param resourceDescription
      * @private
      */
-    _getResourceIntroFromDescription(resourceDescription) {
+    getResourceIntroFromDescription(resourceDescription) {
 
-        if (resourceDescription === undefined || resourceDescription === null) {
+        if (!lodash.isString(resourceDescription)) {
             return ''
         }
 
@@ -235,29 +104,54 @@ module.exports = class ResourceService extends Service {
         })
     }
 
+
     /**
-     * 依赖比较
+     * 检查依赖参数
+     * 1:校验依赖的发行是否存在并且上架
+     * 2:校验依赖的发行版本范围是否真实有效(发行最少需要有一个版本满足设定的范围)
+     * 备注:循环依赖,目前还无法检测.因为依赖的发行版本在变,而且资源此时还没有转换成发行
      * @param dependencies
-     * @param targetDependencies
+     * @returns {Promise<*>}
      * @private
      */
-    _dependenciesCompare(metaDependencies, systemMetaDependencies) {
-        const first = metaDependencies.sort().toString()
-        const second = systemMetaDependencies.map(t => t.resourceId).sort().toString()
-        return first === second
-    }
+    async _checkDependency(dependencies) {
 
-    /**
-     * 构建资源名称
-     * @private
-     */
-    _buildResourceName(sha1, resourceName, resourceFileName) {
-
-        var value = lodash.isString(resourceName) ? resourceName : lodash.isString(resourceFileName) ? resourceFileName : sha1
-        if (!value.length) {
-            value = sha1
+        if (!dependencies.length) {
+            return
         }
-        return lodash.truncate(value, {length: 40, omission: ''})
+
+        const {ctx} = this
+        const invalidDependencies = [], invalidReleaseVersionRanges = [], signAuthFailedDependencies = []
+
+        const releaseMap = await this.releaseProvider.find({_id: {$in: dependencies.map(x => x.releaseId)}})
+            .then(list => new Map(list.map(x => [x.releaseId, x])))
+
+        dependencies.forEach(item => {
+
+            let releaseInfo = releaseMap.get(item.releaseId)
+            if (!releaseInfo || releaseInfo.status !== 1) {
+                invalidDependencies.push(item)
+                return
+            }
+            if ((releaseInfo.signAuth & 1) !== 1) {
+                signAuthFailedDependencies.push(item)
+            }
+            item.releaseName = releaseInfo.releaseName
+            //如果依赖的发行有任意的版本符合资源作者设置的版本范围,则范围有效,否则属于无效的版本设置
+            if (!releaseInfo.resourceVersions.some(x => semver.satisfies(x.version, item.versionRange))) {
+                invalidReleaseVersionRanges.push(item)
+            }
+        })
+
+        if (invalidDependencies.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), {invalidDependencies})
+        }
+        //签约授权暂时不考虑 可能废弃
+        // if (signAuthFailedDependencies.length) {
+        //     throw new ApplicationError(ctx.gettext('resource-depend-release-sign-auth-refuse'), {signAuthFailedDependencies})
+        // }
+        if (invalidReleaseVersionRanges.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidReleaseVersionRanges})
+        }
     }
 }
-

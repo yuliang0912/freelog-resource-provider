@@ -7,54 +7,35 @@
 module.exports = app => {
 
     const {router, controller} = app
-    const {resource, authScheme, collection, auth} = controller
+    const {temporaryFile, resource, collection, release, mockResource, releaseScheme, mockResourceBucket} = controller
 
-    //资源仓库
-    router.get('/v1/resources/warehouse', resource.v1.warehouse)
+    router.put('release-batch-sign', '/v1/releases/:releaseId/batchSignContracts', release.v1.batchSignReleaseContracts)
+    //router.put('release-scheme-update', '/v1/releases/:releaseId/version', releaseScheme.v1.update)
 
-    //资源列表
-    router.get('/v1/resources/list', resource.v1.list)
+    //post-method-api
+    router.post('upload-file', '/v1/resources/temporaryFiles/uploadResourceFile', temporaryFile.v1.uploadResourceFile)
+    router.post('upload-preview-image', '/v1/resources/temporaryFiles/uploadPreviewImage', temporaryFile.v1.uploadPreviewImage)
+    //router.post('release-version-create', '/v1/releases/:releaseId/version', releaseScheme.v1.create)
 
-    //获取资源授权的访问路径
-    router.get('/v1/resources/auth/getResource', auth.v1.getResource)
+    //get-method-api
+    router.get('resource-list', '/v1/resources/list', resource.v1.list)
+    router.get('resource-releases', '/v1/resources/:resourceId/releases', resource.v1.releases)
+    router.get('resource-file-info', '/v1/resources/resourceFileInfo', resource.v1.resourceFileInfo)
+    router.get('bucket-is-exist', '/v1/resources/mocks/buckets/isExist', mockResourceBucket.v1.isExistBucketName)
+    router.get('mock-name-is-exist', '/v1/resources/mocks/isExistMockName', mockResource.v1.isExistMockName)
+    router.get('release-list', '/v1/releases/list', release.v1.list)
+    router.get('release-detail-info', '/v1/releases/detail/:username/:releaseName', release.v1.detail)
+    router.get('release-auth-tree', '/v1/releases/:releaseId/authTree', release.v1.releaseAuthTree)
+    router.get('release-upcast-tree', '/v1/releases/:releaseId/upcastTree', release.v1.releaseUpcastTree)
+    router.get('release-dependency-tree', '/v1/releases/:releaseId/dependencyTree', release.v1.dependencyTree)
+    router.get('release-detail', '/v1/releases/detail', release.v1.detail)
+    router.get('resource-download', '/v1/resources/:resourceId/download', resource.v1.download)
 
-    //批量签约(for授权点)
-    router.put('/v1/resources/authSchemes/:authSchemeId/batchSignContracts', authScheme.v1.batchSignContracts)
-
-    //授权点关联的合同信息
-    router.get('/v1/resources/authSchemes/associatedContracts/:authSchemeId', authScheme.v1.associatedContracts)
-
-    //获取授权方案的授权树
-    router.get('/v1/resources/authSchemes/schemeAuthTree/schemeAuthTreeContractIds', authScheme.v1.schemeAuthTreeContractIds)
-    router.get('/v1/resources/authSchemes/schemeAuthTree/:authSchemeId', authScheme.v1.schemeAuthTree)
-
-
-    //获取资源依赖树
-    router.get('/v1/resources/getResourceDependencyTree/:resourceId', resource.v1.getResourceDependencyTree)
-
-    //上传资源文件
-    router.post('/v1/resources/uploadResourceFile', resource.v1.uploadResourceFile)
-
-    //上传资源预览图
-    router.post('/v1/resources/uploadPreviewImage', '/v1/resources/uploadPreviewImage', resource.v1.uploadPreviewImage)
-
-    //更新资源内容(开发版)
-    router.post('/v1/resources/updateResourceContext/:resourceId', resource.v1.updateResourceContext)
-
-    router.get('/v1/resources/:resourceId/download', resource.v1.download)
-
-    /**
-     * 资源授权方案(授权点)
-     */
-    router.resources('/v1/resources/authSchemes', '/v1/resources/authSchemes', authScheme.v1)
-
-    /**
-     * 资源收藏相关API
-     */
-    router.resources('/v1/resources/collections', '/v1/resources/collections', collection.v1)
-
-    /**
-     * 资源本身相关API
-     */
-    router.resources('/v1/resources', '/v1/resources', resource.v1)
+    //restful-api
+    router.resources('release-info', '/v1/releases', release.v1)
+    router.resources('release-scheme-info', '/v1/releases/:releaseId/versions', releaseScheme.v1)
+    router.resources('mock-resource-bucket', '/v1/resources/mocks/buckets', mockResourceBucket.v1)
+    router.resources('mock-resource', '/v1/resources/mocks', mockResource.v1)
+    router.resources('collection-info', '/v1/collections/releases', collection.v1)
+    router.resources('resource-info', '/v1/resources', resource.v1)
 }

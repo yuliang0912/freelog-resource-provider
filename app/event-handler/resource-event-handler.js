@@ -1,95 +1,50 @@
 'use strict'
 
-const resourceEvents = require('../enum/resource-events')
+const {createResourceEvent} = require('../enum/resource-events')
 
 module.exports = class ResourceEventHandler {
 
     constructor(app) {
         this.app = app
-        this.resourceTreeProvider = app.dal.resourceTreeProvider
-        this.uploadFileInfoProvider = app.dal.uploadFileInfoProvider
-        this.componentsProvider = app.dal.componentsProvider
-        this.__registerEventHandler__()
+        this.resourceProvider = app.dal.resourceProvider
+        this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
     }
 
     /**
-     * 创建资源的版本树
+     * 资源相关事件处理入口
+     * @param eventName
+     * @param uploadFileInfo
+     * @param resourceInfo
+     * @returns {Promise<void>}
      */
-    async createResourceTree({resourceInfo, parentId}) {
+    async handle(eventName, {uploadFileInfo, resourceInfo}) {
 
-        const {app, resourceTreeProvider} = this
+        if (eventName !== createResourceEvent) {
+            return
+        }
 
-        await resourceTreeProvider.createResourceTree(resourceInfo.userId, resourceInfo.resourceId, parentId).catch(error => {
-            console.error('createResourceEvent-createResourceTree-error', error)
-            app.logger.error('createResourceEvent-createResourceTree-error', error)
-        })
-    }
-
-    /**
-     * 删除上传的文件临时信息
-     */
-    async deleteUploadFileInfo({resourceInfo}) {
-
-        const {app, uploadFileInfoProvider} = this
-
-        await uploadFileInfoProvider.deleteOne({
-            sha1: resourceInfo.resourceId,
-            userId: resourceInfo.userId
-        }).catch(error => {
-            console.error("createResourceEvent-deleteUploadFileInfo-error", error)
-            app.logger.error('createResourceEvent-deleteUploadFileInfo-error', error)
-        })
+        return this.copyFile({uploadFileInfo, resourceInfo})
     }
 
     /**
      * 复制临时文件到正式文件夹
      */
-    async copyFile({resourceObjectKey, uploadObjectKey}) {
+    async copyFile({uploadFileInfo, resourceInfo}) {
 
         const {app} = this
+        const {fileOss} = uploadFileInfo
 
-        await app.ossClient.copyFile(resourceObjectKey, uploadObjectKey).catch(error => {
-            console.error("createResourceEvent-copyFile-error", error, resourceObjectKey, uploadObjectKey)
-            app.logger.error("createResourceEvent-copyFile-error", error, resourceObjectKey, uploadObjectKey)
-        })
-    }
+        //此处的存储地址没有使用sha1值,考虑到草稿资源目前允许相同文件存在.防止误删.
+        // //以后做大了,可以考虑sha1值映射管理.这样同样的sha1值文件只存在一份,系统通过数据结果来管理.
+        const targetResourceObjectKey = `resources/${resourceInfo.resourceType}/${resourceInfo.resourceId}`.toLowerCase()
 
-    /**
-     * 创建插件
-     * @param resourceInfo
-     * @returns {Promise<void>}
-     */
-    async createComponents({resourceInfo}) {
-
-        const {app, componentsProvider} = this
-
-        if (resourceInfo.resourceType !== app.resourceType.WIDGET) {
-            return
-        }
-
-        await componentsProvider.create({
-            widgetName: resourceInfo.systemMeta.widgetName,
-            version: resourceInfo.systemMeta.version,
-            resourceId: resourceInfo.resourceId,
-            userId: resourceInfo.userId
+        await app.ossClient.copyFile(targetResourceObjectKey, fileOss.objectKey).then(({res}) => {
+            resourceInfo.fileOss.objectKey = targetResourceObjectKey
+            resourceInfo.fileOss.url = res.requestUrls[0] || fileOss.url.replace(fileOss.objectKey, targetResourceObjectKey)
+            return resourceInfo.updateOne({status: 1, fileOss: resourceInfo.fileOss})
         }).catch(error => {
-            console.error('createResourceEvent-createComponents-error', error)
-            app.logger.error('createResourceEvent-createComponents-error', error)
+            console.error("createResourceEvent-copyFile-error", error, targetResourceObjectKey, fileOss.objectKey)
+            app.logger.error("createResourceEvent-copyFile-error", error, targetResourceObjectKey, fileOss.objectKey)
         })
-    }
-
-    /**
-     * 注册事件处理者
-     * @private
-     */
-    __registerEventHandler__() {
-
-        // arguments : {resourceInfo, resourceObjectKey, uploadObjectKey, parentId}
-
-        this.app.on(resourceEvents.createResourceEvent, this.copyFile.bind(this))
-        this.app.on(resourceEvents.createResourceEvent, this.createComponents.bind(this))
-        this.app.on(resourceEvents.createResourceEvent, this.createResourceTree.bind(this))
-        this.app.on(resourceEvents.createResourceEvent, this.deleteUploadFileInfo.bind(this))
-
     }
 }

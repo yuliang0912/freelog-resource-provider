@@ -26,19 +26,6 @@ module.exports = {
         "updateDate": "2017-11-01T16:24:20.000Z"
     },
 
-    knex: {
-        //资源相关DB配置
-        resource: {
-            connection: {
-                host: '119.23.45.143',
-                user: 'root',
-                password: 'Ff@233109',
-                database: 'fr_resource',
-            },
-            debug: false
-        }
-    },
-
     /**
      * mongoDB配置
      */

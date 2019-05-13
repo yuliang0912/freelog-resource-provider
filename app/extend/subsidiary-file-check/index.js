@@ -6,7 +6,7 @@ const thumbnailImageCheck = require('./thumbnail-image-check')
 class SubsidiaryFileCheck {
 
     constructor() {
-        this.handlerPatrun = this._registerCheckHanlder()
+        this.handlerPatrun = this._registerCheckHandler()
     }
 
     /**
@@ -14,7 +14,7 @@ class SubsidiaryFileCheck {
      * @param fileStream
      * @param checkType
      */
-    main({fileStream, checkType = 'thumbnailImage'}) {
+    main(ctx, {fileStream, checkType = 'thumbnailImage'}) {
 
         const checkHandlerFn = this.handlerPatrun.find({checkType})
 
@@ -22,7 +22,7 @@ class SubsidiaryFileCheck {
             return Promise.reject(new Error('未找到对应的检查函数'))
         }
 
-        return checkHandlerFn({fileStream, checkType})
+        return checkHandlerFn(ctx, {fileStream, checkType})
     }
 
     /**
@@ -30,14 +30,14 @@ class SubsidiaryFileCheck {
      * @returns {*}
      * @private
      */
-    _registerCheckHanlder() {
+    _registerCheckHandler() {
 
         const patrun = Patrun()
 
         /**
          * 检测缩略预览图
          */
-        patrun.add({checkType: 'thumbnailImage'}, ({fileStream}) => thumbnailImageCheck.check(fileStream))
+        patrun.add({checkType: 'thumbnailImage'}, (ctx, {fileStream}) => thumbnailImageCheck.check(ctx, fileStream))
 
         return patrun
     }

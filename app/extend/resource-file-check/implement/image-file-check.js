@@ -10,9 +10,8 @@ module.exports = class ImageFileCheck extends fileCheckBase {
 
     /**
      * 图片文件检查
-     * @param fileStream
      */
-    async check({fileStream}) {
+    async check(ctx, {fileStream}) {
 
         const fileBuffer = await new Promise((resolve, reject) => {
             let chunks = []
@@ -22,7 +21,7 @@ module.exports = class ImageFileCheck extends fileCheckBase {
                 .on('error', reject)
         })
 
-        this.checkMimeType(fileStream.filename)
+        this.checkMimeType(ctx, fileStream.filename)
         const {width, height} = sizeOf(fileBuffer)
 
         return {width, height}
@@ -30,16 +29,15 @@ module.exports = class ImageFileCheck extends fileCheckBase {
 
     /**
      * 检查mimetype
-     * @param mimeType
      * @returns {Error}
      */
-    checkMimeType(fileName) {
+    checkMimeType(ctx, fileName) {
 
         const fileExt = fileName.substr(fileName.lastIndexOf('.') + 1)
         const mimeType = mime.getType(fileExt)
 
-        if (!/^image\/(bmp|cur|ico|psd|tiff|webp|svg|dds|jpg|png|gif|jpeg)$/i.test(mimeType)) {
-            throw new ApplicationError("当前资源不是系统所支持的图片格式")
+        if (!/^image\/(jpg|png|gif|jpeg)$/i.test(mimeType)) {
+            throw new ApplicationError(ctx.gettext('resource-image-extension-validate-failed', '(jpg|jpeg|png|gif)'))
         }
     }
 
@@ -48,7 +46,7 @@ module.exports = class ImageFileCheck extends fileCheckBase {
      * 目前针对其他类型的文件检测的不准确,调整为根据后缀名来检测.不在读取文件信息中的mimetype
      * @param fileBuffer
      */
-    _getFileType(fileBuffer) {
-        return fileType(fileBuffer)
-    }
+    // _getFileType(fileBuffer) {
+    //     return fileType(fileBuffer)
+    // }
 }

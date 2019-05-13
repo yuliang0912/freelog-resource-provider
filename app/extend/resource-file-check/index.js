@@ -22,7 +22,7 @@ class FileGeneralCheck {
      * @param meta
      * @param userId
      */
-    main({fileStream, resourceName, resourceType, meta, userId}) {
+    main(ctx, {fileStream, resourceName, resourceType, meta, userId}) {
 
         const checkHandlerFn = this.handlerPatrun.find({resourceType})
 
@@ -30,7 +30,7 @@ class FileGeneralCheck {
             return Promise.resolve({systemMeta: {}})
         }
 
-        return checkHandlerFn({fileStream, resourceName, resourceType, meta, userId})
+        return checkHandlerFn(ctx, {fileStream, resourceName, resourceType, meta, userId})
     }
 
     /**
@@ -42,13 +42,13 @@ class FileGeneralCheck {
 
         const patrun = Patrun()
 
-        const checkBuild = (checkHandler, ...args) => {
+        const checkBuild = (checkHandler, ctx, ...args) => {
 
             const task1 = this._getFileBaseInfo(...args)
             if (checkHandler && !(checkHandler instanceof fileCheckBase)) {
                 throw new Error("checkHandler must be extends fileCheckBase")
             }
-            const task2 = checkHandler ? checkHandler.check(...args) : undefined
+            const task2 = checkHandler ? checkHandler.check(ctx, ...args) : undefined
             return Promise.all([task1, task2]).then(([fileBaseInfo, checkInfo]) => {
                 return {systemMeta: Object.assign({dependencies: []}, fileBaseInfo, checkInfo)}
             })
@@ -65,9 +65,9 @@ class FileGeneralCheck {
         patrun.add({resourceType: resourceTypes.IMAGE}, (...args) => checkBuild(imageFileCheck, ...args))
 
         /**
-         * PB文件检测
+         * PB文件检测 (pb依赖改为了发行)
          */
-        patrun.add({resourceType: resourceTypes.PAGE_BUILD}, (...args) => checkBuild(pbFileCheck, ...args))
+        //patrun.add({resourceType: resourceTypes.PAGE_BUILD}, (...args) => checkBuild(pbFileCheck, ...args))
 
 
         return patrun

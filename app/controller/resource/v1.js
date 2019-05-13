@@ -1,43 +1,20 @@
-/**
- * Created by yuliang on 2017/6/30.
- * 资源相关操作restful-controller
- */
-
 'use strict'
 
-const lodash = require('lodash')
+const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
-const sendToWormhole = require('stream-wormhole');
+const {ArgumentError} = require('egg-freelog-base/error')
+const JsonWebToken = require('egg-freelog-base/app/extend/helper/jwt_helper')
+const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
 
 module.exports = class ResourcesController extends Controller {
 
     constructor({app}) {
         super(...arguments)
+        this.releaseProvider = app.dal.releaseProvider
         this.resourceProvider = app.dal.resourceProvider
-    }
-
-    /**
-     * 资源仓库
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
-    async warehouse(ctx) {
-
-        const page = ctx.checkQuery("page").default(1).gt(0).toInt().value
-        const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
-        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
-        const keyWords = ctx.checkQuery("keyWords").optional().decodeURIComponent().value
-
-        ctx.validate(false)
-
-        const condition = {status: 2}
-        if (resourceType) {
-            condition.resourceType = resourceType
-        }
-
-        await this.resourceProvider.searchPageList(condition, keyWords, page, pageSize).then(({totalItem, dataList}) => {
-            ctx.success({page, pageSize, totalItem, dataList})
-        })
+        this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
+        this.client = new aliOss(app.config.uploadConfig.aliOss)
+        this.resourceAuthJwt = new JsonWebToken(app.config.RasSha256Key.resourceAuth.publicKey)
     }
 
     /**
@@ -49,144 +26,31 @@ module.exports = class ResourcesController extends Controller {
 
         const page = ctx.checkQuery('page').optional().gt(0).toInt().default(1).value
         const pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
-        ctx.validate()
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
+        const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
+        const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
 
-        var repositories = []
-        const condition = {userId: ctx.request.userId}
-        const totalItem = await this.resourceProvider.getResourceCount(condition)
+        ctx.validate(Boolean(isSelf))
 
+        const condition = {}
+        if (resourceType) {
+            condition.resourceType = resourceType
+        }
+        if (keywords !== undefined) {
+            condition.aliasName = new RegExp(keywords, "i")
+        }
+        if (isSelf) {
+            condition.userId = ctx.request.userId
+        }
+
+        var dataList = []
+        const totalItem = await this.resourceProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            repositories = await this.resourceProvider.getRepositories(condition, page, pageSize).catch(ctx.error)
-        }
-        if (repositories.length === 0) {
-            ctx.success({page, pageSize, totalItem, dataList: []})
+            dataList = await this.resourceProvider.findPageList(condition, page, pageSize, projection.join(' '))
         }
 
-        await this.resourceProvider.getResourceByIdList(repositories.map(t => t.lastVersion))
-            .then(dataList => ctx.success({page, pageSize, totalItem, dataList}))
-    }
-
-    /**
-     * 单个资源展示
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
-    async show(ctx) {
-        const resourceId = ctx.checkParams('id').isResourceId().value
-
-        ctx.validate(false)
-
-        await this.resourceProvider.getResourceInfo({resourceId}).then(ctx.success).catch(ctx.error)
-    }
-
-    /**
-     * 下载资源(内部测试用)
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async download(ctx) {
-
-        const resourceId = ctx.checkParams('resourceId').isResourceId().value
-
-        ctx.validate(false)
-
-        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
-
-        const result = await ctx.curl(resourceInfo.resourceUrl, {streaming: true})
-        ctx.attachment(resourceInfo.resourceId)
-        Object.keys(result.headers).forEach(key => ctx.set(key, result.headers[key]))
-        ctx.body = result.res
-        ctx.set('content-type', resourceInfo.mimeType)
-    }
-
-    /**
-     * 创建资源
-     * @param ctx fileStream WIKI: https://eggjs.org/zh-cn/basics/controller.html
-     * @returns {Promise.<void>}
-     */
-    async create(ctx) {
-
-        const sha1 = ctx.checkBody('sha1').exist().isResourceId('sha1值格式错误').value
-        const meta = ctx.checkBody('meta').optional().default({}).isObject().value
-        const parentId = ctx.checkBody('parentId').optional().isResourceId().value
-        const resourceName = ctx.checkBody('resourceName').optional().len(3, 60).value
-        const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
-        const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
-        const widgetInfo = ctx.checkBody('widgetInfo').optional().default({}).isObject().value
-
-        ctx.allowContentType({type: 'json'}).validate()
-
-        if (previewImages.length && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
-            ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
-            ctx.validate()
-        }
-
-        if (parentId) {
-            const parentResource = await this.resourceProvider.getResourceInfo({resourceId: parentId})
-            if (!parentResource || parentResource.userId !== ctx.request.userId) {
-                ctx.error({msg: 'parentId错误,或者没有权限引用'})
-            }
-        }
-
-        await ctx.service.resourceService.createResource({
-            sha1, resourceName, parentId, meta, description, previewImages, dependencies, widgetInfo
-        }).then(ctx.success)
-    }
-
-    /**
-     * 上传资源文件
-     * @returns {Promise<void>}
-     */
-    async uploadResourceFile(ctx) {
-
-        const fileStream = await ctx.getFileStream()
-        ctx.request.body = fileStream.fields
-        const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value
-        if (!fileStream || !fileStream.filename) {
-            ctx.errors.push({file: 'Can\'t found upload file'})
-        }
-
-        ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
-
-        await ctx.service.resourceService.uploadResourceFile({
-            fileStream,
-            resourceType
-        }).then(ctx.success)
-    }
-
-    /**
-     * 更新资源
-     * @returns {Promise.<void>}
-     */
-    async update(ctx) {
-
-        const resourceId = ctx.checkParams("id").isResourceId().value
-        const meta = ctx.checkBody('meta').optional().isObject().value
-        const resourceName = ctx.checkBody('resourceName').optional().type('string').len(3, 60).value
-        const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
-        const isOnline = ctx.checkBody('isOnline').optional().toInt().in([0, 1]).value
-
-        ctx.allowContentType({type: 'json'}).validate()
-
-        if (Array.isArray(previewImages) && !previewImages.some(x => ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
-            ctx.errors.push({previewImages: '数组中必须是正确的url地址'})
-            ctx.validate()
-        }
-
-        if ([meta, resourceName, description, isOnline, previewImages].every(x => x === undefined)) {
-            ctx.error({msg: '缺少有效参数'})
-        }
-
-        const resourceInfo = await this.resourceProvider.getResourceInfo({resourceId, userId: ctx.request.userId})
-        if (!resourceInfo) {
-            ctx.error({msg: '未找到有效资源'})
-        }
-
-        await ctx.service.resourceService.updateResource({
-            resourceInfo, meta, resourceName, description, previewImages, isOnline
-        }).then(ctx.success)
+        ctx.success({page, pageSize, totalItem, dataList})
     }
 
     /**
@@ -196,83 +60,173 @@ module.exports = class ResourcesController extends Controller {
     async list(ctx) {
 
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 1000).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
 
         ctx.validate(false)
 
-        await this.resourceProvider.getResourceByIdList(resourceIds).then(ctx.success).catch(ctx.error)
+        await this.resourceProvider.find({resourceId: {$in: resourceIds}}, projection.join(' ')).then(ctx.success)
     }
 
     /**
-     * 更新资源内容(开发阶段使用)
+     * 查询资源详情
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async show(ctx) {
+
+        const resourceId = ctx.checkParams('id').exist().isResourceId().value
+        ctx.validate()
+
+        await this.resourceProvider.findOne({resourceId}).then(ctx.success)
+    }
+
+    /**
+     * 创建资源
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async create(ctx) {
+
+        const aliasName = ctx.checkBody('aliasName').exist().len(1, 100).trim().value
+        const meta = ctx.checkBody('meta').optional().default({}).isObject().value
+        const description = ctx.checkBody('description').optional().type('string').value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
+        const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'uploadFileId')).value
+
+        ctx.allowContentType({type: 'json'}).validate()
+
+        const dependReleasesValidateResult = new ResourceInfoValidator().dependReleasesValidate(dependencies)
+        if (dependReleasesValidateResult.errors.length) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {errors: dependReleasesValidateResult.errors})
+        }
+        if (previewImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
+        }
+
+        const uploadFileInfo = await this.temporaryUploadFileProvider.findById(uploadFileId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'uploadFileId'),
+            data: {uploadFileId}
+        }))
+
+        await ctx.service.resourceService.createResource({
+            uploadFileInfo, aliasName, meta, description, previewImages, dependencies
+        }).then(ctx.success)
+    }
+
+    /**
+     * 更新资源
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async update(ctx) {
+
+        const resourceId = ctx.checkParams('id').exist().isResourceId().value
+        const aliasName = ctx.checkBody('aliasName').optional().len(1, 100).trim().value
+        const meta = ctx.checkBody('meta').optional().isObject().value
+        const description = ctx.checkBody('description').optional().type('string').value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
+        const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).value
+
+        ctx.allowContentType({type: 'json'}).validate()
+
+        if (dependencies) {
+            const dependReleasesValidateResult = new ResourceInfoValidator().dependReleasesValidate(dependencies)
+            if (dependReleasesValidateResult.errors.length) {
+                throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {errors: dependReleasesValidateResult.errors})
+            }
+            await this.releaseProvider.findOne({'resourceVersions.resourceId': resourceId}, '_id').then(data => {
+                if (data) {
+                    throw new ArgumentError(ctx.gettext('resource-depend-release-update-refuse'), {dependencies})
+                }
+            })
+        }
+        if (previewImages && previewImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
+        }
+
+        const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceId'),
+            data: {resourceId}
+        }))
+
+        await ctx.service.resourceService.updateResourceInfo({
+            resourceInfo, aliasName, meta, description, previewImages, dependencies
+        }).then(data => ctx.success(Boolean(data.ok)))
+    }
+
+    /**
+     * 资源所挂载的发行
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async releases(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default(['releaseId', 'releaseName', 'username', 'resourceVersions']).value
+        ctx.validate()
+
+        await this.releaseProvider.find({'resourceVersions.resourceId': resourceId}, projection.join(' ')).then(ctx.success)
+    }
+
+    /**
+     * 根据token获取资源授权URL
      * @param ctx
      * @returns {Promise.<void>}
      */
-    async updateResourceContext(ctx) {
+    async resourceFileInfo(ctx) {
 
-        const fileStream = await ctx.getFileStream()
-        ctx.request.body = fileStream.fields
+        const jwt = ctx.checkHeader('resource-signature').exist().notEmpty().value
+        const response = ctx.checkHeader('response').optional().toJson().default({}).value
+        ctx.validate(false)
 
-        const resourceId = ctx.checkParams("resourceId").isResourceId().value
-
-        if (!fileStream || !fileStream.filename) {
-            ctx.errors.push({file: 'Can\'t found upload file'})
+        const authResult = this.resourceAuthJwt.verifyJwt(jwt.replace(/^bearer /i, ""))
+        if (!authResult.isVerify) {
+            throw new ArgumentError(ctx.gettext('jwt-signature-validate-failed'), authResult)
         }
 
-        ctx.allowContentType({type: 'multipart', msg: '资源创建只能接受multipart类型的表单数据'}).validate()
-
-        var resourceInfo = await this.resourceProvider.getResourceInfo({resourceId})
+        const resourceInfo = await this.resourceProvider.findOne({resourceId: authResult.payLoad.resourceId})
         if (!resourceInfo) {
-            ctx.error({msg: `resourceId:${resourceId}错误,未能找到有效资源`})
+            throw new ArgumentError(ctx.gettext('resource-entity-not-found'), {payLoad: authResult.payLoad})
         }
 
-        const fileName = ctx.helper.uuid.v4().replace(/-/g, '')
+        const {fileOss} = resourceInfo
+        response['expires'] = 90 //默认90秒有效期
+        response['response-content-type'] = resourceInfo.customMimeType || resourceInfo.systemMeta.mimeType
 
-        const fileCheckAsync = ctx.helper.resourceFileCheck({
-            fileStream, resourceType: resourceInfo.resourceType, userId: ctx.request.userId
-        })
+        const returnInfo = resourceInfo.toObject()
+        returnInfo.resourceUrl = this.client.signatureUrl(fileOss.objectKey, response)
 
-        const fileUploadAsync = ctx.app.ossClient.putStream(`resources/${resourceInfo.resourceType}/${fileName}`.toLowerCase(), fileStream)
-        const model = await Promise.all([fileCheckAsync, fileUploadAsync]).then(([metaInfo, uploadData]) => {
-            const systemMeta = lodash.defaultsDeep({dependencies: resourceInfo.systemMeta.dependencies}, metaInfo.systemMeta, resourceInfo.systemMeta)
-            return {
-                systemMeta: JSON.stringify(systemMeta),
-                resourceUrl: uploadData.url,
-                mimeType: systemMeta.mimeType
-            }
-        }).catch(err => {
-            sendToWormhole(fileStream)
-            ctx.error(err)
-        })
-
-        await this.resourceProvider.updateResourceInfo(model, {resourceId: resourceInfo.resourceId})
-        await this.resourceProvider.getResourceInfo({resourceId}).then(ctx.success)
+        ctx.success(returnInfo)
     }
 
     /**
-     * 获取资源依赖树
+     * 下载资源
      * @param ctx
      * @returns {Promise<void>}
      */
-    async getResourceDependencyTree(ctx) {
+    async download(ctx) {
 
-        const resourceId = ctx.checkParams("resourceId").isResourceId().value
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value
+        ctx.validate()
 
-        await ctx.validate().service.resourceService.getResourceDependencyTree(resourceId).then(ctx.success)
+        const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceId'),
+            data: {resourceId}
+        }))
+
+        await this.client.getStream(resourceInfo.fileOss.objectKey).then(result => {
+            ctx.status = result.res.status
+            ctx.attachment(resourceInfo.aliasName)
+            ctx.set('content-type', resourceInfo.mimeType)
+            ctx.body = result.stream
+        })
+
+        // await ctx.curl(resourceInfo.fileOss.url, {streaming: true}).then(result => {
+        //     ctx.body = result.res
+        //     ctx.attachment(resourceInfo.aliasName)
+        //     Object.keys(result.headers).forEach(key => ctx.set(key, result.headers[key]))
+        //     ctx.set('content-type', resourceInfo.mimeType)
+        // })
     }
-
-    /**
-     * 上传预览图
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async uploadPreviewImage(ctx) {
-
-        const fileStream = await ctx.getFileStream()
-        if (!fileStream || !fileStream.filename) {
-            ctx.error({msg: 'Can\'t found upload file'})
-        }
-
-        await ctx.service.resourceService.uploadPreviewImage(fileStream).then(ctx.success)
-    }
-
 }

@@ -5,24 +5,9 @@
 'use strict'
 
 const lodash = require('lodash')
-const resourceStatus = require('../enum/resource_status')
-const resourceAttribute = require('../enum/resource_attribute')
 const previewImageOssKey = Symbol("resource#previewImageOssKey")
 
-
 module.exports = {
-
-    /**
-     * 资源内部属性
-     */
-    get resourceAttribute() {
-        return resourceAttribute(this.resourceType)
-    },
-
-    /**
-     * 资源状态
-     */
-    resourceStatus,
 
     /**
      * 预览图上传的oss对象

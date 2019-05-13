@@ -13,14 +13,14 @@ module.exports = class CollectionProvider extends MongoBaseOperation {
      * @param model
      * @returns {PromiseLike<T> | Promise<T>}
      */
-    createResourceCollection(model) {
+    createReleaseCollection(model) {
 
         model.status = 0
+
         return super.findOneAndUpdate({
-            resourceId: model.resourceId,
-            userId: model.userId
-        }, model).then(oldInfo => {
-            return oldInfo ? super.findOne({resourceId: model.resourceId}) : super.create(model)
+            releaseId: model.releaseId, userId: model.userId
+        }, model, {new: true}).then(collectionInfo => {
+            return collectionInfo || super.create(model)
         })
     }
 }

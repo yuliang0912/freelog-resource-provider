@@ -12,7 +12,8 @@ module.exports = app => {
         keys: '20ab72d9397ff78c5058a106c635f008',
 
         i18n: {
-            enable: false
+            enable: true,
+            defaultLocale: 'zh-CN'
         },
 
         /**
@@ -36,39 +37,7 @@ module.exports = app => {
             enableTypes: ['json', 'form', 'text']
         },
 
-        middleware: ['errorHandler', 'identityAuthentication'], //
-
-        /**
-         * DB-mysql相关配置
-         */
-        knex: {
-            /**
-             * 资源相关DB配置
-             */
-            resource: {
-                client: 'mysql',
-                connection: {
-                    host: '127.0.0.1',
-                    user: 'root',
-                    password: 'yuliang@@',
-                    database: 'fr_resource',
-                    charset: 'utf8',
-                    timezone: '+08:00',
-                    bigNumberStrings: true,
-                    supportBigNumbers: true,
-                    connectTimeout: 2000,
-                    typeCast: (field, next) => {
-                        if (field.type === 'JSON') {
-                            return JSON.parse(field.string())
-                        }
-                        return next()
-                    },
-                },
-                pool: {max: 8, min: 1},
-                acquireConnectionTimeout: 800,
-                debug: false
-            }
-        },
+        middleware: ['errorHandler', 'identityAuthentication'],
 
         /**
          * 上传文件相关配置
@@ -132,6 +101,6 @@ module.exports = app => {
             privateKey: '9d3761da71ee041e648cafb2e322d968'
         },
 
-        customLoader: ['app/event-handler']
+        customFileLoader: ['app/event-handler/app-events-listener.js']
     }
 }

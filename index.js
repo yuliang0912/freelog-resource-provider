@@ -1,5 +1,7 @@
 'use strict';
 
+const lodash = require('lodash')
+
 // npm run dev DO NOT read this file
 
 require('egg').startCluster({

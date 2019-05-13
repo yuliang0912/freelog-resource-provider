@@ -6,10 +6,7 @@
 
 const uuid = require('uuid')
 const fileCheck = require('./resource-file-check/index')
-const policyCompiler = require('./policy-compiler/index')
 const subsidiaryFileCheck = require('./subsidiary-file-check/index')
-const resourceAttributeCheck = require('./resource-attribute-check/index')
-const resourceDependencyCheck = require('./resource-attribute-check/resource_dependencies_check')
 
 module.exports = {
 
@@ -18,41 +15,21 @@ module.exports = {
      */
     uuid: uuid,
 
-    /**
-     * 授权语言转换{policyText, languageType, policyName}
-     */
-    policyCompiler(...args) {
-        return policyCompiler.compiler(...args)
-    },
 
     /**
      * 文件检查
      */
     resourceFileCheck(...args) {
-        return fileCheck.main(...args)
+        const {ctx} = this
+        return fileCheck.main(ctx, ...args)
     },
 
     /**
      * 附属文件检查
      */
     subsidiaryFileCheck(...args) {
-        return subsidiaryFileCheck.main(...args)
-    },
-
-    /**
-     * 资源属性检查
-     * @param args
-     * @returns {*}
-     */
-    resourceAttributeCheck(...args) {
-        return resourceAttributeCheck.main(...args)
-    },
-
-    /**
-     * 资源依赖检查
-     */
-    resourceDependencyCheck({dependencies, resourceId}) {
-        return resourceDependencyCheck.check(...arguments)
+        const {ctx} = this
+        return subsidiaryFileCheck.main(ctx, ...args)
     }
 }
 

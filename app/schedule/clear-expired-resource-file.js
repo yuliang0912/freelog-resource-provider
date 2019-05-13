@@ -11,7 +11,7 @@ module.exports = class ClearExpiredResourceFile extends Subscription {
     static get schedule() {
         return {
             type: 'worker',
-            cron: '0 0 4 */1 * * *', //每天凌晨4点执行一次
+            cron: '0 0 4 */1 * *', //每天凌晨4点执行一次
         }
     }
 
@@ -25,7 +25,7 @@ module.exports = class ClearExpiredResourceFile extends Subscription {
 
         const currentDate = app.moment().toDate().toLocaleString()
 
-        await app.dal.uploadFileInfoProvider.deleteMany({expireDate: {$lt: currentDate}})
+        await app.dal.temporaryUploadFileProvider.deleteMany({expireDate: {$lt: currentDate}})
     }
 
 }
