@@ -46,6 +46,8 @@ module.exports = class TemporaryUploadFileService extends Service {
             throw new ApplicationError(error.toString(), error)
         })
 
+        delete uploadFileInfo.systemMeta.dependencies
+
         const resourceInfo = await this.resourceProvider.findOne({resourceId: uploadFileInfo.sha1}, 'resourceId')
 
         return this.temporaryUploadFileProvider.create(uploadFileInfo).then(model => Object({

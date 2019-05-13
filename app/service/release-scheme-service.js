@@ -182,6 +182,10 @@ module.exports = class ReleaseSchemeService extends Service {
      */
     async validatePolicyIdentityAndSignAuth(resolveReleases, isFilterSignedPolicy = true) {
 
+        if (lodash.isEmpty(resolveReleases)) {
+            return
+        }
+
         const {ctx} = this
         const releasePolicies = []
         for (let i = 0, j = resolveReleases.length; i < j; i++) {

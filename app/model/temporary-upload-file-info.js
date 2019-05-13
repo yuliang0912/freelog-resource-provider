@@ -25,7 +25,7 @@ module.exports = app => {
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
     })
 
-    UploadFileInfoSchema.index({sha1: 1, resourceType: 1, userId: 1}, {unique: true});
+    //UploadFileInfoSchema.index({sha1: 1, resourceType: 1, userId: 1}, {unique: true});
 
     return mongoose.model('temporary-upload-file-info', UploadFileInfoSchema)
 }

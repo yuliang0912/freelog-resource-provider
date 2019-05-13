@@ -10,12 +10,10 @@ module.exports = app => {
     const {temporaryFile, resource, collection, release, mockResource, releaseScheme, mockResourceBucket} = controller
 
     router.put('release-batch-sign', '/v1/releases/:releaseId/batchSignContracts', release.v1.batchSignReleaseContracts)
-    //router.put('release-scheme-update', '/v1/releases/:releaseId/version', releaseScheme.v1.update)
 
     //post-method-api
     router.post('upload-file', '/v1/resources/temporaryFiles/uploadResourceFile', temporaryFile.v1.uploadResourceFile)
     router.post('upload-preview-image', '/v1/resources/temporaryFiles/uploadPreviewImage', temporaryFile.v1.uploadPreviewImage)
-    //router.post('release-version-create', '/v1/releases/:releaseId/version', releaseScheme.v1.create)
 
     //get-method-api
     router.get('resource-list', '/v1/resources/list', resource.v1.list)
