@@ -48,7 +48,6 @@ module.exports = class ReleaseService extends Service {
         //待签约的策略身份授权和签约授权校验
         await ctx.service.releaseSchemeService.validatePolicyIdentityAndSignAuth(resolveReleases, false)
 
-        //await ctx.curlIntranetApi(`${ctx.webApi.userInfo}/${userId}`)
         const userInfo = ctx.request.identityInfo.userInfo
         if (userInfo.username === null || userInfo.username === undefined) {
             throw new ApplicationError(ctx.gettext('用户名缺失,请补充账户信息'))
@@ -64,7 +63,7 @@ module.exports = class ReleaseService extends Service {
         }
         if (!lodash.isEmpty(policies)) {
             releaseInfo.policies = this._compilePolicies(policies)
-            releaseInfo.signAuth = releaseInfo.policies.reduce((releaseSignAuth, item) => releaseSignAuth | item.signAuth, 0)
+            //releaseInfo.signAuth = releaseInfo.policies.reduce((releaseSignAuth, item) => releaseSignAuth | item.signAuth, 0)
             //如果存在启用的策略,则发行自动上架
             releaseInfo.status = releaseInfo.policies.some(x => x.status === 1) ? 1 : 0
         }
@@ -72,9 +71,7 @@ module.exports = class ReleaseService extends Service {
         //contractActivatedStatus需要考虑何时计算.以及后续对合同状态的监听
         const releaseSchemeInfo = {
             releaseId, resourceId, upcastReleases, resolveReleases, userId, version,
-            dependencies: systemMeta.dependencies,
-            contractActivatedStatus: resolveReleases.length ? 0 : 1,
-            upcastCoverageRate: systemMeta.dependencies.length ? lodash.round(upcastReleases.length / systemMeta.dependencies.length, 2) : 0
+            contractStatus: resolveReleases.length ? 0 : 1,
         }
 
         const releaseCreateTask = this.releaseProvider.create(releaseInfo)

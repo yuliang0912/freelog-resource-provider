@@ -31,13 +31,12 @@ module.exports = class ReleaseSchemeService extends Service {
 
         //处理的依赖和上抛基本参数数据校验
         const {upcastReleases} = await this.validateUpcastAndResolveReleaseParams(systemMeta.dependencies, resolveReleases, baseUpcastReleases)
+
         //待签约的策略身份授权和签约授权校验
         await this.validatePolicyIdentityAndSignAuth(resolveReleases, true)
 
         const model = {
-            releaseId, resourceId, upcastReleases, resolveReleases, userId, version,
-            dependencies: systemMeta.dependencies,
-            upcastCoverageRate: systemMeta.dependencies.length ? lodash.round(upcastReleases.length / systemMeta.dependencies.length, 2) : 0
+            releaseId, resourceId, upcastReleases, resolveReleases, userId, version
         }
 
         const releaseSchemeInfo = await this.releaseSchemeProvider.create(model)

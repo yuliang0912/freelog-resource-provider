@@ -47,8 +47,8 @@ module.exports = app => {
         version: {type: String, required: true},
         upcastReleases: [UpcastReleaseSchema], //方案实际上抛的发行资源
         resolveReleases: [ResolveReleaseSchema], //声明解决的发行资源
-        dependencies: [DependReleaseSchema], //方案对应的资源原始依赖项
-        upcastCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //依赖上抛率
+        //dependencies: [DependReleaseSchema], //方案对应的资源原始依赖项
+        //upcastCoverageRate: {type: Number, default: 0, min: 0, max: 100}, //依赖上抛率
         //合同状态  0:未计算 1:空合约(没有需要处理的,单一资源或者全上抛) 2:存在待签约的依赖 3:全部签约, 4:合约全部激活 5:合同未全部激活(部分或者没有)
         contractStatus: {type: Number, default: 0, required: false},
         status: {type: Number, default: 0, required: false}, // 0:下架 1:上架
