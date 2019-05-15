@@ -128,25 +128,29 @@ module.exports = class ReleaseService extends Service {
      * 获取发行的依赖树
      * @param releaseInfo
      * @param resourceVersion
+     * @param isContainRootNode
      * @param maxDeep
      * @param fields
      * @returns {Promise<*>}
      */
-    async releaseDependencyTree(releaseInfo, resourceVersion, maxDeep = 100, fields = ['releaseName', 'version', 'resourceId', 'baseUpcastReleases']) {
+    async releaseDependencyTree(releaseInfo, resourceVersion, isContainRootNode, maxDeep = 100, fields = ['releaseName', 'version', 'resourceId', 'baseUpcastReleases']) {
 
         fields = [...['releaseId'], ...fields, ...['dependencies']]
+
         const resourceInfo = await this.resourceProvider.findOne({resourceId: resourceVersion.resourceId}, 'systemMeta.dependencies')
 
-        const model = {
+        if (!isContainRootNode) {
+            return this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, fields)
+        }
+
+        return [{
             releaseId: releaseInfo.releaseId,
             releaseName: releaseInfo.releaseName,
             version: resourceVersion.version,
             resourceId: resourceVersion.resourceId,
             baseUpcastReleases: releaseInfo.baseUpcastReleases,
             dependencies: await this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, fields)
-        }
-
-        return [lodash.pick(model, fields)]
+        }]
     }
 
     /**
@@ -157,7 +161,7 @@ module.exports = class ReleaseService extends Service {
      */
     async releaseAuthTree(releaseInfo, resourceVersion) {
 
-        const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion)
+        const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion, true)
 
         const releaseSchemeMap = await this._getReleaseSchemesFormDependencyTree(dependencyTree).then(list => new Map(list.map(x => [`${x.releaseId}_${x.resourceId}`, x])))
 
@@ -178,9 +182,7 @@ module.exports = class ReleaseService extends Service {
             })
         }
 
-        const rootRelease = dependencyTree[0]
-
-        return recursionAuthTree(rootRelease)
+        return recursionAuthTree(dependencyTree[0])
     }
 
 
@@ -192,7 +194,7 @@ module.exports = class ReleaseService extends Service {
      */
     async releaseUpcastTree(releaseInfo, resourceVersion, maxDeep = 100) {
 
-        const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion)
+        const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion, true)
 
         const recursionUpcastTree = (releaseNode, currDeep = 1) => releaseNode.baseUpcastReleases.map(upcastRelease => {
 

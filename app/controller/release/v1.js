@@ -32,7 +32,7 @@ module.exports = class ReleaseController extends Controller {
 
         ctx.validate(Boolean(isSelf))
 
-        const condition = {status: 1}
+        const condition = {}
         if (resourceType) {
             condition.resourceType = resourceType
         }
@@ -228,7 +228,7 @@ module.exports = class ReleaseController extends Controller {
 
         const fields = ['releaseName', 'version']
 
-        await ctx.service.releaseService.releaseDependencyTree(releaseInfo, resourceVersion, maxDeep, fields).then(ctx.success)
+        await ctx.service.releaseService.releaseDependencyTree(releaseInfo, resourceVersion, false, maxDeep, fields).then(ctx.success)
     }
 
     /**
