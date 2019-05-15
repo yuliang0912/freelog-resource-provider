@@ -127,20 +127,12 @@ module.exports = class ReleaseService extends Service {
     /**
      * 获取发行的依赖树
      * @param releaseInfo
-     * @param version
-     * @returns {Promise<Array>}
+     * @param resourceVersion
+     * @param maxDeep
+     * @param fields
+     * @returns {Promise<*>}
      */
-    async releaseDependencyTree(releaseInfo, versionRange, maxDeep = 100, fields = ['releaseName', 'version', 'resourceId', 'baseUpcastReleases']) {
-
-        var resourceVersion = null
-        if (versionRange) {
-            resourceVersion = this._getReleaseMaxSatisfying(releaseInfo.resourceVersions, versionRange)
-        } else {
-            resourceVersion = releaseInfo.latestVersion
-        }
-        if (!resourceVersion) {
-            return []
-        }
+    async releaseDependencyTree(releaseInfo, resourceVersion, maxDeep = 100, fields = ['releaseName', 'version', 'resourceId', 'baseUpcastReleases']) {
 
         fields = [...['releaseId'], ...fields, ...['dependencies']]
         const resourceInfo = await this.resourceProvider.findOne({resourceId: resourceVersion.resourceId}, 'systemMeta.dependencies')
@@ -160,12 +152,12 @@ module.exports = class ReleaseService extends Service {
     /**
      * 发行授权树
      * @param releaseInfo
-     * @param versionRange
+     * @param resourceVersion
      * @returns {Promise<Array>}
      */
-    async releaseAuthTree(releaseInfo, versionRange) {
+    async releaseAuthTree(releaseInfo, resourceVersion) {
 
-        const dependencyTree = await this.releaseDependencyTree(releaseInfo, versionRange)
+        const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion)
 
         const releaseSchemeMap = await this._getReleaseSchemesFormDependencyTree(dependencyTree).then(list => new Map(list.map(x => [`${x.releaseId}_${x.resourceId}`, x])))
 
@@ -195,12 +187,12 @@ module.exports = class ReleaseService extends Service {
     /**
      * 发行的上抛树
      * @param releaseInfo
-     * @param versionRange
+     * @param resourceVersion
      * @returns {Promise<Array>}
      */
-    async releaseUpcastTree(releaseInfo, versionRange, maxDeep = 100) {
+    async releaseUpcastTree(releaseInfo, resourceVersion, maxDeep = 100) {
 
-        const dependencyTree = await this.releaseDependencyTree(releaseInfo, versionRange)
+        const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion)
 
         const recursionUpcastTree = (releaseNode, currDeep = 1) => releaseNode.baseUpcastReleases.map(upcastRelease => {
 
@@ -209,10 +201,8 @@ module.exports = class ReleaseService extends Service {
             return {
                 releaseId: upcastRelease.releaseId,
                 releaseName: upcastRelease.releaseName,
-                versions: lodash.uniqWith(list, (x, y) => x.releaseId === y.releaseId && x.version === y.version).map(item => Object({
-                    version: item.version,
-                    upcastReleases: currDeep >= maxDeep ? [] : recursionUpcastTree(item, currDeep + 1)
-                }))
+                versions: lodash.uniqBy(list, x => x.version).map(item => Object({version: item.version})),
+                upcastReleases: (currDeep >= maxDeep || !list.length) ? [] : recursionUpcastTree(list[0], currDeep + 1),
             }
         })
 
@@ -226,7 +216,7 @@ module.exports = class ReleaseService extends Service {
      */
     async batchSignReleaseContracts(releaseId, resolveReleases) {
 
-        const {ctx, app, userId} = this
+        const {ctx, app} = this
         if (!resolveReleases.length) {
             return []
         }
@@ -299,8 +289,7 @@ module.exports = class ReleaseService extends Service {
 
         const resourceIds = []
         const dependencyMap = new Map(dependencies.map(item => [item.releaseId, {versionRange: item.versionRange}]))
-        const releaseList = await
-            this.releaseProvider.find({_id: {$in: Array.from(dependencyMap.keys())}})
+        const releaseList = await this.releaseProvider.find({_id: {$in: Array.from(dependencyMap.keys())}})
 
         for (let i = 0, j = releaseList.length; i < j; i++) {
             const {releaseId, resourceVersions} = releaseList[i]
@@ -311,9 +300,8 @@ module.exports = class ReleaseService extends Service {
             resourceIds.push(resourceId)
         }
 
-        const resourceMap = await
-            this.resourceProvider.find({resourceId: {$in: resourceIds}})
-                .then(list => new Map(list.map(x => [x.resourceId, x])))
+        const resourceMap = await this.resourceProvider.find({resourceId: {$in: resourceIds}})
+            .then(list => new Map(list.map(x => [x.resourceId, x])))
 
         for (var value of dependencyMap.values()) {
             value.resourceInfo = resourceMap.get(value.resourceId)
@@ -335,10 +323,7 @@ module.exports = class ReleaseService extends Service {
             tasks.push(this._buildDependencyTree(resourceInfo.systemMeta.dependencies || [], maxDeep, currDeep, fields).then(dependencies => result.dependencies = dependencies))
         }
 
-        await
-            Promise.all(tasks)
-
-        return results
+        return Promise.all(tasks).then(() => results)
     }
 
 
@@ -419,25 +404,30 @@ module.exports = class ReleaseService extends Service {
 
         const {ctx} = this
         const {addPolicies, updatePolicies} = policyInfo
-
         const oldPolicyMap = new Map(releaseInfo.policies.map(x => [x.policyId, x]))
 
-        updatePolicies && updatePolicies.forEach(item => {
-            let targetPolicy = oldPolicyMap.get(item.policyId)
-            if (!targetPolicy) {
-                throw new ApplicationError(ctx.gettext('params-validate-failed', 'policyId'), item)
+        if (!lodash.isEmpty(updatePolicies)) {
+            for (let i = 0, j = updatePolicies.length; i < j; i++) {
+                let item = updatePolicies[i]
+                let targetPolicy = oldPolicyMap.get(item.policyId)
+                if (!targetPolicy) {
+                    throw new ApplicationError(ctx.gettext('params-validate-failed', 'policyId'), item)
+                }
+                targetPolicy.status = item.status
+                targetPolicy.policyName = item.policyName
             }
-            targetPolicy.status = item.status
-            targetPolicy.policyName = item.policyName
-        })
+        }
 
-        addPolicies && addPolicies.forEach(item => {
-            let newPolicy = releasePolicyCompiler.compile(item.policyText, item.policyName)
-            if (oldPolicyMap.has(newPolicy.policyId)) {
-                throw new ApplicationError(ctx.gettext('policy-create-duplicate-error'), item)
+        if (!lodash.isEmpty(addPolicies)) {
+            for (let i = 0, j = addPolicies.length; i < j; i++) {
+                let item = addPolicies[i]
+                let newPolicy = releasePolicyCompiler.compile(item.policyText, item.policyName)
+                if (oldPolicyMap.has(newPolicy.policyId)) {
+                    throw new ApplicationError(ctx.gettext('policy-create-duplicate-error'), item)
+                }
+                oldPolicyMap.set(newPolicy.policyId, newPolicy)
             }
-            oldPolicyMap.set(newPolicy.policyId, newPolicy)
-        })
+        }
 
         return Array.from(oldPolicyMap.values())
     }

@@ -216,7 +216,7 @@ module.exports = class ReleaseController extends Controller {
 
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value
-        const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         ctx.validate()
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
@@ -224,9 +224,11 @@ module.exports = class ReleaseController extends Controller {
             data: {releaseId}
         }))
 
+        const resourceVersion = this._getReleaseVersion(releaseInfo, version)
+
         const fields = ['releaseName', 'version']
 
-        await ctx.service.releaseService.releaseDependencyTree(releaseInfo, versionRange, maxDeep, fields).then(ctx.success)
+        await ctx.service.releaseService.releaseDependencyTree(releaseInfo, resourceVersion, maxDeep, fields).then(ctx.success)
     }
 
     /**
@@ -237,7 +239,7 @@ module.exports = class ReleaseController extends Controller {
     async releaseAuthTree(ctx) {
 
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
-        const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         ctx.validate()
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
@@ -245,7 +247,9 @@ module.exports = class ReleaseController extends Controller {
             data: {releaseId}
         }))
 
-        await ctx.service.releaseService.releaseAuthTree(releaseInfo, versionRange).then(ctx.success)
+        const resourceVersion = this._getReleaseVersion(releaseInfo, version)
+
+        await ctx.service.releaseService.releaseAuthTree(releaseInfo, resourceVersion).then(ctx.success)
     }
 
 
@@ -257,7 +261,7 @@ module.exports = class ReleaseController extends Controller {
     async releaseUpcastTree(ctx) {
 
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
-        const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value
         ctx.validate()
 
@@ -266,7 +270,9 @@ module.exports = class ReleaseController extends Controller {
             data: {releaseId}
         }))
 
-        await ctx.service.releaseService.releaseUpcastTree(releaseInfo, versionRange, maxDeep).then(ctx.success)
+        const resourceVersion = this._getReleaseVersion(releaseInfo, version)
+
+        await ctx.service.releaseService.releaseUpcastTree(releaseInfo, resourceVersion, maxDeep).then(ctx.success)
     }
 
     /**
@@ -306,14 +312,7 @@ module.exports = class ReleaseController extends Controller {
             data: {releaseId}
         }))
 
-        const resourceVersion = releaseInfo.resourceVersions.find(x => x.version === version)
-        if (!resourceVersion) {
-            throw new ArgumentError('params-validate-failed', 'version')
-        }
-
-        const releaseScheme = await this.releaseSchemeProvider.findOne({
-            releaseId, resourceId: resourceVersion.resourceId
-        })
+        const releaseScheme = await this.releaseSchemeProvider.findOne({releaseId, version})
 
         await ctx.service.releaseService.batchSignReleaseContracts(releaseInfo.releaseId, releaseScheme.resolveReleases).then(ctx.success)
     }
@@ -368,5 +367,21 @@ module.exports = class ReleaseController extends Controller {
         })
 
         return true
+    }
+
+    /**
+     * 获取资源版本版本
+     * @param releaseInfo
+     * @param version
+     * @returns {}
+     * @private
+     */
+    _getReleaseVersion(releaseInfo, version) {
+
+        if (version && !releaseInfo.resourceVersions.some(x => x.version === version)) {
+            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'version'))
+        }
+
+        return version ? releaseInfo.resourceVersions.find(x => x.version === version) : releaseInfo.latestVersion
     }
 }
