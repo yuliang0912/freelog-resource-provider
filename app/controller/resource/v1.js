@@ -152,7 +152,7 @@ module.exports = class ResourcesController extends Controller {
 
         await ctx.service.resourceService.updateResourceInfo({
             resourceInfo, aliasName, meta, description, previewImages, dependencies
-        }).then(data => ctx.success(Boolean(data.ok)))
+        }).then(ctx.success)
     }
 
     /**

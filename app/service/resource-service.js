@@ -80,7 +80,7 @@ module.exports = class ResourceService extends Service {
         }
         if (dependencies) {
             await this._checkDependency(dependencies)
-            model.dependencies = dependencies
+            model['systemMeta.dependencies'] = dependencies
         }
 
         return this.resourceProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, model, {new: true})

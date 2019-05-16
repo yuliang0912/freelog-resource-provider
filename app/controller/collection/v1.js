@@ -44,7 +44,7 @@ module.exports = class CollectionController extends Controller {
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
         ctx.validate()
 
-        let condition = {status: 0, userId: ctx.request.userId}
+        let condition = {userId: ctx.request.userId}
         if (resourceType) {
             condition.resourceType = resourceType
         }
@@ -70,6 +70,29 @@ module.exports = class CollectionController extends Controller {
                 }
             })
         })
+
+        ctx.success(result)
+    }
+
+
+    /**
+     * 批量查看发行是否被收藏
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async isCollection(ctx) {
+
+        const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().value
+        ctx.validate()
+
+        const condition = {
+            userId: ctx.request.userId,
+            releaseId: {$in: releaseIds}
+        }
+
+        const collectionSet = await this.collectionProvider.find(condition, 'releaseId').then(list => new Set(list.map(x => x.releaseId)))
+
+        const result = releaseIds.map(x => Object({releaseId: x, isCollection: collectionSet.has(x)}))
 
         ctx.success(result)
     }

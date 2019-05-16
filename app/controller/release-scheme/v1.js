@@ -122,15 +122,23 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
     async list(ctx) {
 
         const releaseIds = ctx.checkQuery('releaseIds').exist().isSplitMongoObjectId().toSplitArray().len(1).value
-        const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitResourceId().toSplitArray().len(1).value
+        const versions = ctx.checkQuery('versions').optional().toSplitArray().len(1).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate()
 
-        const condition = {releaseId: {$in: releaseIds}}
-        if (!lodash.isEmpty(resourceIds)) {
-            condition.resourceId = {$in: resourceIds}
+        const condition = {}
+        if (versions && versions.length !== releaseIds.length) {
+            throw new ArgumentError(ctx.gettext('params-comb-validate-failed'))
+        } else if (versions) {
+            condition.$or = []
+            for (let i = 0, j = releaseIds.length; i < j; i++) {
+                condition.$or.push({releaseId: releaseIds[i], version: versions[i]})
+            }
+        } else {
+            condition.releaseId = {$in: releaseIds}
         }
 
-        await this.releaseSchemeProvider.find(condition).then(ctx.success)
+        await this.releaseSchemeProvider.find(condition, projection.join(' ')).then(ctx.success)
     }
 
 

@@ -22,12 +22,15 @@ module.exports = app => {
     router.get('bucket-is-exist', '/v1/resources/mocks/buckets/isExist', mockResourceBucket.v1.isExistBucketName)
     router.get('mock-name-is-exist', '/v1/resources/mocks/isExistMockName', mockResource.v1.isExistMockName)
     router.get('release-list', '/v1/releases/list', release.v1.list)
+    router.get('release-scheme-list', '/v1/releases/versions/list', releaseScheme.v1.list)
     router.get('release-detail-info', '/v1/releases/detail/:username/:releaseName', release.v1.detail)
     router.get('release-auth-tree', '/v1/releases/:releaseId/authTree', release.v1.releaseAuthTree)
     router.get('release-upcast-tree', '/v1/releases/:releaseId/upcastTree', release.v1.releaseUpcastTree)
     router.get('release-dependency-tree', '/v1/releases/:releaseId/dependencyTree', release.v1.dependencyTree)
     router.get('release-detail', '/v1/releases/detail', release.v1.detail)
     router.get('resource-download', '/v1/resources/:resourceId/download', resource.v1.download)
+    router.get('release-is-collection', '/v1/collections/releases/isCollection', collection.v1.isCollection)
+
 
     //restful-api
     router.resources('release-info', '/v1/releases', release.v1)
