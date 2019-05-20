@@ -33,7 +33,7 @@ module.exports = class ResourceService extends Service {
 
         await this.resourceProvider.findOne({resourceId: sha1}, 'resourceId').then(model => {
             if (model) {
-                throw new ApplicationError(ctx.gettext('resource-create-duplicate-error'))
+                throw new ApplicationError(ctx.gettext('resource-create-duplicate-error'), {resourceId: sha1})
             }
         })
 
@@ -48,7 +48,7 @@ module.exports = class ResourceService extends Service {
         }
 
         return this.resourceProvider.create(model).tap(resourceInfo => {
-            app.emit(createResourceEvent, {uploadFileInfo, resourceInfo})
+            app.emit(createResourceEvent, uploadFileInfo, resourceInfo)
         })
     }
 
@@ -121,37 +121,39 @@ module.exports = class ResourceService extends Service {
         }
 
         const {ctx} = this
-        const invalidDependencies = [], invalidReleaseVersionRanges = [], signAuthFailedDependencies = []
+        const invalidDependencies = [], invalidReleaseVersionRanges = []  //signAuthFailedDependencies = []
+
+        //不允许依赖同一个发行的不同版本
+        if (lodash.uniqBy(dependencies, x => x.releaseId) !== dependencies.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), dependencies)
+        }
 
         const releaseMap = await this.releaseProvider.find({_id: {$in: dependencies.map(x => x.releaseId)}})
             .then(list => new Map(list.map(x => [x.releaseId, x])))
 
-        dependencies.forEach(item => {
-
-            let releaseInfo = releaseMap.get(item.releaseId)
+        for (let i = 0, j = dependencies.length; i < j; i++) {
+            let dependency = dependencies[i]
+            let releaseInfo = releaseMap.get(dependency.releaseId)
             if (!releaseInfo || releaseInfo.status !== 1) {
-                invalidDependencies.push(item)
-                return
+                invalidDependencies.push(dependency)
+                continue
             }
-            if ((releaseInfo.signAuth & 1) !== 1) {
-                signAuthFailedDependencies.push(item)
-            }
-            item.releaseName = releaseInfo.releaseName
+            dependency.releaseName = releaseInfo.releaseName
             //如果依赖的发行有任意的版本符合资源作者设置的版本范围,则范围有效,否则属于无效的版本设置
-            if (!releaseInfo.resourceVersions.some(x => semver.satisfies(x.version, item.versionRange))) {
-                invalidReleaseVersionRanges.push(item)
+            if (!releaseInfo.resourceVersions.some(x => semver.satisfies(x.version, dependency.versionRange))) {
+                invalidReleaseVersionRanges.push(dependency)
             }
-        })
+        }
 
         if (invalidDependencies.length) {
             throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), {invalidDependencies})
+        }
+        if (invalidReleaseVersionRanges.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidReleaseVersionRanges})
         }
         //签约授权暂时不考虑 可能废弃
         // if (signAuthFailedDependencies.length) {
         //     throw new ApplicationError(ctx.gettext('resource-depend-release-sign-auth-refuse'), {signAuthFailedDependencies})
         // }
-        if (invalidReleaseVersionRanges.length) {
-            throw new ApplicationError(ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidReleaseVersionRanges})
-        }
     }
 }

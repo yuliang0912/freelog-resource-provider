@@ -1,8 +1,7 @@
 'use strict'
 
-const sizeOf = require('image-size')
 const mime = require('mime')
-//const fileType = require('file-type')
+const sizeOf = require('image-size')
 const fileCheckBase = require('../fileCheckBase')
 const {ApplicationError} = require('egg-freelog-base/error')
 
@@ -20,11 +19,16 @@ module.exports = class ImageFileCheck extends fileCheckBase {
                 .on('end', () => resolve(Buffer.concat(chunks)))
                 .on('error', reject)
         })
-
-        this.checkMimeType(ctx, fileStream.filename)
-        const {width, height} = sizeOf(fileBuffer)
-
-        return {width, height}
+        if (fileStream.filename !== undefined) {
+            this.checkMimeType(ctx, fileStream.filename)
+        }
+        try {
+            const {width, height} = sizeOf(fileBuffer)
+            return {width, height}
+        }
+        catch (error) {
+            throw new ApplicationError('image file validate error', {error: error.toString()})
+        }
     }
 
     /**

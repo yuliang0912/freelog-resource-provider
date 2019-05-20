@@ -12,7 +12,7 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return lodash.omit(ret, ['_id', 'dependencies', 'upcastReleases'])
+            return Object.assign({schemeId: doc.id}, lodash.omit(ret, ['_id', 'dependencies', 'upcastReleases']))
         }
     }
 

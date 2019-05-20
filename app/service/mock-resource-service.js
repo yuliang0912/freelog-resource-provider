@@ -1,9 +1,9 @@
 'use strict'
 
 const lodash = require('lodash')
+const aliOss = require('ali-oss')
 const Service = require('egg').Service
-const {ApplicationError} = require('egg-freelog-base/error')
-const {createMockResourceEvent, updateMockResourceFileEvent} = require('../enum/resource-events')
+const {createMockResourceEvent, updateMockResourceFileEvent, deleteMockResourceEvent} = require('../enum/resource-events')
 
 module.exports = class MockResourceService extends Service {
 
@@ -59,7 +59,7 @@ module.exports = class MockResourceService extends Service {
 
         const mockResourceInfo = await this.mockResourceProvider.create(model)
 
-        app.emit(createMockResourceEvent, {uploadFileInfo, mockResourceInfo})
+        app.emit(createMockResourceEvent, uploadFileInfo, mockResourceInfo)
 
         return mockResourceInfo
     }
@@ -72,9 +72,10 @@ module.exports = class MockResourceService extends Service {
      * @param description
      * @param previewImages
      * @param dependencies
+     * @param resourceType
      * @returns {Promise<object>}
      */
-    async updateMockResource({mockResourceInfo, uploadFileId, meta, description, previewImages, dependencies}) {
+    async updateMockResource({mockResourceInfo, uploadFileId, meta, description, previewImages, dependencies, resourceType}) {
 
         const {ctx, app} = this
         var model = {}, uploadFileInfo = null
@@ -95,15 +96,26 @@ module.exports = class MockResourceService extends Service {
                 data: {uploadFileId}
             }))
             model.sha1 = uploadFileInfo.sha1
-            model.systemMeta = uploadFileInfo.systemMeta
             model.resourceType = uploadFileInfo.resourceType
+        }
+        //有新的上传文件,并且类型不一致或者没有新的上传文件,并且类型不一致,才需要重新计算systemMeta相关数据
+        if (resourceType && (uploadFileId && uploadFileInfo.resourceType !== resourceType || !uploadFileId && mockResourceInfo.resourceType !== resourceType)) {
+
+            const ossClient = new aliOss(app.config.uploadConfig.aliOss)
+            const objectKey = uploadFileInfo ? uploadFileInfo.fileOss.objectKey : mockResourceInfo.fileOss.objectKey
+            const metaInfo = await ossClient.getStream(objectKey).then(result => {
+                return ctx.helper.resourceFileCheck({fileStream: result.stream, resourceType})
+            })
+            model.systemMeta = metaInfo.systemMeta
+            model.sha1 = metaInfo.systemMeta.sha1
+            model.resourceType = resourceType
         }
 
         mockResourceInfo = await this.mockResourceProvider.findOneAndUpdate({_id: mockResourceInfo.id}, model, {new: true})
 
         if (uploadFileInfo) {
             //后续需要计算两个文件之间的大小差值,用于更新bucket信息
-            app.emit(updateMockResourceFileEvent, {uploadFileInfo, mockResourceInfo})
+            app.emit(updateMockResourceFileEvent, uploadFileInfo, mockResourceInfo)
         }
 
         return mockResourceInfo
@@ -114,18 +126,14 @@ module.exports = class MockResourceService extends Service {
      * @param mockId
      * @returns {Promise<void>}
      */
-    async deleteMockResource(mockId) {
+    async deleteMockResource(mockResourceInfo) {
 
-        const {ctx, app} = this
-        const mockResourceInfo = await this.mockResourceProvider.findById(mockId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'mockId'),
-            data: {mockId}
-        }))
+        const {app} = this
 
-        return this.mockResourceProvider.deleteOne({_id: mockId}).then(data => {
-            const isDelSuccess = Boolean(data.nModified)
+        return this.mockResourceProvider.deleteOne({_id: mockResourceInfo.id}).then(data => {
+            const isDelSuccess = Boolean(data.deletedCount)
             if (isDelSuccess) {
-                app.ossClient.deleteFile(mockResourceInfo.fileOss.objectKey)
+                app.emit(deleteMockResourceEvent, mockResourceInfo)
             }
             return isDelSuccess
         })

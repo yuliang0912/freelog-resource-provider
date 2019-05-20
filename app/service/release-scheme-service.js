@@ -41,10 +41,10 @@ module.exports = class ReleaseSchemeService extends Service {
 
         const releaseSchemeInfo = await this.releaseSchemeProvider.create(model)
 
-        app.emit(createReleaseSchemeEvent, {releaseInfo, releaseSchemeInfo, version})
+        app.emit(createReleaseSchemeEvent, releaseInfo, releaseSchemeInfo)
 
         ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
-            app.emit(signReleaseContractEvent, {schemeId: releaseSchemeInfo.id, contracts})
+            app.emit(signReleaseContractEvent, releaseSchemeInfo.id, contracts)
         })
 
         return releaseSchemeInfo

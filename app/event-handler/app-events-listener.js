@@ -3,9 +3,12 @@
 const Patrun = require('patrun')
 const ResourceEvents = require('../enum/resource-events')
 const {ApplicationError} = require('egg-freelog-base/error')
-const ResourceEventHandler = require('./resource-event-handler')
-const MockResourceEventHandler = require('./mock-resource-event-handler')
-const ReleaseSchemeEventHandler = require('./release-scheme-event-handler')
+const CreateResourceEventHandler = require('./create-resource-event-handler')
+const CreateMockResourceEventHandler = require('./create-mock-event-handler')
+const UpdateMockResourceFileEventHandler = require('./update-mock-file-event-handler')
+const DeleteMockResourceEventHandler = require('./delete-mock-resource-event-handler')
+const SignReleaseContractEventHandler = require('./sign-release-contract-event-handler')
+const CreateSchemeEventHandler = require('./create-scheme-event-handler')
 
 module.exports = class AppEventsListener {
 
@@ -20,10 +23,11 @@ module.exports = class AppEventsListener {
      * 注册事件侦听者
      */
     registerEventListener() {
-        this.registerEventAndHandler(ResourceEvents.createResourceEvent)
+        this.registerEventAndHandler(ResourceEvents.deleteMockResourceEvent)
         this.registerEventAndHandler(ResourceEvents.createMockResourceEvent)
         this.registerEventAndHandler(ResourceEvents.updateMockResourceFileEvent)
         this.registerEventAndHandler(ResourceEvents.createReleaseSchemeEvent)
+        this.registerEventAndHandler(ResourceEvents.signReleaseContractEvent)
         this.registerEventAndHandler(ResourceEvents.signReleaseContractEvent)
     }
 
@@ -48,13 +52,11 @@ module.exports = class AppEventsListener {
 
         const {app, patrun} = this
 
-        const releaseSchemeEventHandler = new ReleaseSchemeEventHandler(app)
-
-        patrun.add({event: ResourceEvents.createReleaseSchemeEvent.toString()}, releaseSchemeEventHandler)
-        patrun.add({event: ResourceEvents.signReleaseContractEvent.toString()}, releaseSchemeEventHandler)
-        patrun.add({event: ResourceEvents.createResourceEvent.toString()}, new ResourceEventHandler(app))
-        patrun.add({event: ResourceEvents.createMockResourceEvent.toString()}, new MockResourceEventHandler(app))
-        patrun.add({event: ResourceEvents.updateMockResourceFileEvent.toString()}, new MockResourceEventHandler(app))
-
+        patrun.add({event: ResourceEvents.createResourceEvent.toString()}, new CreateResourceEventHandler(app))
+        patrun.add({event: ResourceEvents.createReleaseSchemeEvent.toString()}, new CreateSchemeEventHandler(app))
+        patrun.add({event: ResourceEvents.deleteMockResourceEvent.toString()}, new DeleteMockResourceEventHandler(app))
+        patrun.add({event: ResourceEvents.createMockResourceEvent.toString()}, new CreateMockResourceEventHandler(app))
+        patrun.add({event: ResourceEvents.signReleaseContractEvent.toString()}, new SignReleaseContractEventHandler(app))
+        patrun.add({event: ResourceEvents.updateMockResourceFileEvent.toString()}, new UpdateMockResourceFileEventHandler(app))
     }
 }

@@ -24,6 +24,7 @@ module.exports = class MockResourceController extends Controller {
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
         const bucketName = ctx.checkQuery("bucketName").optional().type("string").value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate(true)
 
         const condition = {userId: ctx.request.userId}
@@ -40,7 +41,7 @@ module.exports = class MockResourceController extends Controller {
         var dataList = []
         const totalItem = await this.mockResourceProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.mockResourceProvider.findPageList(condition, page, pageSize, null, {createDate: -1})
+            dataList = await this.mockResourceProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
         }
 
         ctx.success({page, pageSize, totalItem, dataList})
@@ -53,8 +54,7 @@ module.exports = class MockResourceController extends Controller {
     async show(ctx) {
 
         const mockId = ctx.checkParams('id').exist().isMongoObjectId().value
-
-        ctx.validate(true)
+        ctx.validate()
 
         await this.mockResourceProvider.findById(mockId).then(ctx.success)
     }
@@ -67,15 +67,14 @@ module.exports = class MockResourceController extends Controller {
      */
     async create(ctx) {
 
-        const name = ctx.checkBody('name').exist().len(1, 100).value
+        const bucketName = ctx.checkBody('bucketName').exist().type('string').trim().value
+        const name = ctx.checkBody('name').exist().type('string').trim().len(1, 100).value
+        const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
-        const bucketName = ctx.checkBody('bucketName').exist().value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
-        const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'uploadFileId')).value
-
-        ctx.allowContentType({type: 'json'}).validate()
+        ctx.validate()
 
         if (previewImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
@@ -99,10 +98,10 @@ module.exports = class MockResourceController extends Controller {
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).value
         const uploadFileId = ctx.checkBody('uploadFileId').optional().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'uploadFileId')).value
+        const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLowercase().value
+        ctx.validate()
 
-        ctx.allowContentType({type: 'json'}).validate()
-
-        if ([meta, description, uploadFileId, previewImages, dependencies].every(x => x === undefined)) {
+        if ([meta, description, uploadFileId, previewImages, dependencies, resourceType].every(x => x === undefined)) {
             ctx.error({msg: ctx.gettext('params-required-validate-failed')})
         }
         if (previewImages && previewImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
@@ -115,7 +114,7 @@ module.exports = class MockResourceController extends Controller {
         }))
 
         await ctx.service.mockResourceService.updateMockResource({
-            mockResourceInfo, uploadFileId, meta, description, previewImages, dependencies
+            mockResourceInfo, uploadFileId, meta, description, previewImages, dependencies, resourceType
         }).then(ctx.success)
     }
 
@@ -128,9 +127,14 @@ module.exports = class MockResourceController extends Controller {
     async destroy(ctx) {
 
         const mockId = ctx.checkParams('id').exist().isMongoObjectId().value
-        ctx.validate(true)
+        ctx.validate()
 
-        await ctx.service.mockResourceService.deleteMockResource(mockId).then(ctx.success)
+        const mockResourceInfo = await this.mockResourceProvider.findById(mockId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'mockId'),
+            data: {mockId}
+        }))
+
+        await ctx.service.mockResourceService.deleteMockResource(mockResourceInfo).then(ctx.success)
     }
 
 
@@ -142,9 +146,9 @@ module.exports = class MockResourceController extends Controller {
     async isExistMockName(ctx) {
 
         const name = ctx.checkQuery('name').exist().value
-        const bucketId = ctx.checkBody('bucketId').exist().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'bucketId')).value
+        const bucketName = ctx.checkQuery('bucketName').exist().type('string').trim().value
         ctx.validate()
 
-        await this.mockResourceProvider.findById({name, bucketId}, '_id').then(data => ctx.success(Boolean(data)))
+        await this.mockResourceProvider.findOne({name, bucketName}, '_id').then(data => ctx.success(Boolean(data)))
     }
 }

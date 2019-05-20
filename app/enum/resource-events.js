@@ -22,6 +22,11 @@ module.exports = {
     updateMockResourceFileEvent: Symbol('resource#updateMockResourceFileEvent'),
 
     /**
+     * 删除mock资源事件
+     */
+    deleteMockResourceEvent: Symbol('resource#deleteMockResourceEvent'),
+
+    /**
      * 创建发行方案事件
      */
     createReleaseSchemeEvent: Symbol('release#createReleaseSchemeEvent'),

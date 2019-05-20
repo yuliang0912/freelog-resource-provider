@@ -7,17 +7,15 @@ module.exports = app => {
     const mongoose = app.mongoose;
 
     const toObjectOptions = {
-        virtuals: true,
         transform(doc, ret, options) {
             ret.meta = ret.meta || {}
-            return lodash.omit(ret, ['_id', 'fileOss'])
+            return Object.assign(lodash.pick(doc, ['mockResourceId', 'fullName']), lodash.omit(ret, ['_id', 'fileOss']))
         }
     }
 
     const MockResourceSchema = new mongoose.Schema({
         sha1: {type: String, required: true},
         name: {type: String, required: true},
-        fullName: {type: String, required: true},
         bucketId: {type: String, required: true},
         bucketName: {type: String, required: true},
         resourceType: {type: String, required: true},
@@ -37,6 +35,17 @@ module.exports = app => {
         versionKey: false,
         timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
         toJSON: toObjectOptions
+    })
+
+    MockResourceSchema.virtual('mockResourceId').get(function () {
+        return this.id
+    })
+
+    MockResourceSchema.virtual('fullName').get(function () {
+        if (this.bucketName === undefined || this.name === undefined) {
+            return ''
+        }
+        return `${this.bucketName}/${this.name}`
     })
 
     MockResourceSchema.index({userId: 1, name: 1, resourceType: 1})

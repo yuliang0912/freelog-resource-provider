@@ -217,6 +217,8 @@ module.exports = class ReleaseController extends Controller {
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+        const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default(['versionRange', 'baseUpcastReleases']).value
+        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value
         ctx.validate()
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
@@ -226,9 +228,7 @@ module.exports = class ReleaseController extends Controller {
 
         const resourceVersion = this._getReleaseVersion(releaseInfo, version)
 
-        const fields = ['releaseName', 'version']
-
-        await ctx.service.releaseService.releaseDependencyTree(releaseInfo, resourceVersion, false, maxDeep, fields).then(ctx.success)
+        await ctx.service.releaseService.releaseDependencyTree(releaseInfo, resourceVersion, isContainRootNode, maxDeep, omitFields).then(ctx.success)
     }
 
     /**

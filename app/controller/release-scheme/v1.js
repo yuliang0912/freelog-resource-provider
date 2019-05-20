@@ -121,20 +121,29 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
      */
     async list(ctx) {
 
-        const releaseIds = ctx.checkQuery('releaseIds').exist().isSplitMongoObjectId().toSplitArray().len(1).value
+        const schemeIds = ctx.checkQuery('schemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1).value
+        const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1).value
         const versions = ctx.checkQuery('versions').optional().toSplitArray().len(1).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate()
 
         const condition = {}
-        if (versions && versions.length !== releaseIds.length) {
-            throw new ArgumentError(ctx.gettext('params-comb-validate-failed'))
-        } else if (versions) {
+
+        if ([releaseIds, versions, schemeIds].every(x => x === undefined)) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
+        }
+        if (!lodash.isEmpty(schemeIds)) {
+            condition._id = {$in: schemeIds}
+        }
+        if (versions && (!releaseIds || (releaseIds && versions.length !== releaseIds.length))) {
+            throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'releaseIds,versions'))
+        }
+        if (!lodash.isEmpty(versions)) {
             condition.$or = []
             for (let i = 0, j = releaseIds.length; i < j; i++) {
                 condition.$or.push({releaseId: releaseIds[i], version: versions[i]})
             }
-        } else {
+        } else if (releaseIds) {
             condition.releaseId = {$in: releaseIds}
         }
 

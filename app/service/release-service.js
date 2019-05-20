@@ -85,7 +85,7 @@ module.exports = class ReleaseService extends Service {
 
         //发行的状态应该是动态计算的,包括上架的策略,依赖的发行是否签约完成,并且获得激活授权
         this.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
-            app.emit(signReleaseContractEvent, {schemeId: releaseScheme.id, contracts})
+            app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
         }).catch(error => {
             console.error('创建发行批量签约异常:', error)
             releaseScheme.updateOne({contractStatus: -1}).exec()
@@ -130,26 +130,25 @@ module.exports = class ReleaseService extends Service {
      * @param resourceVersion
      * @param isContainRootNode
      * @param maxDeep
-     * @param fields
+     * @param omitFields
      * @returns {Promise<*>}
      */
-    async releaseDependencyTree(releaseInfo, resourceVersion, isContainRootNode, maxDeep = 100, fields = ['releaseName', 'version', 'resourceId', 'baseUpcastReleases']) {
-
-        fields = [...['releaseId'], ...fields, ...['dependencies']]
+    async releaseDependencyTree(releaseInfo, resourceVersion, isContainRootNode, maxDeep = 100, omitFields = []) {
 
         const resourceInfo = await this.resourceProvider.findOne({resourceId: resourceVersion.resourceId}, 'systemMeta.dependencies')
 
         if (!isContainRootNode) {
-            return this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, fields)
+            return this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, omitFields)
         }
 
         return [{
             releaseId: releaseInfo.releaseId,
             releaseName: releaseInfo.releaseName,
             version: resourceVersion.version,
+            versionRange: resourceVersion.version,
             resourceId: resourceVersion.resourceId,
             baseUpcastReleases: releaseInfo.baseUpcastReleases,
-            dependencies: await this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, fields)
+            dependencies: await this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, omitFields)
         }]
     }
 
@@ -283,7 +282,7 @@ module.exports = class ReleaseService extends Service {
      * @param resourceIds
      * @private
      */
-    async _buildDependencyTree(dependencies, maxDeep = 100, currDeep = 1, fields = []) {
+    async _buildDependencyTree(dependencies, maxDeep = 100, currDeep = 1, omitFields = []) {
 
         if (!dependencies.length || currDeep++ > maxDeep) {
             return []
@@ -311,18 +310,18 @@ module.exports = class ReleaseService extends Service {
 
         const results = [], tasks = []
         for (let i = 0, j = releaseList.length; i < j; i++) {
-            const {releaseId, releaseName, baseUpcastReleases} = releaseList[i]
-            const {resourceInfo, version} = dependencyMap.get(releaseId)
-            var result = {
-                releaseId, releaseName, version,
+            let {releaseId, releaseName, baseUpcastReleases} = releaseList[i]
+            let {resourceInfo, versionRange, version} = dependencyMap.get(releaseId)
+            let result = {
+                releaseId, releaseName, version, versionRange, baseUpcastReleases,
                 resourceId: resourceInfo.resourceId,
-                baseUpcastReleases, dependencies: []
             }
-            if (fields.length) {
-                result = lodash.pick(result, fields)
+            if (omitFields.length) {
+                result = lodash.omit(result, omitFields)
             }
+            tasks.push(this._buildDependencyTree(resourceInfo.systemMeta.dependencies || [], maxDeep, currDeep, omitFields)
+                .then(list => result.dependencies = list))
             results.push(result)
-            tasks.push(this._buildDependencyTree(resourceInfo.systemMeta.dependencies || [], maxDeep, currDeep, fields).then(dependencies => result.dependencies = dependencies))
         }
 
         return Promise.all(tasks).then(() => results)
