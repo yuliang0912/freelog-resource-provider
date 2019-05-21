@@ -114,7 +114,7 @@ module.exports = class MockResourceService extends Service {
         mockResourceInfo = await this.mockResourceProvider.findOneAndUpdate({_id: mockResourceInfo.id}, model, {new: true})
 
         if (uploadFileInfo) {
-            //后续需要计算两个文件之间的大小差值,用于更新bucket信息
+            //需要计算两个文件之间的大小差值,用于更新bucket信息
             app.emit(updateMockResourceFileEvent, uploadFileInfo, mockResourceInfo)
         }
 

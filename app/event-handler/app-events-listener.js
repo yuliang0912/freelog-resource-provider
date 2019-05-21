@@ -23,11 +23,11 @@ module.exports = class AppEventsListener {
      * 注册事件侦听者
      */
     registerEventListener() {
+        this.registerEventAndHandler(ResourceEvents.createResourceEvent)
         this.registerEventAndHandler(ResourceEvents.deleteMockResourceEvent)
         this.registerEventAndHandler(ResourceEvents.createMockResourceEvent)
         this.registerEventAndHandler(ResourceEvents.updateMockResourceFileEvent)
         this.registerEventAndHandler(ResourceEvents.createReleaseSchemeEvent)
-        this.registerEventAndHandler(ResourceEvents.signReleaseContractEvent)
         this.registerEventAndHandler(ResourceEvents.signReleaseContractEvent)
     }
 

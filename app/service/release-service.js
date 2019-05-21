@@ -224,30 +224,15 @@ module.exports = class ReleaseService extends Service {
         if (resolveReleases.some(x => x.releaseId === releaseId)) {
             throw new LogicError('depend infinite loop error', {resolveReleases})
         }
-        const toBeSignedReleases = []
-        for (let i = 0, j = resolveReleases.length; i < j; i++) {
-            let resolveRelease = resolveReleases[i]
-            const toBeSignedRelease = {releaseId: resolveRelease.releaseId, policyIds: []}
-            for (let x = 0; x < resolveRelease.contracts.length; x++) {
-                let contract = resolveRelease.contracts[x]
-                if (!contract.contractId && contract.policyId) {
-                    toBeSignedRelease.policyIds.push(contract.policyId)
-                }
-            }
-            if (toBeSignedRelease.policyIds.length) {
-                toBeSignedReleases.push(toBeSignedRelease)
-            }
-        }
-
-        if (!toBeSignedReleases.length) {
-            return []
-        }
 
         const batchSignReleaseContractParams = {
             targetId: releaseId,
             partyTwoId: releaseId,
             contractType: app.contractType.ResourceToResource,
-            signReleases: toBeSignedReleases
+            signReleases: resolveReleases.map(item => Object({
+                releaseId: item.releaseId,
+                policyIds: item.contracts.map(x => x.policyId)
+            }))
         }
 
         return ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {

@@ -6,7 +6,7 @@
 
 const Subscription = require('egg').Subscription;
 
-module.exports = class ClearExpiredResourceFile extends Subscription {
+module.exports = class ClearExpiredUploadFile extends Subscription {
 
     static get schedule() {
         return {
@@ -16,16 +16,14 @@ module.exports = class ClearExpiredResourceFile extends Subscription {
     }
 
     /**
-     * 定时清理掉已经过去30天的临时数据
+     * 定时清理掉已经过期的临时上传文件
      * @returns {Promise<void>}
      */
     async subscribe() {
 
         const {app} = this
 
-        const currentDate = app.moment().toDate().toLocaleString()
-
-        await app.dal.temporaryUploadFileProvider.deleteMany({expireDate: {$lt: currentDate}})
+        await app.dal.temporaryUploadFileProvider.deleteMany({expireDate: {$lt: Date()}})
     }
 
 }

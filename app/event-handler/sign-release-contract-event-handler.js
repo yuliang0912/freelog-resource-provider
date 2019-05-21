@@ -16,7 +16,7 @@ module.exports = class SignReleaseContractEventHandler {
      */
     async handle(eventName, schemeId, contracts) {
 
-        if (!lodash.isEmpty(contracts)) {
+        if (lodash.isEmpty(contracts)) {
             return
         }
 
