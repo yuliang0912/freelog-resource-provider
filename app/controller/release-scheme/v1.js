@@ -3,7 +3,7 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
-const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
+const {ArgumentError} = require('egg-freelog-base/error')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
 
 module.exports = class ReleaseAuthSchemeController extends Controller {
@@ -123,6 +123,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
 
         const schemeIds = ctx.checkQuery('schemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1).value
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1).value
+        //如果传version参数,则需要version与releaseId一一匹配
         const versions = ctx.checkQuery('versions').optional().toSplitArray().len(1).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate()

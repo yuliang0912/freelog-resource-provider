@@ -33,11 +33,11 @@ module.exports = class TemporaryUploadFileService extends Service {
             userId, resourceType,
             sha1: metaInfo.systemMeta.sha1,
             systemMeta: metaInfo.systemMeta,
-            resourceFileName: fileStream.filename,
             expireDate: moment().add(7, "day").toDate(),
             fileOss: {
                 url: uploadData.url,
                 objectKey: uploadData.name,
+                filename: fileStream.filename,
                 bucket: app.config.uploadConfig.aliOss.bucket,
                 region: app.config.uploadConfig.aliOss.region
             }

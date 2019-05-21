@@ -26,7 +26,7 @@ module.exports = class ResourcesController extends Controller {
 
         const page = ctx.checkQuery('page').optional().gt(0).toInt().default(1).value
         const pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
-        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
@@ -47,7 +47,7 @@ module.exports = class ResourcesController extends Controller {
         var dataList = []
         const totalItem = await this.resourceProvider.count(condition)
         if (totalItem > (page - 1) * pageSize) { //避免不必要的分页查询
-            dataList = await this.resourceProvider.findPageList(condition, page, pageSize, projection.join(' '))
+            dataList = await this.resourceProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
         }
 
         ctx.success({page, pageSize, totalItem, dataList})
@@ -92,9 +92,8 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
-        const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'uploadFileId')).value
-
-        ctx.allowContentType({type: 'json'}).validate()
+        const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
+        ctx.validate()
 
         const dependReleasesValidateResult = new ResourceInfoValidator().dependReleasesValidate(dependencies)
         if (dependReleasesValidateResult.errors.length) {
@@ -127,8 +126,7 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).value
-
-        ctx.allowContentType({type: 'json'}).validate()
+        ctx.validate()
 
         if (dependencies) {
             const dependReleasesValidateResult = new ResourceInfoValidator().dependReleasesValidate(dependencies)
@@ -215,18 +213,12 @@ module.exports = class ResourcesController extends Controller {
             data: {resourceId}
         }))
 
-        await this.client.getStream(resourceInfo.fileOss.objectKey).then(result => {
+        const {fileOss, systemMeta, aliasName} = resourceInfo
+        await this.client.getStream(fileOss.objectKey).then(result => {
             ctx.status = result.res.status
-            ctx.attachment(resourceInfo.aliasName)
-            ctx.set('content-type', resourceInfo.mimeType)
+            ctx.attachment(fileOss.filename || aliasName)
+            ctx.set('content-type', systemMeta.mimeType)
             ctx.body = result.stream
         })
-
-        // await ctx.curl(resourceInfo.fileOss.url, {streaming: true}).then(result => {
-        //     ctx.body = result.res
-        //     ctx.attachment(resourceInfo.aliasName)
-        //     Object.keys(result.headers).forEach(key => ctx.set(key, result.headers[key]))
-        //     ctx.set('content-type', resourceInfo.mimeType)
-        // })
     }
 }

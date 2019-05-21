@@ -100,10 +100,10 @@ module.exports = class MockResourceService extends Service {
         }
         //有新的上传文件,并且类型不一致或者没有新的上传文件,并且类型不一致,才需要重新计算systemMeta相关数据
         if (resourceType && (uploadFileId && uploadFileInfo.resourceType !== resourceType || !uploadFileId && mockResourceInfo.resourceType !== resourceType)) {
-
+            const {fileOss} = uploadFileInfo || mockResourceInfo
             const ossClient = new aliOss(app.config.uploadConfig.aliOss)
-            const objectKey = uploadFileInfo ? uploadFileInfo.fileOss.objectKey : mockResourceInfo.fileOss.objectKey
-            const metaInfo = await ossClient.getStream(objectKey).then(result => {
+            const metaInfo = await ossClient.getStream(fileOss.objectKey).then(result => {
+                result.stream.filename = fileOss.filename
                 return ctx.helper.resourceFileCheck({fileStream: result.stream, resourceType})
             })
             model.systemMeta = metaInfo.systemMeta

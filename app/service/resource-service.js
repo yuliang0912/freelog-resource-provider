@@ -124,7 +124,7 @@ module.exports = class ResourceService extends Service {
         const invalidDependencies = [], invalidReleaseVersionRanges = []  //signAuthFailedDependencies = []
 
         //不允许依赖同一个发行的不同版本
-        if (lodash.uniqBy(dependencies, x => x.releaseId) !== dependencies.length) {
+        if (lodash.uniqBy(dependencies, x => x.releaseId).length !== dependencies.length) {
             throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), dependencies)
         }
 

@@ -11,6 +11,7 @@ module.exports = app => {
         resourceType: {type: String, required: true},
         fileOss: {
             serviceProvider: {type: String, required: false, default: 'aliyun'},
+            filename: {type: String, required: true},
             objectKey: {type: String, required: true},
             bucket: {type: String, required: true},
             region: {type: String, required: true},

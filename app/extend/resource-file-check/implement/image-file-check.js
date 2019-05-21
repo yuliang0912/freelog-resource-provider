@@ -41,7 +41,7 @@ module.exports = class ImageFileCheck extends fileCheckBase {
         const mimeType = mime.getType(fileExt)
 
         if (!/^image\/(jpg|png|gif|jpeg)$/i.test(mimeType)) {
-            throw new ApplicationError(ctx.gettext('resource-image-extension-validate-failed', '(jpg|jpeg|png|gif)'))
+            throw new ApplicationError(ctx.gettext('resource-image-extension-validate-failed', '(jpg|jpeg|png|gif)'), {filename: fileName})
         }
     }
 

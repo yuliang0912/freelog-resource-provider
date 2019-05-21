@@ -151,4 +151,28 @@ module.exports = class MockResourceController extends Controller {
 
         await this.mockResourceProvider.findOne({name, bucketName}, '_id').then(data => ctx.success(Boolean(data)))
     }
+
+    /**
+     * 下载资源
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async download(ctx) {
+
+        const mockResourceId = ctx.checkParams('mockResourceId').exist().isMongoObjectId().value
+        ctx.validate()
+
+        const mockResourceInfo = await this.mockResourceProvider.findOne({mockResourceId}).tap(mockResourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(mockResourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'mockResourceId'),
+            data: {mockResourceId}
+        }))
+
+        const {fileOss, systemMeta, name} = mockResourceInfo
+        await this.client.getStream(fileOss.objectKey).then(result => {
+            ctx.status = result.res.status
+            ctx.attachment(fileOss.filename || name)
+            ctx.set('content-type', systemMeta.mimeType)
+            ctx.body = result.stream
+        })
+    }
 }

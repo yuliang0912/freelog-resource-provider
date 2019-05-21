@@ -29,6 +29,7 @@ module.exports = app => {
     router.get('release-dependency-tree', '/v1/releases/:releaseId/dependencyTree', release.v1.dependencyTree)
     router.get('release-detail', '/v1/releases/detail', release.v1.detail)
     router.get('resource-download', '/v1/resources/:resourceId/download', resource.v1.download)
+    router.get('mock-resource-download', '/v1/resources/mocks/:mockResourceId/download', mockResource.v1.download)
     router.get('release-is-collection', '/v1/collections/releases/isCollection', collection.v1.isCollection)
 
 
