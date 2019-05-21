@@ -1,5 +1,6 @@
 'use strict'
 
+const lodash = require('lodash')
 const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
@@ -161,10 +162,20 @@ module.exports = class ResourcesController extends Controller {
     async releases(ctx) {
 
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value
-        const projection = ctx.checkQuery('projection').optional().toSplitArray().default(['releaseId', 'releaseName', 'username', 'resourceVersions']).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default(['releaseId', 'releaseName', 'username']).value
         ctx.validate()
 
-        await this.releaseProvider.find({'resourceVersions.resourceId': resourceId}, projection.join(' ')).then(ctx.success)
+        const results = []
+        const releases = await this.releaseProvider.find({'resourceVersions.resourceId': resourceId})
+
+        for (let i = 0, j = releases.length; i < j; i++) {
+            let releaseInfo = releases[i]
+            results.push(Object.assign(lodash.pick(releaseInfo, projection), {
+                resourceVersion: releaseInfo.resourceVersions.find(x => x.resourceId === resourceId)
+            }))
+        }
+        
+        ctx.success(results)
     }
 
     /**
