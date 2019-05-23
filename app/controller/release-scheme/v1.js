@@ -3,7 +3,7 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
-const {ArgumentError} = require('egg-freelog-base/error')
+const {ArgumentError, LogicError} = require('egg-freelog-base/error')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
 
 module.exports = class ReleaseAuthSchemeController extends Controller {
@@ -29,7 +29,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         ctx.validate()
 
-        this._validateUpcastAndResolveReleasesParamFormat([], resolveReleases)
+        this._validateResolveReleasesParamFormat(releaseId, resolveReleases)
 
         const resourceInfoTask = this.resourceProvider.findOne({resourceId}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'resourceId'),
@@ -68,7 +68,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         const resolveReleases = ctx.checkBody('resolveReleases').exist().isArray().value
         ctx.validate()
 
-        this._validateUpcastAndResolveReleasesParamFormat([], resolveReleases)
+        this._validateResolveReleasesParamFormat(releaseId, resolveReleases)
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
@@ -158,22 +158,18 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
      * @param resolveReleases
      * @private
      */
-    _validateUpcastAndResolveReleasesParamFormat(upcastReleases, resolveReleases) {
+    _validateResolveReleasesParamFormat(baseReleaseId, resolveReleases) {
 
         const {ctx} = this
         const schemeResolveAndUpcastValidator = new SchemeResolveAndUpcastValidator()
-        const upcastReleasesValidateResult = schemeResolveAndUpcastValidator.upcastReleasesValidate(upcastReleases)
-        if (upcastReleasesValidateResult.errors.length) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'upcastReleases'), {
-                errors: upcastReleasesValidateResult.errors
-            })
-        }
-
         const resolveReleasesValidateResult = schemeResolveAndUpcastValidator.resolveReleasesValidate(resolveReleases)
         if (resolveReleasesValidateResult.errors.length) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resolveReleases'), {
                 errors: resolveReleasesValidateResult.errors
             })
+        }
+        if (resolveReleases.some(x => x.releaseId === baseReleaseId)) {
+            throw new LogicError(ctx.gettext('release-circular-dependency-error'), {resolveReleases})
         }
     }
 }

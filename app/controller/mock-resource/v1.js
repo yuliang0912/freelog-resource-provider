@@ -1,6 +1,5 @@
 'use strict'
 
-const lodash = require('lodash')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
 
@@ -23,7 +22,7 @@ module.exports = class MockResourceController extends Controller {
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
-        const bucketName = ctx.checkQuery("bucketName").optional().type("string").value
+        const bucketName = ctx.checkQuery("bucketName").optional().isBucketName().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         ctx.validate(true)
 
@@ -67,7 +66,7 @@ module.exports = class MockResourceController extends Controller {
      */
     async create(ctx) {
 
-        const bucketName = ctx.checkBody('bucketName').exist().type('string').trim().value
+        const bucketName = ctx.checkBody('bucketName').exist().isBucketName().trim().value
         const name = ctx.checkBody('name').exist().type('string').trim().len(1, 100).value
         const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
@@ -146,7 +145,7 @@ module.exports = class MockResourceController extends Controller {
     async isExistMockName(ctx) {
 
         const name = ctx.checkQuery('name').exist().value
-        const bucketName = ctx.checkQuery('bucketName').exist().type('string').trim().value
+        const bucketName = ctx.checkQuery('bucketName').exist().isBucketName().value
         ctx.validate()
 
         await this.mockResourceProvider.findOne({name, bucketName}, '_id').then(data => ctx.success(Boolean(data)))

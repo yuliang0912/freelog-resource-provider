@@ -221,9 +221,6 @@ module.exports = class ReleaseService extends Service {
         if (!resolveReleases.length) {
             return []
         }
-        if (resolveReleases.some(x => x.releaseId === releaseId)) {
-            throw new LogicError('depend infinite loop error', {resolveReleases})
-        }
 
         const batchSignReleaseContractParams = {
             targetId: releaseId,

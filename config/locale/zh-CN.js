@@ -70,11 +70,7 @@ module.exports = {
 
     'resource-widget-create-duplicate-validate-failed': '插件%s已存在,不能重复创建',
 
-    'resource-widget-version-validate-failed': '插件版本号校验失败',
-
     'mock-resource-entity-not-found': '未找到mock资源',
-
-    'mock-resource-type-validate-failed': 'mock资源更新时,资源类型必须保持一致',
 
     'resource-depend-upcast-resolve-integrity-validate-failed': '资源的依赖发行以及其上抛未全部处理',
 
@@ -90,13 +86,13 @@ module.exports = {
 
     'release-policy-identity-authorization-failed': '策略中的身份授权失败,无法签约',
 
-    'release-policy-sign-authorization-failed': '发行的上游合同限制了签约授权',
+    //'release-policy-sign-authorization-failed': '发行的上游合同限制了签约授权',
 
     'resource-depend-release-invalid': '资源依赖的发行无效',
 
     'resource-depend-release-update-refuse': '资源已经加入发行,依赖项不允许再变更',
 
-    'resource-depend-release-sign-auth-refuse': '依赖发行中存在未获得签约授权的部分',
+    //'resource-depend-release-sign-auth-refuse': '依赖发行中存在未获得签约授权的部分',
 
     'resource-depend-release-versionRange-invalid': '资源依赖的发行版本范围无效',
 
@@ -104,7 +100,9 @@ module.exports = {
 
     'release-resource-type-validate-failed': '资源的类型和发行的资源类型必须保持一致',
 
-    'release-scheme-update-resolve-release-invalid-error': '方案中的依赖解决项存在无效的发行'
+    'release-scheme-update-resolve-release-invalid-error': '方案中的依赖解决项存在无效的发行',
+
+    'release-circular-dependency-error': '发行的依赖发行与目标发行之间存在循环依赖,无法加入当前发行',
 }
 
 

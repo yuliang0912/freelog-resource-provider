@@ -45,6 +45,9 @@ module.exports = class ReleaseSchemeService extends Service {
 
         ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
             app.emit(signReleaseContractEvent, releaseSchemeInfo.id, contracts)
+        }).catch(error => {
+            console.error('创建方案批量签约异常:', error)
+            releaseSchemeInfo.updateOne({contractStatus: -1}).exec()
         })
 
         return releaseSchemeInfo

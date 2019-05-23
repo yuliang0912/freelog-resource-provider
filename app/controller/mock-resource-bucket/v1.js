@@ -30,7 +30,7 @@ module.exports = class DraftResourceBucketController extends Controller {
     async create(ctx) {
 
         //只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
-        const bucketName = ctx.checkBody('bucketName').exist().match(/^[a-z0-9]+[a-z0-9-]+[a-z0-9]+$/).len(1, 63).value
+        const bucketName = ctx.checkBody('bucketName').exist().isBucketName().len(1, 63).value
         ctx.allowContentType({type: 'json'}).validate()
 
         const isExist = await this.mockResourceBucketProvider.count({bucketName})
@@ -49,7 +49,7 @@ module.exports = class DraftResourceBucketController extends Controller {
      */
     async destroy(ctx) {
 
-        const bucketName = ctx.checkParams('id').match(/^[a-z0-9]+[a-z0-9-]+[a-z0-9]+$/).len(1, 63).value
+        const bucketName = ctx.checkParams('id').isBucketName().value
         ctx.validate()
 
         const bucketInfo = await this.mockResourceBucketProvider.findOne({bucketName}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
@@ -72,7 +72,7 @@ module.exports = class DraftResourceBucketController extends Controller {
      */
     async isExistBucketName(ctx) {
 
-        const bucketName = ctx.checkQuery('bucketName').exist().match(/^([a-z0-9]+[a-z0-9-]+[a-z0-9]+){1,63}$/).value
+        const bucketName = ctx.checkQuery('bucketName').exist().isBucketName().value
         ctx.validate()
 
         await this.mockResourceBucketProvider.count({bucketName}).then(data => ctx.success(Boolean(data)))
