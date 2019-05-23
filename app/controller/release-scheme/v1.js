@@ -168,8 +168,5 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
                 errors: resolveReleasesValidateResult.errors
             })
         }
-        if (resolveReleases.some(x => x.releaseId === baseReleaseId)) {
-            throw new LogicError(ctx.gettext('release-circular-dependency-error'), {resolveReleases})
-        }
     }
 }

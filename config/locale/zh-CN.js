@@ -102,7 +102,7 @@ module.exports = {
 
     'release-scheme-update-resolve-release-invalid-error': '方案中的依赖解决项存在无效的发行',
 
-    'release-circular-dependency-error': '发行的依赖发行与目标发行之间存在循环依赖,无法加入当前发行',
+    //'release-circular-dependency-error': '发行的依赖发行与目标发行之间存在循环依赖,无法加入当前发行',
 }
 
 
