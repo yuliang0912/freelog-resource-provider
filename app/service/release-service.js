@@ -35,13 +35,6 @@ module.exports = class ReleaseService extends Service {
         const releaseId = app.mongoose.getNewObjectId()
         const {resourceId, resourceType, systemMeta} = resourceInfo
 
-        //循环依赖检查
-        if (this._isExistCircleDependency(releaseName, systemMeta.dependencies)) {
-            throw new LogicError(ctx.gettext('resource-cycle-depend-validate-failed'), {
-                releaseName, dependencies: systemMeta.dependencies
-            })
-        }
-
         //上抛和处理的依赖基本参数数据校验
         const {upcastReleases} = await ctx.service.releaseSchemeService.validateUpcastAndResolveReleaseParams(systemMeta.dependencies, resolveReleases, baseUpcastReleases, true)
 
@@ -416,7 +409,7 @@ module.exports = class ReleaseService extends Service {
     }
 
     /**
-     * 检查循环依赖
+     * 检查循环依赖(当前版本不在进行循环依赖检测,允许存在,合约层面也开放自己与自己签约)
      * @param releaseName
      * @param dependencies
      * @returns boolean

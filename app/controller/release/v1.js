@@ -297,27 +297,6 @@ module.exports = class ReleaseController extends Controller {
     }
 
     /**
-     * 批量签约
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async batchSignReleaseContracts(ctx) {
-
-        const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
-        const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
-
-        const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'releaseId'),
-            data: {releaseId}
-        }))
-
-        const releaseScheme = await this.releaseSchemeProvider.findOne({releaseId, version})
-
-        await ctx.service.releaseService.batchSignReleaseContracts(releaseInfo.releaseId, releaseScheme.resolveReleases).then(ctx.success)
-    }
-
-    /**
      * 校验上抛和处理的数据格式
      * @param upcastReleases
      * @param resolveReleases

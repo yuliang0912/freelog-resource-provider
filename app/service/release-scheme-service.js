@@ -39,18 +39,18 @@ module.exports = class ReleaseSchemeService extends Service {
             releaseId, resourceId, upcastReleases, resolveReleases, userId, version
         }
 
-        const releaseSchemeInfo = await this.releaseSchemeProvider.create(model)
+        const releaseScheme = await this.releaseSchemeProvider.create(model)
 
-        app.emit(createReleaseSchemeEvent, releaseInfo, releaseSchemeInfo)
+        app.emit(createReleaseSchemeEvent, releaseInfo, releaseScheme)
 
         ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
-            app.emit(signReleaseContractEvent, releaseSchemeInfo.id, contracts)
+            app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
         }).catch(error => {
             console.error('创建方案批量签约异常:', error)
-            releaseSchemeInfo.updateOne({contractStatus: -1}).exec()
+            releaseScheme.updateOne({contractStatus: -1}).exec()
         })
 
-        return releaseSchemeInfo
+        return releaseScheme
     }
 
     /**

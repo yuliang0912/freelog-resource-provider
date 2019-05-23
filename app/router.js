@@ -9,8 +9,6 @@ module.exports = app => {
     const {router, controller} = app
     const {temporaryFile, resource, collection, release, mockResource, releaseScheme, mockResourceBucket} = controller
 
-    router.put('release-batch-sign', '/v1/releases/:releaseId/batchSignContracts', release.v1.batchSignReleaseContracts)
-
     //post-method-api
     router.post('upload-file', '/v1/resources/temporaryFiles/uploadResourceFile', temporaryFile.v1.uploadResourceFile)
     router.post('upload-preview-image', '/v1/resources/temporaryFiles/uploadPreviewImage', temporaryFile.v1.uploadPreviewImage)
@@ -31,7 +29,7 @@ module.exports = app => {
     router.get('resource-download', '/v1/resources/:resourceId/download', resource.v1.download)
     router.get('mock-resource-download', '/v1/resources/mocks/:mockResourceId/download', mockResource.v1.download)
     router.get('release-is-collection', '/v1/collections/releases/isCollection', collection.v1.isCollection)
-
+    router.put('release-scheme-retry-sign-contract', '/v1/releases/:releaseId/versions/:version/retrySignContracts', releaseScheme.v1.retrySignContracts)
 
     //restful-api
     router.resources('release-info', '/v1/releases', release.v1)

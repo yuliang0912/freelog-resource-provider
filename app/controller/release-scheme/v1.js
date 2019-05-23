@@ -3,7 +3,8 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
-const {ArgumentError, LogicError} = require('egg-freelog-base/error')
+const {ArgumentError} = require('egg-freelog-base/error')
+const {signReleaseContractEvent} = require('../enum/resource-events')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
 
 module.exports = class ReleaseAuthSchemeController extends Controller {
@@ -111,6 +112,41 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         ctx.validate()
 
         await this.releaseSchemeProvider.findOne({releaseId, resourceId}).then(ctx.success)
+    }
+
+
+    /**
+     * 签约失败时,重试签约过程
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async retrySignContracts(ctx) {
+
+        const releaseId = ctx.checkQuery('releaseId').exist().isMongoObjectId().value
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+        ctx.validate()
+
+        await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'releaseId'),
+            data: {releaseId}
+        }))
+
+        const releaseScheme = await this.releaseSchemeProvider.findOne({releaseId, version})
+            .then(model => ctx.entityNullObjectCheck(model))
+
+        const resolveReleases = releaseScheme.resolveReleases.map(x => Object({
+            releaseId: x.releaseId,
+            contracts: x.contracts.filter(x => !x.contractId)
+        })).filter(x => x.contracts.length)
+
+        if (resolveReleases.length) {
+            return ctx.success(true)
+        }
+
+        await ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
+            ctx.app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
+            ctx.success(Boolean(contracts.length))
+        })
     }
 
 
