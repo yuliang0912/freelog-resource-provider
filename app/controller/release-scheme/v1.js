@@ -4,7 +4,7 @@ const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
-const {signReleaseContractEvent} = require('../enum/resource-events')
+const {signReleaseContractEvent} = require('../../enum/resource-events')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
 
 module.exports = class ReleaseAuthSchemeController extends Controller {
