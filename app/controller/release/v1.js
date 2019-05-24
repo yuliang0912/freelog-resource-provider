@@ -3,6 +3,7 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
+const {mongoObjectId} = require('egg-freelog-base/app/extend/helper/common_regex')
 const {ApplicationError, ArgumentError} = require('egg-freelog-base/error')
 const ReleasePolicyValidator = require('../../extend/json-schema/release-policy-validator')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
@@ -37,7 +38,12 @@ module.exports = class ReleaseController extends Controller {
             condition.resourceType = resourceType
         }
         if (keywords !== undefined) {
-            condition.releaseName = new RegExp(keywords, "i")
+            let searchRegExp = new RegExp(keywords, "i")
+            if (mongoObjectId.test(keywords.toLowerCase())) {
+                condition.$or = [{releaseName: searchRegExp}, {_id: keywords.toLowerCase()}]
+            } else {
+                condition.releaseName = searchRegExp
+            }
         }
         if (isSelf) {
             condition.userId = ctx.request.userId
