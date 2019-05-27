@@ -47,25 +47,27 @@ module.exports = class ReleaseController extends Controller {
         }
         if (isSelf) {
             condition.userId = ctx.request.userId
+        } else {
+            condition.status = 1
         }
 
         var dataList = []
         const totalItem = await this.releaseProvider.count(condition)
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.releaseProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
+        if (totalItem <= (page - 1) * pageSize) {
+            return ctx.success({page, pageSize, totalItem, dataList})
         }
 
-        if (dataList.length && dataList[0].latestVersion) {
-            const condition = {resourceId: {$in: dataList.map(x => x.latestVersion.resourceId)}}
-            const resourceMap = await this.resourceProvider.find(condition)
-                .then(list => new Map(list.map(x => [x.resourceId, x])))
+        dataList = await this.releaseProvider.findPageList(condition, page, pageSize, projection.join(' '), {createDate: -1})
 
-            dataList = dataList.map(release => {
-                release = release.toObject()
-                release.latestVersion.resourceInfo = resourceMap.get(release.latestVersion.resourceId)
-                return release
-            })
-        }
+        const resourceIds = {resourceId: {$in: dataList.map(x => x.latestVersion.resourceId)}}
+        const resourceMap = await this.resourceProvider.find(resourceIds)
+            .then(list => new Map(list.map(x => [x.resourceId, x])))
+
+        dataList = dataList.map(release => {
+            release = release.toObject()
+            release.latestVersion.resourceInfo = resourceMap.get(release.latestVersion.resourceId)
+            return release
+        })
 
         ctx.success({page, pageSize, totalItem, dataList})
     }
@@ -128,8 +130,7 @@ module.exports = class ReleaseController extends Controller {
 
         await this._checkReleaseName(releaseName)
         const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceId'),
-            data: {resourceId}
+            msg: ctx.gettext('params-validate-failed', 'resourceId')
         }))
 
         await ctx.service.releaseService.createRelease({

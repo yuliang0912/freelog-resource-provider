@@ -70,36 +70,20 @@ module.exports = class ReleaseSchemeService extends Service {
             throw new ApplicationError(ctx.gettext('release-scheme-update-resolve-release-invalid-error'), {invalidResolveReleases})
         }
 
-        const changedResolveReleases = [], intrinsicResolveReleases = []
-        for (let i = 0, j = releaseScheme.resolveReleases.length; i < j; i++) {
-            const resolveRelease = releaseScheme.resolveReleases[i]
-            const newModel = resolveReleases.find(x => x.releaseId === resolveRelease.releaseId)
-            if (!newModel) {
-                intrinsicResolveReleases.push(resolveRelease)
-                continue
-            }
-            newModel.contracts.forEach(item => {
-                var policyContractInfo = resolveRelease.contracts.find(x => x.policyId === item.policyId)
-                if (policyContractInfo) {
-                    item.contractId = policyContractInfo.contractId
-                }
-            })
-            newModel.releaseName = resolveRelease.releaseName
-            changedResolveReleases.push(newModel)
-        }
-
-        if (!changedResolveReleases.length) {
-            return releaseScheme
+        const beSignedContractReleases = []
+        const updatedResolveReleases = releaseScheme.toObject().resolveReleases
+        for (let i = 0, j = resolveReleases.length; i < j; i++) {
+            let {releaseId, contracts} = resolveReleases[i]
+            let intrinsicResolve = updatedResolveReleases.find(x => x.releaseId === releaseId)
+            intrinsicResolve.contracts = contracts
+            beSignedContractReleases.push(intrinsicResolve)
         }
 
         //待签约的策略身份授权和签约授权校验
-        await this.validatePolicyIdentityAndSignAuth(resolveReleases, true)
+        await this.validatePolicyIdentityAndSignAuth(beSignedContractReleases, true)
+        await releaseScheme.updateOne({resolveReleases: updatedResolveReleases})
 
-        releaseScheme.resolveReleases = [...changedResolveReleases, ...intrinsicResolveReleases]
-
-        await releaseScheme.updateOne({resolveReleases: releaseScheme.resolveReleases})
-
-        ctx.service.releaseService.batchSignReleaseContracts(releaseInfo.releaseId, changedResolveReleases).then(contracts => {
+        ctx.service.releaseService.batchSignReleaseContracts(releaseInfo.releaseId, beSignedContractReleases).then(contracts => {
             app.emit(signReleaseContractEvent, {schemeId: releaseScheme.id, contracts})
         })
 
