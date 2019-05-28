@@ -118,6 +118,7 @@ module.exports = class ReleaseSchemeService extends Service {
             throw new ApplicationError(ctx.gettext('resource-depend-upcast-resolve-integrity-validate-failed'), {untreatedReleases})
         }
 
+
         //无效的解决(不在待办发行中)
         const invalidResolveReleases = lodash.differenceBy(resolveReleases, backlogReleases, x => x.releaseId)
         if (invalidResolveReleases.length) {
@@ -173,15 +174,16 @@ module.exports = class ReleaseSchemeService extends Service {
         }
 
         const {ctx} = this
-        const releasePolicies = []
+        const releaseIds = [], policyIds = []
         for (let i = 0, j = resolveReleases.length; i < j; i++) {
-            let resolveRelease = resolveReleases[i]
-            for (let x = 0, y = resolveRelease.contracts.length; x < y; x++) {
-                releasePolicies.push(`${resolveRelease.releaseId}-${resolveRelease.contracts[x].policyId}`)
+            let {releaseId, contracts} = resolveReleases[i]
+            for (let x = 0, y = contracts.length; x < y; x++) {
+                releaseIds.push(releaseId)
+                policyIds.push(contracts[x].policyId)
             }
         }
 
-        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releasePolicyIdentityAuthentication?releasePolicies=${releasePolicies.toString()}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
+        const authResults = await ctx.curlIntranetApi(`${ctx.webApi.authInfo}/releasePolicyIdentityAuthentication?releaseIds=${releaseIds.toString()}&policyIds=${policyIds}&isFilterSignedPolicy=${isFilterSignedPolicy ? 1 : 0}`)
         const identityAuthFailedPolices = authResults.filter(x => x.status !== 1)
         if (identityAuthFailedPolices.length) {
             throw new AuthorizationError(ctx.gettext('release-policy-identity-authorization-failed'), {identityAuthFailedPolices})
