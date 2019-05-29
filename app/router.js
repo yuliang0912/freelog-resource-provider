@@ -29,6 +29,7 @@ module.exports = app => {
     router.get('resource-download', '/v1/resources/:resourceId/download', resource.v1.download)
     router.get('mock-resource-download', '/v1/resources/mocks/:mockResourceId/download', mockResource.v1.download)
     router.get('release-is-collection', '/v1/collections/releases/isCollection', collection.v1.isCollection)
+    router.get('bucket-count', '/v1/resources/mocks/buckets/count', mockResourceBucket.v1.count)
     router.put('release-scheme-retry-sign-contract', '/v1/releases/:releaseId/versions/:version/retrySignContracts', releaseScheme.v1.retrySignContracts)
 
     //restful-api
