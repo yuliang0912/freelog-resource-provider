@@ -150,7 +150,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseId = ctx.checkParams('id').isMongoObjectId().value
         const releaseName = ctx.checkBody('releaseName').optional().type('string').trim().len(1, 100).value
         const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
-        const intro = ctx.checkBody('intro').optional().type('string').default('').value
+        const intro = ctx.checkBody('intro').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
 
         ctx.validate(true)
