@@ -1,5 +1,6 @@
 'use strict'
 
+const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
 
@@ -7,8 +8,10 @@ module.exports = class MockResourceController extends Controller {
 
     constructor({app}) {
         super(...arguments)
+        this.client = new aliOss(app.config.uploadConfig.aliOss)
         this.mockResourceProvider = app.dal.mockResourceProvider
         this.mockResourceBucketProvider = app.dal.mockResourceBucketProvider
+
     }
 
     /**
