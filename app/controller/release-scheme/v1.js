@@ -33,12 +33,10 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         this._validateResolveReleasesParamFormat(releaseId, resolveReleases)
 
         const resourceInfoTask = this.resourceProvider.findOne({resourceId}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'resourceId'),
-            data: {resourceId}
+            msg: ctx.gettext('params-validate-failed', 'resourceId')
         }))
         const releaseInfoTask = this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'releaseId'),
-            data: {releaseId}
+            msg: ctx.gettext('params-validate-failed', 'releaseId')
         }))
 
         const [resourceInfo, releaseInfo] = await Promise.all([resourceInfoTask, releaseInfoTask])
@@ -122,7 +120,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
      */
     async retrySignContracts(ctx) {
 
-        const releaseId = ctx.checkQuery('releaseId').exist().isMongoObjectId().value
+        const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         ctx.validate()
 
@@ -132,14 +130,14 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         }))
 
         const releaseScheme = await this.releaseSchemeProvider.findOne({releaseId, version})
-            .then(model => ctx.entityNullObjectCheck(model))
+            .tap(model => ctx.entityNullObjectCheck(model))
 
         const resolveReleases = releaseScheme.resolveReleases.map(x => Object({
             releaseId: x.releaseId,
             contracts: x.contracts.filter(x => !x.contractId)
         })).filter(x => x.contracts.length)
 
-        if (resolveReleases.length) {
+        if (!resolveReleases.length) {
             return ctx.success(true)
         }
 

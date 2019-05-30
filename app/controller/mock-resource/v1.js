@@ -161,9 +161,8 @@ module.exports = class MockResourceController extends Controller {
         const mockResourceId = ctx.checkParams('mockResourceId').exist().isMongoObjectId().value
         ctx.validate()
 
-        const mockResourceInfo = await this.mockResourceProvider.findOne({mockResourceId}).tap(mockResourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(mockResourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'mockResourceId'),
-            data: {mockResourceId}
+        const mockResourceInfo = await this.mockResourceProvider.findById(mockResourceId).tap(mockResourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(mockResourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'mockResourceId')
         }))
 
         const {fileOss, systemMeta, name} = mockResourceInfo
