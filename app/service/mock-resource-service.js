@@ -1,5 +1,6 @@
 'use strict'
 
+const semver = require('semver')
 const lodash = require('lodash')
 const aliOss = require('ali-oss')
 const Service = require('egg').Service
