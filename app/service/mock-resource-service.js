@@ -11,6 +11,7 @@ module.exports = class MockResourceService extends Service {
     constructor({app, request}) {
         super(...arguments)
         this.userId = request.userId
+        this.releaseProvider = app.dal.releaseProvider
         this.mockResourceProvider = app.dal.mockResourceProvider
         this.mockResourceBucketProvider = app.dal.mockResourceBucketProvider
         this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
