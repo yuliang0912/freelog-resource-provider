@@ -3,7 +3,7 @@
 const lodash = require('lodash')
 const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
-const {ArgumentError} = require('egg-freelog-base/error')
+const {ArgumentError, AuthorizationError, AuthenticationError} = require('egg-freelog-base/error')
 const JsonWebToken = require('egg-freelog-base/app/extend/helper/jwt_helper')
 const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
 
@@ -15,7 +15,6 @@ module.exports = class ResourcesController extends Controller {
         this.resourceProvider = app.dal.resourceProvider
         this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
         this.client = new aliOss(app.config.uploadConfig.aliOss)
-        this.resourceAuthJwt = new JsonWebToken(app.config.RasSha256Key.resourceAuth.publicKey)
     }
 
     /**
@@ -174,39 +173,8 @@ module.exports = class ResourcesController extends Controller {
                 resourceVersion: releaseInfo.resourceVersions.find(x => x.resourceId === resourceId)
             }))
         }
-        
+
         ctx.success(results)
-    }
-
-    /**
-     * 根据token获取资源授权URL
-     * @param ctx
-     * @returns {Promise.<void>}
-     */
-    async resourceFileInfo(ctx) {
-
-        const jwt = ctx.checkHeader('resource-signature').exist().notEmpty().value
-        const response = ctx.checkHeader('response').optional().toJson().default({}).value
-        ctx.validate(false)
-
-        const authResult = this.resourceAuthJwt.verifyJwt(jwt.replace(/^bearer /i, ""))
-        if (!authResult.isVerify) {
-            throw new ArgumentError(ctx.gettext('jwt-signature-validate-failed'), authResult)
-        }
-
-        const resourceInfo = await this.resourceProvider.findOne({resourceId: authResult.payLoad.resourceId})
-        if (!resourceInfo) {
-            throw new ArgumentError(ctx.gettext('resource-entity-not-found'), {payLoad: authResult.payLoad})
-        }
-
-        const {fileOss} = resourceInfo
-        response['expires'] = 90 //默认90秒有效期
-        response['response-content-type'] = resourceInfo.customMimeType || resourceInfo.systemMeta.mimeType
-
-        const returnInfo = resourceInfo.toObject()
-        returnInfo.resourceUrl = this.client.signatureUrl(fileOss.objectKey, response)
-
-        ctx.success(returnInfo)
     }
 
     /**
@@ -219,17 +187,44 @@ module.exports = class ResourcesController extends Controller {
         const resourceId = ctx.checkParams('resourceId').isResourceId().value
         ctx.validate()
 
-        const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceId'),
-            data: {resourceId}
-        }))
+
+        const {userId, clientId} = ctx.request
+        const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullObjectCheck(resourceInfo))
+
+        if (!clientId && !userId) {
+            throw new AuthenticationError(ctx.gettext('user-authentication-failed'))
+        }
+        if (!clientId && userId && resourceInfo.userId !== userId) {
+            throw new AuthorizationError(ctx.gettext('user-authorization-failed'))
+        }
 
         const {fileOss, systemMeta, aliasName} = resourceInfo
+
         await this.client.getStream(fileOss.objectKey).then(result => {
             ctx.status = result.res.status
             ctx.attachment(fileOss.filename || aliasName)
+            ctx.set('content-length', result.res.headers['content-length'])
             ctx.set('content-type', systemMeta.mimeType)
             ctx.body = result.stream
         })
+    }
+
+    /**
+     * 获取资源加密过的下载URL地址
+     * @returns {Promise<void>}
+     */
+    async signedResourceInfo(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value
+        ctx.validate()
+
+        const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullObjectCheck(resourceInfo))
+
+        const {fileOss, systemMeta} = resourceInfo
+        const response = {expires: 60, 'response-content-type': systemMeta.mimeType}
+
+        const resourceFileUrl = this.client.signatureUrl(fileOss.objectKey, response)
+
+        ctx.success(Object.assign(lodash.pick(resourceInfo, ['resourceId', 'aliasName', 'previewImages', 'resourceType', 'systemMeta', 'meta']), {resourceFileUrl}))
     }
 }

@@ -1,6 +1,5 @@
 'use strict';
 
-const fs = require('fs')
 const path = require('path')
 
 module.exports = app => {
@@ -89,11 +88,6 @@ module.exports = app => {
             pageUrl: '/public/404.html',
         },
 
-        RasSha256Key: {
-            resourceAuth: {
-                publicKey: fs.readFileSync('config/auth_key/resource_auth_public_key.pem').toString()
-            }
-        },
 
         clientCredentialInfo: {
             clientId: 1002,

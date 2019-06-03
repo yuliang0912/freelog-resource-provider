@@ -3,6 +3,7 @@
 const lodash = require('lodash')
 const aliOss = require('ali-oss')
 const Service = require('egg').Service
+const {ApplicationError} = require('egg-freelog-base/error')
 const {createMockResourceEvent, updateMockResourceFileEvent, deleteMockResourceEvent} = require('../enum/resource-events')
 
 module.exports = class MockResourceService extends Service {
@@ -48,6 +49,8 @@ module.exports = class MockResourceService extends Service {
         const {sha1, resourceType, systemMeta, fileOss} = uploadFileInfo
 
         systemMeta.dependencies = lodash.isArray(dependencies) ? dependencies : []
+
+        await this._checkDependency(systemMeta.dependencies)
 
         const model = {
             name, sha1, meta, userId, previewImages, resourceType, fileOss, systemMeta, bucketId: bucketInfo.id,
@@ -110,6 +113,14 @@ module.exports = class MockResourceService extends Service {
             model.sha1 = metaInfo.systemMeta.sha1
             model.resourceType = resourceType
         }
+        if (!lodash.isEmpty(dependencies)) {
+            if (model.systemMeta) {
+                model.systemMeta.dependencies = dependencies
+            } else {
+                model['systemMeta.dependencies'] = dependencies
+            }
+            await this._checkDependency(dependencies)
+        }
 
         mockResourceInfo = await this.mockResourceProvider.findOneAndUpdate({_id: mockResourceInfo.id}, model, {new: true})
 
@@ -137,5 +148,50 @@ module.exports = class MockResourceService extends Service {
             }
             return isDelSuccess
         })
+    }
+
+    /**
+     * 检查依赖
+     * @param dependencies
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _checkDependency(dependencies) {
+
+        if (lodash.isEmpty(dependencies)) {
+            return
+        }
+
+        const {ctx} = this
+        const invalidDependencies = [], invalidReleaseVersionRanges = []
+
+        //不允许依赖同一个发行的不同版本
+        if (lodash.uniqBy(dependencies, x => x.releaseId).length !== dependencies.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), dependencies)
+        }
+
+        const releaseMap = await this.releaseProvider.find({_id: {$in: dependencies.map(x => x.releaseId)}})
+            .then(list => new Map(list.map(x => [x.releaseId, x])))
+
+        for (let i = 0, j = dependencies.length; i < j; i++) {
+            let dependency = dependencies[i]
+            let releaseInfo = releaseMap.get(dependency.releaseId)
+            if (!releaseInfo || releaseInfo.status !== 1) {
+                invalidDependencies.push(dependency)
+                continue
+            }
+            dependency.releaseName = releaseInfo.releaseName
+            //如果依赖的发行有任意的版本符合资源作者设置的版本范围,则范围有效,否则属于无效的版本设置
+            if (!releaseInfo.resourceVersions.some(x => semver.satisfies(x.version, dependency.versionRange))) {
+                invalidReleaseVersionRanges.push(dependency)
+            }
+        }
+
+        if (invalidDependencies.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), {invalidDependencies})
+        }
+        if (invalidReleaseVersionRanges.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidReleaseVersionRanges})
+        }
     }
 }
