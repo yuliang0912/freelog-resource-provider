@@ -8,8 +8,12 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            ret.meta = ret.meta || {}
-            return Object.assign(lodash.pick(doc, ['mockResourceId', 'fullName']), lodash.omit(ret, ['_id', 'fileOss']))
+            let result = Object.assign(lodash.pick(doc, ['mockResourceId', 'fullName']), lodash.omit(ret, ['_id', 'fileOss']))
+            result.meta = result.meta || {}
+            if (result.systemMeta && ret.fileOss) {
+                result.systemMeta.filename = ret.fileOss.filename
+            }
+            return result
         }
     }
 
