@@ -11,7 +11,7 @@ module.exports = class MockResourceController extends Controller {
         this.client = new aliOss(app.config.uploadConfig.aliOss)
         this.mockResourceProvider = app.dal.mockResourceProvider
         this.mockResourceBucketProvider = app.dal.mockResourceBucketProvider
-
+        this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
     }
 
     /**
@@ -82,8 +82,17 @@ module.exports = class MockResourceController extends Controller {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
         }
 
+        const bucketInfoTask = this.mockResourceBucketProvider.findOne({bucketName}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'bucketName')
+        }))
+        const uploadFileInfoTask = this.temporaryUploadFileProvider.findById(uploadFileId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'uploadFileId')
+        }))
+
+        const [bucketInfo, uploadFileInfo] = await Promise.all([bucketInfoTask, uploadFileInfoTask])
+
         await ctx.service.mockResourceService.createMockResource({
-            name, uploadFileId, meta, description, previewImages, dependencies, bucketName
+            name, uploadFileInfo, bucketInfo, meta, description, previewImages, dependencies
         }).then(ctx.success)
     }
 
@@ -110,13 +119,19 @@ module.exports = class MockResourceController extends Controller {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
         }
 
+        let uploadFileInfo = null
+        if (uploadFileId) {
+            uploadFileInfo = await this.temporaryUploadFileProvider.findById(uploadFileId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+                msg: ctx.gettext('params-validate-failed', 'uploadFileId')
+            }))
+        }
+
         const mockResourceInfo = await this.mockResourceProvider.findById(mockId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('mock-resource-entity-not-found'),
-            data: {mockId}
+            msg: ctx.gettext('mock-resource-entity-not-found')
         }))
 
         await ctx.service.mockResourceService.updateMockResource({
-            mockResourceInfo, uploadFileId, meta, description, previewImages, dependencies, resourceType
+            mockResourceInfo, uploadFileInfo, meta, description, previewImages, dependencies, resourceType
         }).then(ctx.success)
     }
 

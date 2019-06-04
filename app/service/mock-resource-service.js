@@ -15,41 +15,29 @@ module.exports = class MockResourceService extends Service {
         this.releaseProvider = app.dal.releaseProvider
         this.mockResourceProvider = app.dal.mockResourceProvider
         this.mockResourceBucketProvider = app.dal.mockResourceBucketProvider
-        this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
     }
 
     /**
      * 创建草稿资源
-     * @param uploadFileId
+     * @param uploadFileInfo
+     * @param bucketInfo
      * @param name
      * @param meta
      * @param description
      * @param previewImages
      * @param dependencies
-     * @param bucketName
      * @returns {Promise<void>}
      */
-    async createMockResource({uploadFileId, name, meta, description, previewImages, dependencies, bucketName}) {
+    async createMockResource({uploadFileInfo, bucketInfo, name, meta, description, previewImages, dependencies}) {
 
         const {ctx, app, userId} = this
 
-        const uploadFileInfo = await this.temporaryUploadFileProvider.findById(uploadFileId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'uploadFileId'),
-            data: {uploadFileId}
-        }))
-
-        const bucketInfo = await this.mockResourceBucketProvider.findOne({bucketName}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'bucketName'),
-            data: {bucketName}
-        }))
-
         const isExistMock = await this.mockResourceProvider.count({name, bucketId: bucketInfo.id}).then(Boolean)
         if (isExistMock) {
-            ctx.error({msg: ctx.gettext('mock-name-create-duplicate-error', name)})
+            throw new ApplicationError(ctx.gettext('mock-name-create-duplicate-error', name))
         }
 
         const {sha1, resourceType, systemMeta, fileOss} = uploadFileInfo
-
         systemMeta.dependencies = lodash.isArray(dependencies) ? dependencies : []
 
         await this._checkDependency(systemMeta.dependencies)
@@ -72,19 +60,18 @@ module.exports = class MockResourceService extends Service {
     /**
      * 更新草稿资源
      * @param mockResourceInfo
-     * @param uploadFileId
+     * @param uploadFileInfo
      * @param meta
      * @param description
      * @param previewImages
      * @param dependencies
      * @param resourceType
-     * @returns {Promise<object>}
+     * @returns {Promise<Collection~findAndModifyWriteOpResultObject.mockResourceInfo|*>}
      */
-    async updateMockResource({mockResourceInfo, uploadFileId, meta, description, previewImages, dependencies, resourceType}) {
+    async updateMockResource({mockResourceInfo, uploadFileInfo, meta, description, previewImages, dependencies, resourceType}) {
 
+        const model = {}
         const {ctx, app} = this
-        var model = {}, uploadFileInfo = null
-
         if (meta) {
             model.meta = meta
         }
@@ -95,29 +82,23 @@ module.exports = class MockResourceService extends Service {
         if (lodash.isArray(previewImages)) {
             model.previewImages = previewImages
         }
-        if (uploadFileId) {
-            uploadFileInfo = await this.temporaryUploadFileProvider.findById(uploadFileId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-                msg: ctx.gettext('params-validate-failed', 'uploadFileId'),
-                data: {uploadFileId}
-            }))
+        if (uploadFileInfo) {
             model.sha1 = uploadFileInfo.sha1
             model.resourceType = uploadFileInfo.resourceType
         }
-        //有新的上传文件,并且类型不一致或者没有新的上传文件,并且类型不一致,才需要重新计算systemMeta相关数据
-        if (resourceType && (uploadFileId && uploadFileInfo.resourceType !== resourceType || !uploadFileId && mockResourceInfo.resourceType !== resourceType)) {
-            const {fileOss} = uploadFileInfo || mockResourceInfo
+        if (resourceType && mockResourceInfo.resourceType !== resourceType && !uploadFileInfo) {
+            const {fileOss} = mockResourceInfo
             const ossClient = new aliOss(app.config.uploadConfig.aliOss)
             const metaInfo = await ossClient.getStream(fileOss.objectKey).then(result => {
                 result.stream.filename = fileOss.filename
                 return ctx.helper.resourceFileCheck({fileStream: result.stream, resourceType})
             })
             model.systemMeta = metaInfo.systemMeta
-            model.sha1 = metaInfo.systemMeta.sha1
-            model.resourceType = resourceType
         }
-
         if (lodash.isArray(dependencies)) {
-            if (model.systemMeta) {
+            if (uploadFileInfo) {
+                uploadFileInfo.systemMeta.dependencies = dependencies
+            } else if (model.systemMeta) {
                 model.systemMeta.dependencies = dependencies
             } else {
                 model['systemMeta.dependencies'] = dependencies
@@ -137,17 +118,15 @@ module.exports = class MockResourceService extends Service {
 
     /**
      * 删除mock资源
-     * @param mockId
-     * @returns {Promise<void>}
+     * @param mockResourceInfo
+     * @returns {Promise<Promise<boolean> | Promise>}
      */
     async deleteMockResource(mockResourceInfo) {
-
-        const {app} = this
 
         return this.mockResourceProvider.deleteOne({_id: mockResourceInfo.id}).then(data => {
             const isDelSuccess = Boolean(data.deletedCount)
             if (isDelSuccess) {
-                app.emit(deleteMockResourceEvent, mockResourceInfo)
+                this.app.emit(deleteMockResourceEvent, mockResourceInfo)
             }
             return isDelSuccess
         })
