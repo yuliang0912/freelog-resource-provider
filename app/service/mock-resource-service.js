@@ -115,7 +115,7 @@ module.exports = class MockResourceService extends Service {
             model.sha1 = metaInfo.systemMeta.sha1
             model.resourceType = resourceType
         }
-        if (!lodash.isEmpty(dependencies)) {
+        if (lodash.isArray(dependencies)) {
             if (model.systemMeta) {
                 model.systemMeta.dependencies = dependencies
             } else {
