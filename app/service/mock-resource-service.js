@@ -31,8 +31,9 @@ module.exports = class MockResourceService extends Service {
     async createMockResource({uploadFileInfo, bucketInfo, name, meta, description, previewImages, dependencies}) {
 
         const {ctx, app, userId} = this
+        const {bucketId, bucketName} = bucketInfo
 
-        const isExistMock = await this.mockResourceProvider.count({name, bucketId: bucketInfo.id}).then(Boolean)
+        const isExistMock = await this.mockResourceProvider.count({name, bucketId}).then(Boolean)
         if (isExistMock) {
             throw new ApplicationError(ctx.gettext('mock-name-create-duplicate-error', name))
         }
@@ -43,9 +44,8 @@ module.exports = class MockResourceService extends Service {
         await this._checkDependency(systemMeta.dependencies)
 
         const model = {
-            name, sha1, meta, userId, previewImages, resourceType, fileOss, systemMeta, bucketId: bucketInfo.id,
-            bucketName: bucketInfo.bucketName,
-            fullName: `${bucketInfo.bucketName}/${name}`,
+            name, sha1, meta, userId, previewImages, resourceType, fileOss, systemMeta, bucketId, bucketName,
+            fullName: `${bucketName}/${name}`,
             description: lodash.isString(description) ? description : '',
             intro: ctx.service.resourceService.getResourceIntroFromDescription(description)
         }

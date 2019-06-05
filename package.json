@@ -9,7 +9,7 @@
   "dependencies": {
     "@freelog/resource-policy-lang": "0.0.33",
     "ali-oss": "^6.1.1",
-    "bluebird": "^3.5.4",
+    "bluebird": "^3.5.5",
     "cheerio": "^1.0.0-rc.3",
     "egg": "^2.22.2",
     "egg-freelog-base": "^1.2.10",
@@ -21,9 +21,9 @@
     "lodash": "^4.17.11",
     "mime": "^2.4.3",
     "moment": "^2.24.0",
-    "mongoose": "^5.5.10",
+    "mongoose": "^5.5.12",
     "patrun": "^1.0.0",
-    "semver": "^6.0.0",
+    "semver": "^6.1.1",
     "stream-wormhole": "^1.1.0",
     "uuid": "^3.3.2"
   },
