@@ -96,6 +96,24 @@ module.exports = class MockResourceController extends Controller {
         }).then(ctx.success)
     }
 
+
+    /**
+     * mock转资源
+     * @returns {Promise<void>}
+     */
+    async convertToResource(ctx) {
+
+        const mockId = ctx.checkParams('mockId').exist().isMongoObjectId().value
+        const resourceAliasName = ctx.checkBody('resourceAliasName').exist().len(1, 100).trim().value
+        ctx.validate()
+
+        const mockResourceInfo = await this.mockResourceProvider.findById(mockId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
+            msg: ctx.gettext('mock-resource-entity-not-found')
+        }))
+
+        await ctx.service.mockResourceService.convertToResource(mockResourceInfo, resourceAliasName).then(ctx.success)
+    }
+
     /**
      * 更新mock资源
      * @param ctx

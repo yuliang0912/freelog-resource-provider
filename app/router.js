@@ -12,6 +12,7 @@ module.exports = app => {
     //post-method-api
     router.post('upload-file', '/v1/resources/temporaryFiles/uploadResourceFile', temporaryFile.v1.uploadResourceFile)
     router.post('upload-preview-image', '/v1/resources/temporaryFiles/uploadPreviewImage', temporaryFile.v1.uploadPreviewImage)
+    router.post('mock-convert-resource', '/v1/resources/mocks/:mockId/convert', mockResource.v1.convertToResource)
 
     //get-method-api
     router.get('resource-list', '/v1/resources/list', resource.v1.list)

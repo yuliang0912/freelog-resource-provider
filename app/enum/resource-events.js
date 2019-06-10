@@ -17,6 +17,11 @@ module.exports = {
     createMockResourceEvent: Symbol('resource#createMockResourceEvent'),
 
     /**
+     * mock转换成资源事件
+     */
+    mockConvertToResourceEvent: Symbol('resource#mockConvertToResourceEvent'),
+
+    /**
      * 更新mock资源源文件事件
      */
     updateMockResourceFileEvent: Symbol('resource#updateMockResourceFileEvent'),

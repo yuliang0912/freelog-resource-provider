@@ -118,7 +118,6 @@ module.exports = class ReleaseSchemeService extends Service {
             throw new ApplicationError(ctx.gettext('resource-depend-upcast-resolve-integrity-validate-failed'), {untreatedReleases})
         }
 
-
         //无效的解决(不在待办发行中)
         const invalidResolveReleases = lodash.differenceBy(resolveReleases, backlogReleases, x => x.releaseId)
         if (invalidResolveReleases.length) {

@@ -5,7 +5,7 @@ const lodash = require('lodash')
 const aliOss = require('ali-oss')
 const Service = require('egg').Service
 const {ApplicationError} = require('egg-freelog-base/error')
-const {createMockResourceEvent, updateMockResourceFileEvent, deleteMockResourceEvent} = require('../enum/resource-events')
+const {createMockResourceEvent, updateMockResourceFileEvent, deleteMockResourceEvent, mockConvertToResourceEvent} = require('../enum/resource-events')
 
 module.exports = class MockResourceService extends Service {
 
@@ -13,6 +13,7 @@ module.exports = class MockResourceService extends Service {
         super(...arguments)
         this.userId = request.userId
         this.releaseProvider = app.dal.releaseProvider
+        this.resourceProvider = app.dal.resourceProvider
         this.mockResourceProvider = app.dal.mockResourceProvider
         this.mockResourceBucketProvider = app.dal.mockResourceBucketProvider
     }
@@ -129,6 +130,39 @@ module.exports = class MockResourceService extends Service {
                 this.app.emit(deleteMockResourceEvent, mockResourceInfo)
             }
             return isDelSuccess
+        })
+    }
+
+    /**
+     * mock转资源
+     * @param mockResourceInfo
+     * @param resourceAliasName
+     * @returns {Promise<void>}
+     */
+    async convertToResource(mockResourceInfo, resourceAliasName) {
+
+        const {ctx, app} = this
+        if (!lodash.isEmpty(mockResourceInfo.systemMeta.dependencies) && mockResourceInfo.systemMeta.dependencies.some(x => x.mockId)) {
+            throw new ApplicationError(ctx.gettext('mock-convert-to-resource-depend-validate-failed'))
+        }
+
+        await this.resourceProvider.findOne({resourceId: mockResourceInfo.sha1}, 'resourceId').then(model => {
+            if (model) {
+                throw new ApplicationError(ctx.gettext('resource-create-duplicate-error'))
+            }
+        })
+
+        const model = lodash.pick(mockResourceInfo, ['meta', 'userId', 'previewImages', 'resourceType', 'fileOss', 'systemMeta', 'description'])
+        model.resourceId = mockResourceInfo.sha1
+        model.aliasName = resourceAliasName
+        model.intro = ctx.service.resourceService.getResourceIntroFromDescription(mockResourceInfo.description)
+
+        if (!lodash.isArray(model.systemMeta.dependencies)) {
+            model.systemMeta.dependencies = []
+        }
+
+        return this.resourceProvider.create(model).tap(resourceInfo => {
+            app.emit(mockConvertToResourceEvent, resourceInfo)
         })
     }
 
