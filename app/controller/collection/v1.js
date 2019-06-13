@@ -58,15 +58,17 @@ module.exports = class CollectionController extends Controller {
             return ctx.success(result)
         }
 
-        const collectionReleaseMap = await this.collectionProvider.findPageList(condition, page, pageSize, null, {createDate: 1})
+        const collectionReleaseMap = await this.collectionProvider.findPageList(condition, page, pageSize, null, {updateDate: 1})
             .map(x => [x.releaseId, x]).then(list => new Map(list))
 
         await this.releaseProvider.find({_id: {$in: Array.from(collectionReleaseMap.keys())}}).then(dataList => {
             result.dataList = dataList.map(releaseInfo => {
-                let {releaseId, releaseName, userId, username, latestVersion} = releaseInfo
+                let {releaseId, releaseName, resourceType, userId, username, latestVersion} = releaseInfo
+                let collectionReleaseInfo = collectionReleaseMap.get(releaseId)
                 return {
-                    releaseId, releaseName, authorId: userId, authorName: username, latestVersion,
-                    createDate: collectionReleaseMap.get(releaseId).createDate
+                    releaseId, releaseName, resourceType, authorId: userId, authorName: username, latestVersion,
+                    createDate: collectionReleaseInfo.createDate,
+                    updateDate: collectionReleaseInfo.updateDate,
                 }
             })
         })
