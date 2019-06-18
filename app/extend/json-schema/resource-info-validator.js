@@ -13,11 +13,19 @@ module.exports = class ResourceInfoValidator extends FreelogCommonJsonSchema {
     }
 
     /**
-     * 依赖的方案格式校验
+     * 资源依赖项格式校验
      * @param dependencies
      */
-    dependReleasesValidate(dependencies) {
+    resourceDependencyValidate(dependencies) {
         return super.validate(dependencies, super.getSchema('/dependReleasesSchema'))
+    }
+
+    /**
+     * mock资源依赖项格式校验
+     * @param dependencyInfo
+     */
+    mockResourceDependencyValidate(dependencyInfo) {
+        return super.validate(dependencyInfo, super.getSchema('/mockResourceDependencySchema'))
     }
 
     /**
@@ -38,6 +46,31 @@ module.exports = class ResourceInfoValidator extends FreelogCommonJsonSchema {
                     releaseId: {type: "string", required: true, format: 'mongoObjectId'},
                     versionRange: {type: "string", required: true, format: 'versionRange'}
                 }
+            }
+        })
+
+        super.addSchema({
+            id: "/dependMocksSchema",
+            type: "array",
+            uniqueItems: true,
+            items: {
+                type: "object",
+                required: true,
+                additionalProperties: false,
+                properties: {
+                    mockResourceId: {type: "string", required: true, format: 'mongoObjectId'}
+                }
+            }
+        })
+
+        super.addSchema({
+            id: "/mockResourceDependencySchema",
+            type: "object",
+            required: true,
+            additionalProperties: false,
+            properties: {
+                mocks: {$ref: "/dependMocksSchema"},
+                releases: {$ref: "/dependReleasesSchema"}
             }
         })
     }

@@ -4,7 +4,6 @@ const lodash = require('lodash')
 const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
 const {ArgumentError, AuthorizationError, AuthenticationError} = require('egg-freelog-base/error')
-const JsonWebToken = require('egg-freelog-base/app/extend/helper/jwt_helper')
 const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
 
 module.exports = class ResourcesController extends Controller {
@@ -95,7 +94,7 @@ module.exports = class ResourcesController extends Controller {
         const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
         ctx.validate()
 
-        const dependReleasesValidateResult = new ResourceInfoValidator().dependReleasesValidate(dependencies)
+        const dependReleasesValidateResult = new ResourceInfoValidator().resourceDependencyValidate(dependencies)
         if (dependReleasesValidateResult.errors.length) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {errors: dependReleasesValidateResult.errors})
         }
@@ -129,7 +128,7 @@ module.exports = class ResourcesController extends Controller {
         ctx.validate()
 
         if (dependencies) {
-            const dependReleasesValidateResult = new ResourceInfoValidator().dependReleasesValidate(dependencies)
+            const dependReleasesValidateResult = new ResourceInfoValidator().resourceDependencyValidate(dependencies)
             if (dependReleasesValidateResult.errors.length) {
                 throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {errors: dependReleasesValidateResult.errors})
             }

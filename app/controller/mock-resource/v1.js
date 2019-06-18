@@ -3,6 +3,7 @@
 const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
+const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
 
 module.exports = class MockResourceController extends Controller {
 
@@ -75,11 +76,16 @@ module.exports = class MockResourceController extends Controller {
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
-        const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
+        const dependencyInfo = ctx.checkBody('dependencyInfo').optional().isObject().default({}).value
         ctx.validate()
 
         if (previewImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
+        }
+
+        const mockDependencyValidateResult = new ResourceInfoValidator().mockResourceDependencyValidate(dependencyInfo)
+        if (mockDependencyValidateResult.errors.length) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencyInfo'), {errors: mockDependencyValidateResult.errors})
         }
 
         const bucketInfoTask = this.mockResourceBucketProvider.findOne({bucketName}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
@@ -92,7 +98,7 @@ module.exports = class MockResourceController extends Controller {
         const [bucketInfo, uploadFileInfo] = await Promise.all([bucketInfoTask, uploadFileInfoTask])
 
         await ctx.service.mockResourceService.createMockResource({
-            name, uploadFileInfo, bucketInfo, meta, description, previewImages, dependencies
+            name, uploadFileInfo, bucketInfo, meta, description, previewImages, dependencyInfo
         }).then(ctx.success)
     }
 
@@ -125,16 +131,21 @@ module.exports = class MockResourceController extends Controller {
         const meta = ctx.checkBody('meta').optional().isObject().value
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
-        const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).value
+        const dependencyInfo = ctx.checkBody('dependencyInfo').optional().isObject().value
         const uploadFileId = ctx.checkBody('uploadFileId').optional().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'uploadFileId')).value
         const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLowercase().value
         ctx.validate()
 
-        if ([meta, description, uploadFileId, previewImages, dependencies, resourceType].every(x => x === undefined)) {
+        if ([meta, description, uploadFileId, previewImages, dependencyInfo, resourceType].every(x => x === undefined)) {
             ctx.error({msg: ctx.gettext('params-required-validate-failed')})
         }
         if (previewImages && previewImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
+        }
+
+        const mockDependencyValidateResult = new ResourceInfoValidator().mockResourceDependencyValidate(dependencyInfo)
+        if (dependencyInfo && mockDependencyValidateResult.errors.length) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencyInfo'), {errors: mockDependencyValidateResult.errors})
         }
 
         let uploadFileInfo = null
@@ -149,7 +160,7 @@ module.exports = class MockResourceController extends Controller {
         }))
 
         await ctx.service.mockResourceService.updateMockResource({
-            mockResourceInfo, uploadFileInfo, meta, description, previewImages, dependencies, resourceType
+            mockResourceInfo, uploadFileInfo, meta, description, previewImages, dependencyInfo, resourceType
         }).then(ctx.success)
     }
 

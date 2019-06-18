@@ -90,6 +90,8 @@ module.exports = {
 
     'resource-depend-release-invalid': '资源依赖的发行无效',
 
+    'resource-depend-mock-invalid': '资源依赖的mock资源无效',
+
     'resource-depend-release-update-refuse': '资源已经加入发行,依赖项不允许再变更',
 
     //'resource-depend-release-sign-auth-refuse': '依赖发行中存在未获得签约授权的部分',

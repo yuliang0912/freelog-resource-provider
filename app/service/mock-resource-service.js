@@ -26,10 +26,10 @@ module.exports = class MockResourceService extends Service {
      * @param meta
      * @param description
      * @param previewImages
-     * @param dependencies
+     * @param dependencyInfo
      * @returns {Promise<void>}
      */
-    async createMockResource({uploadFileInfo, bucketInfo, name, meta, description, previewImages, dependencies}) {
+    async createMockResource({uploadFileInfo, bucketInfo, name, meta, description, previewImages, dependencyInfo}) {
 
         const {ctx, app, userId} = this
         const {bucketId, bucketName} = bucketInfo
@@ -40,9 +40,8 @@ module.exports = class MockResourceService extends Service {
         }
 
         const {sha1, resourceType, systemMeta, fileOss} = uploadFileInfo
-        systemMeta.dependencies = lodash.isArray(dependencies) ? dependencies : []
 
-        await this._checkDependency(systemMeta.dependencies)
+        systemMeta.dependencyInfo = await this._checkDependencyInfo(dependencyInfo)
 
         const model = {
             name, sha1, meta, userId, previewImages, resourceType, fileOss, systemMeta, bucketId, bucketName,
@@ -65,11 +64,11 @@ module.exports = class MockResourceService extends Service {
      * @param meta
      * @param description
      * @param previewImages
-     * @param dependencies
+     * @param dependencyInfo
      * @param resourceType
      * @returns {Promise<Collection~findAndModifyWriteOpResultObject.mockResourceInfo|*>}
      */
-    async updateMockResource({mockResourceInfo, uploadFileInfo, meta, description, previewImages, dependencies, resourceType}) {
+    async updateMockResource({mockResourceInfo, uploadFileInfo, meta, description, previewImages, dependencyInfo, resourceType}) {
 
         const model = {}
         const {ctx, app} = this
@@ -96,15 +95,15 @@ module.exports = class MockResourceService extends Service {
             })
             model.systemMeta = metaInfo.systemMeta
         }
-        if (lodash.isArray(dependencies)) {
+        if (!lodash.isEmpty(dependencyInfo)) {
+            await this._checkDependencyInfo(dependencyInfo)
             if (uploadFileInfo) {
-                uploadFileInfo.systemMeta.dependencies = dependencies
+                uploadFileInfo.systemMeta.dependencyInfo = dependencyInfo
             } else if (model.systemMeta) {
-                model.systemMeta.dependencies = dependencies
+                model.systemMeta.dependencyInfo = dependencyInfo
             } else {
-                model['systemMeta.dependencies'] = dependencies
+                model['systemMeta.dependencyInfo'] = dependencyInfo
             }
-            await this._checkDependency(dependencies)
         }
 
         mockResourceInfo = await this.mockResourceProvider.findOneAndUpdate({_id: mockResourceInfo.id}, model, {new: true})
@@ -142,7 +141,9 @@ module.exports = class MockResourceService extends Service {
     async convertToResource(mockResourceInfo, resourceAliasName) {
 
         const {ctx, app} = this
-        if (!lodash.isEmpty(mockResourceInfo.systemMeta.dependencies) && mockResourceInfo.systemMeta.dependencies.some(x => x.mockId)) {
+        const {mocks = [], releases = []} = mockResourceInfo.systemMeta.dependencyInfo || {}
+
+        if (!lodash.isEmpty(mocks)) {
             throw new ApplicationError(ctx.gettext('mock-convert-to-resource-depend-validate-failed'))
         }
 
@@ -156,10 +157,9 @@ module.exports = class MockResourceService extends Service {
         model.resourceId = mockResourceInfo.sha1
         model.aliasName = resourceAliasName
         model.intro = ctx.service.resourceService.getResourceIntroFromDescription(mockResourceInfo.description)
+        model.systemMeta.dependencies = releases
 
-        if (!lodash.isArray(model.systemMeta.dependencies)) {
-            model.systemMeta.dependencies = []
-        }
+        delete model.systemMeta.dependencyInfo
 
         return this.resourceProvider.create(model).tap(resourceInfo => {
             app.emit(mockConvertToResourceEvent, resourceInfo)
@@ -167,33 +167,33 @@ module.exports = class MockResourceService extends Service {
     }
 
     /**
-     * 检查依赖
-     * @param dependencies
-     * @returns {Promise<void>}
+     * 检查依赖信息
+     * @param dependencyInfo
+     * @returns {Promise<{releases: Array, mocks: Array}>}
      * @private
      */
-    async _checkDependency(dependencies) {
-
-        if (lodash.isEmpty(dependencies)) {
-            return
-        }
+    async _checkDependencyInfo(dependencyInfo) {
 
         const {ctx} = this
-        const invalidDependencies = [], invalidReleaseVersionRanges = []
+        var {releases = [], mocks = []} = dependencyInfo
+
+        let invalidDependReleases = [], invalidReleaseVersionRanges = [], invalidDependMocks = []
 
         //不允许依赖同一个发行的不同版本
-        if (lodash.uniqBy(dependencies, x => x.releaseId).length !== dependencies.length) {
-            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), dependencies)
+        if (lodash.uniqBy(releases, x => x.releaseId).length !== releases.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), releases)
         }
 
-        const releaseMap = await this.releaseProvider.find({_id: {$in: dependencies.map(x => x.releaseId)}})
-            .then(list => new Map(list.map(x => [x.releaseId, x])))
+        const releaseMap = new Map()
+        if (!lodash.isEmpty(releases)) {
+            await this.releaseProvider.find({_id: {$in: releases.map(x => x.releaseId)}}).each(x => releaseMap.set(x.releaseId, x))
+        }
 
-        for (let i = 0, j = dependencies.length; i < j; i++) {
-            let dependency = dependencies[i]
+        for (let i = 0, j = releases.length; i < j; i++) {
+            let dependency = releases[i]
             let releaseInfo = releaseMap.get(dependency.releaseId)
             if (!releaseInfo || releaseInfo.status !== 1) {
-                invalidDependencies.push(dependency)
+                invalidDependReleases.push(dependency)
                 continue
             }
             dependency.releaseName = releaseInfo.releaseName
@@ -203,11 +203,31 @@ module.exports = class MockResourceService extends Service {
             }
         }
 
-        if (invalidDependencies.length) {
-            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), {invalidDependencies})
+        if (invalidDependReleases.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-release-invalid'), {invalidDependReleases})
         }
         if (invalidReleaseVersionRanges.length) {
             throw new ApplicationError(ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidReleaseVersionRanges})
         }
+
+        if (!lodash.isEmpty(mocks)) {
+            const mockInfos = await this.mockResourceProvider.find({
+                _id: {$in: mocks.map(x => x.mockResourceId)},
+                userId: ctx.request.userId
+            })
+            invalidDependMocks = lodash.differenceBy(mocks, mockInfos, x => x.mockResourceId)
+            mocks = mockInfos.map(x => Object({
+                mockResourceId: x.mockResourceId,
+                mockResourceName: x.fullName
+            }))
+        }
+        if (invalidDependMocks.length) {
+            throw new ApplicationError(ctx.gettext('resource-depend-mock-invalid'), {invalidDependMocks})
+        }
+
+        dependencyInfo.mocks = mocks
+        dependencyInfo.releases = releases
+
+        return dependencyInfo
     }
 }
