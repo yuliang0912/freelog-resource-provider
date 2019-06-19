@@ -114,6 +114,29 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
 
 
     /**
+     * 获取发行具体版本的资源信息
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async resourceInfo(ctx) {
+
+        const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        ctx.validate()
+
+        const {resourceVersions} = await this.releaseProvider.findById(releaseId, 'resourceVersions')
+        const {resourceId} = resourceVersions.find(x => x.version === version) || {}
+
+        if (!resourceId) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'))
+        }
+
+        await this.resourceProvider.findOne({resourceId}, projection.join(' ')).then(ctx.success)
+    }
+
+
+    /**
      * 签约失败时,重试签约过程
      * @param ctx
      * @returns {Promise<void>}
