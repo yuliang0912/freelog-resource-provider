@@ -1,5 +1,7 @@
 'use strict'
 
+const lodash = require('lodash')
+
 module.exports = class CreateSchemeEventHandler {
 
     constructor(app) {
@@ -14,9 +16,8 @@ module.exports = class CreateSchemeEventHandler {
      */
     async handle(eventName, releaseInfo, releaseSchemeInfo) {
 
-        const {resourceId, version, createDate} = releaseSchemeInfo
+        const latestVersion = lodash.pick(releaseSchemeInfo, ['resourceId', 'version', 'createDate'])
 
-        const latestVersion = {resourceId, version, createDate}
         return this.releaseProvider.findOneAndUpdate({_id: releaseInfo.id}, {
             $addToSet: {resourceVersions: latestVersion}, latestVersion
         })

@@ -26,7 +26,7 @@ module.exports = class ResourcesController extends Controller {
         const page = ctx.checkQuery('page').optional().gt(0).toInt().default(1).value
         const pageSize = ctx.checkQuery('pageSize').optional().gt(0).lt(101).toInt().default(10).value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value
-        const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
+        const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().trim().value
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
 
@@ -36,8 +36,13 @@ module.exports = class ResourcesController extends Controller {
         if (resourceType) {
             condition.resourceType = resourceType
         }
-        if (keywords !== undefined) {
-            condition.aliasName = new RegExp(keywords, "i")
+        if (lodash.isString(keywords) && keywords.length > 0) {
+            const searchRegExp = new RegExp(keywords, "i")
+            if (/^[0-9a-zA-Z]{4,40}$/.test(keywords)) {
+                condition.$or = [{resourceId: searchRegExp}, {aliasName: searchRegExp}]
+            } else {
+                condition.aliasName = searchRegExp
+            }
         }
         if (isSelf) {
             condition.userId = ctx.request.userId

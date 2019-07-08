@@ -3,7 +3,7 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
-const {ArgumentError} = require('egg-freelog-base/error')
+const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
 const {signReleaseContractEvent} = require('../../enum/resource-events')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
 
@@ -48,6 +48,9 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         }
         if (resourceInfo.resourceType !== releaseInfo.resourceType) {
             throw new ArgumentError(ctx.gettext('release-resource-type-validate-failed'))
+        }
+        if (resourceInfo.systemMeta.dependencies.some(x => x.releaseId === releaseId)) {
+            throw new ApplicationError(ctx.gettext('release-circular-dependency-error'))
         }
 
         await this.ctx.service.releaseSchemeService.createReleaseScheme({

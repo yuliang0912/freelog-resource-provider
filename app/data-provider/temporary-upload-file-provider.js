@@ -22,4 +22,22 @@ module.exports = class ResourceTreeProvider extends MongoBaseOperation {
             return model || super.create(uploadFileInfo)
         })
     }
+
+    //事务测试
+    async test(uploadFileInfo) {
+        let session = await super.model.startSession()
+        session.startTransaction()
+        let model = null
+        try {
+            model = await super.create([uploadFileInfo], {session})
+            await super.create([uploadFileInfo], {session})
+            await session.commitTransaction();
+            session.endSession();
+        } catch (e) {
+            await session.abortTransaction();
+            session.endSession();
+            throw e
+        }
+        return model[0]
+    }
 }

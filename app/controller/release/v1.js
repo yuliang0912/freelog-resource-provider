@@ -3,7 +3,6 @@
 const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
-const {mongoObjectId} = require('egg-freelog-base/app/extend/helper/common_regex')
 const {ApplicationError, ArgumentError} = require('egg-freelog-base/error')
 const ReleasePolicyValidator = require('../../extend/json-schema/release-policy-validator')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
@@ -27,7 +26,7 @@ module.exports = class ReleaseController extends Controller {
         const page = ctx.checkQuery("page").optional().default(1).gt(0).toInt().value
         const pageSize = ctx.checkQuery("pageSize").optional().default(10).gt(0).lt(101).toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
-        const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
+        const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().trim().value
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
 
@@ -37,18 +36,18 @@ module.exports = class ReleaseController extends Controller {
         if (resourceType) {
             condition.resourceType = resourceType
         }
-        if (keywords !== undefined) {
-            let searchRegExp = new RegExp(keywords, "i")
-            if (mongoObjectId.test(keywords.toLowerCase())) {
-                condition.$or = [{releaseName: searchRegExp}, {_id: keywords.toLowerCase()}]
-            } else {
-                condition.releaseName = searchRegExp
-            }
-        }
         if (isSelf) {
             condition.userId = ctx.request.userId
         } else {
             condition.status = 1
+        }
+        if (lodash.isString(keywords) && keywords.length > 0) {
+            let searchRegExp = new RegExp(keywords, "i")
+            if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) {
+                condition.$or = [{releaseName: searchRegExp}, {_id: keywords.toLowerCase()}]
+            } else {
+                condition.releaseName = searchRegExp
+            }
         }
 
         var dataList = []
@@ -169,8 +168,7 @@ module.exports = class ReleaseController extends Controller {
         }
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
-            msg: ctx.gettext('params-validate-failed', 'releaseId'),
-            data: {releaseId}
+            msg: ctx.gettext('params-validate-failed', 'releaseId')
         }))
 
         if (releaseName !== undefined && releaseInfo.releaseName !== releaseName) {
@@ -194,18 +192,13 @@ module.exports = class ReleaseController extends Controller {
         ctx.validate(false)
 
         var releaseInfo = await this.releaseProvider.findById(releaseId)
-
         if (!releaseInfo) {
             return ctx.success(null)
         }
 
-        var resourceId = releaseInfo.latestVersion.resourceId
-        if (version) {
-            const resourceVersion = releaseInfo.resourceVersions.find(x => x.version === version)
-            if (!resourceVersion) {
-                throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'))
-            }
-            resourceId = resourceVersion.resourceId
+        const {resourceId = ''} = version ? releaseInfo.resourceVersions.find(x => x.version === version) || {} : releaseInfo.latestVersion
+        if (!resourceId) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'version'))
         }
 
         releaseInfo = releaseInfo.toObject()

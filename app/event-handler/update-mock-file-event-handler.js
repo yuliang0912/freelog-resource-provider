@@ -24,6 +24,7 @@ module.exports = class UpdateMockResourceFileEventHandler {
         mockResourceInfo.updateOne({
             'fileOss.objectKey': objectKey,
             'fileOss.url': url,
+            'fileOss.filename': uploadFileInfo.fileOss.filename,
             systemMeta: uploadFileInfo.systemMeta
         }).then(() => {
             let fluctuantFileSize = uploadFileInfo.systemMeta.fileSize - mockResourceInfo.systemMeta.fileSize

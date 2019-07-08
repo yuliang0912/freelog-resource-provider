@@ -11,7 +11,7 @@ module.exports = class CollectionController extends Controller {
     }
 
     /**
-     * 创建资源收藏
+     * 资源收藏
      * @param ctx
      * @returns {Promise<void>}
      */
@@ -21,13 +21,17 @@ module.exports = class CollectionController extends Controller {
 
         ctx.validate()
 
-        const {releaseName, resourceType, userId, username} = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
+        const {releaseName, resourceType, latestVersion, userId, username} = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
             data: {releaseId}
         }))
 
         await this.collectionProvider.createReleaseCollection({
-            releaseId, releaseName, resourceType, authorId: userId, authorName: username, userId: ctx.request.userId
+            releaseId, releaseName, resourceType,
+            version: latestVersion.version,
+            authorId: userId,
+            authorName: username,
+            userId: ctx.request.userId
         }).then(ctx.success)
     }
 

@@ -55,7 +55,7 @@ module.exports = app => {
     })
 
     MockResourceSchema.index({userId: 1, name: 1, resourceType: 1})
-    MockResourceSchema.index({bucketId: 1, name: 1}, {unique: true})
+    MockResourceSchema.index({bucketName: 1, name: 1}, {unique: true})
 
     return mongoose.model('mock-resources', MockResourceSchema)
 }
