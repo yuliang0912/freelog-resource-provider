@@ -182,6 +182,33 @@ module.exports = class ResourcesController extends Controller {
     }
 
     /**
+     * 批量查询资源所挂载的发行
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async batchReleases(ctx) {
+
+        const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default(['releaseId', 'releaseName', 'username', 'version']).value
+        ctx.validate()
+
+        const releases = await this.releaseProvider.find({'resourceVersions.resourceId': {$in: resourceIds}})
+
+        const results = resourceIds.map(resourceId => Object({
+            resourceId,
+            releases: releases.filter(x => x.resourceVersions.some(m => m.resourceId === resourceId)).map(release => {
+                let releaseInfo = lodash.pick(release, projection)
+                if (projection.includes('version')) {
+                    releaseInfo.version = release.resourceVersions.find(n => n.resourceId === resourceId).version
+                }
+                return releaseInfo
+            })
+        }))
+
+        ctx.success(results)
+    }
+
+    /**
      * 下载资源
      * @param ctx
      * @returns {Promise<void>}
@@ -190,7 +217,6 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceId = ctx.checkParams('resourceId').isResourceId().value
         ctx.validate()
-
 
         const {userId, clientId} = ctx.request
         const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullObjectCheck(resourceInfo))

@@ -22,6 +22,7 @@ module.exports = app => {
         description: {type: String, required: false},
         previewImages: {type: [String], required: false},
         customMimeType: {type: String, default: '', required: false},
+        isReleased: {type: Number, default: 0, required: true}, //是否加入发行
         fileOss: {
             serviceProvider: {type: String, required: false, default: 'aliyun'},
             filename: {type: String, required: true},

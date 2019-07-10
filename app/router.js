@@ -17,6 +17,7 @@ module.exports = app => {
     //get-method-api
     router.get('resource-list', '/v1/resources/list', resource.v1.list)
     router.get('resource-releases', '/v1/resources/:resourceId/releases', resource.v1.releases)
+    router.get('resource-joined-releases', '/v1/resources/releases', resource.v1.batchReleases)
     router.get('resource-sign-url', '/v1/resources/:resourceId/signedResourceInfo', resource.v1.signedResourceInfo)
     //router.get('resource-file-info', '/v1/resources/resourceFileInfo', resource.v1.resourceFileInfo)
     router.get('bucket-is-exist', '/v1/resources/mocks/buckets/isExist', mockResourceBucket.v1.isExistBucketName)

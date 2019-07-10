@@ -134,7 +134,7 @@ module.exports = class ResourceService extends Service {
         for (let i = 0, j = dependencies.length; i < j; i++) {
             let dependency = dependencies[i]
             let releaseInfo = releaseMap.get(dependency.releaseId)
-            if (!releaseInfo || releaseInfo.status !== 1) {
+            if (!releaseInfo) {
                 invalidDependencies.push(dependency)
                 continue
             }

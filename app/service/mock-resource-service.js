@@ -192,7 +192,7 @@ module.exports = class MockResourceService extends Service {
         for (let i = 0, j = releases.length; i < j; i++) {
             let dependency = releases[i]
             let releaseInfo = releaseMap.get(dependency.releaseId)
-            if (!releaseInfo || releaseInfo.status !== 1) {
+            if (!releaseInfo) {
                 invalidDependReleases.push(dependency)
                 continue
             }

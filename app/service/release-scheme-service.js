@@ -41,6 +41,8 @@ module.exports = class ReleaseSchemeService extends Service {
 
         const releaseScheme = await this.releaseSchemeProvider.create(model)
 
+        this.resourceProvider.updateOne({resourceId}, {isReleased: 1})
+
         app.emit(createReleaseSchemeEvent, releaseInfo, releaseScheme)
 
         ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {

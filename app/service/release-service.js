@@ -76,6 +76,8 @@ module.exports = class ReleaseService extends Service {
             throw error
         })
 
+        this.resourceProvider.updateOne({resourceId}, {isReleased: 1})
+
         //发行的状态应该是动态计算的,包括上架的策略,依赖的发行是否签约完成,并且获得激活授权
         this.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
             app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
