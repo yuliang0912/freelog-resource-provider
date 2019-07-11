@@ -41,15 +41,15 @@ module.exports = class ReleaseService extends Service {
         //待签约的策略身份授权和签约授权校验
         await ctx.service.releaseSchemeService.validatePolicyIdentityAndSignAuth(resolveReleases, false)
 
-        const userInfo = ctx.request.identityInfo.userInfo
-        if (userInfo.username === null || userInfo.username === undefined) {
+        const {username = null} = ctx.request.identityInfo.userInfo
+        if (username === null) {
             throw new ApplicationError(ctx.gettext('用户名缺失,请补充账户信息'))
         }
 
         const releaseInfo = {
-            _id: releaseId,
-            releaseName, userId, resourceType, intro, previewImages,
-            username: userInfo.username, policies: [],
+            _id: releaseId, username, policies: [],
+            userId, resourceType, intro, previewImages,
+            releaseName: `${username}/${releaseName}`,
             latestVersion: {resourceId, version, createDate: new Date()},
             resourceVersions: [{resourceId, version, createDate: new Date()}],
             baseUpcastReleases: upcastReleases
@@ -99,12 +99,9 @@ module.exports = class ReleaseService extends Service {
      * @param policyInfo
      * @returns {Promise<void>}
      */
-    async updateReleaseInfo({releaseInfo, releaseName, intro, previewImages, policyInfo}) {
+    async updateReleaseInfo({releaseInfo, intro, previewImages, policyInfo}) {
 
         var model = {}
-        if (lodash.isString(releaseName)) {
-            model.releaseName = releaseName
-        }
         if (lodash.isString(intro)) {
             model.intro = intro
         }

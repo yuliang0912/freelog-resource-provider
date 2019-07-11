@@ -8,10 +8,7 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return Object.assign({
-                releaseId: doc.id,
-                fullReleaseName: doc.fullReleaseName
-            }, lodash.omit(ret, ['_id', 'signAuth']))
+            return Object.assign({releaseId: doc.id}, lodash.omit(ret, ['_id', 'signAuth']))
         }
     }
 
@@ -59,13 +56,6 @@ module.exports = app => {
 
     ReleaseInfoSchema.virtual('releaseId').get(function () {
         return this.id
-    })
-
-    ReleaseInfoSchema.virtual('fullReleaseName').get(function () {
-        if (this.username === undefined || this.releaseName === undefined) {
-            return ''
-        }
-        return `${this.username}/${this.releaseName}`
     })
 
     ReleaseInfoSchema.index({username: 1})

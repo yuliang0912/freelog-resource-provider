@@ -147,14 +147,13 @@ module.exports = class ReleaseController extends Controller {
     async update(ctx) {
 
         const releaseId = ctx.checkParams('id').isMongoObjectId().value
-        const releaseName = ctx.checkBody('releaseName').optional().isReleaseName().value
         const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
         const intro = ctx.checkBody('intro').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
 
         ctx.validate(true)
 
-        if ([releaseName, policyInfo, intro, previewImages].every(x => x === undefined)) {
+        if ([policyInfo, intro, previewImages].every(x => x === undefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
         }
 
@@ -171,12 +170,12 @@ module.exports = class ReleaseController extends Controller {
             msg: ctx.gettext('params-validate-failed', 'releaseId')
         }))
 
-        if (releaseName !== undefined && releaseInfo.releaseName !== releaseName) {
-            await this._checkReleaseName(releaseName)
-        }
+        // if (releaseName !== undefined && releaseInfo.releaseName !== releaseName) {
+        //     await this._checkReleaseName(releaseName)
+        // }
 
         await ctx.service.releaseService.updateReleaseInfo({
-            releaseInfo, releaseName, intro, previewImages, policyInfo
+            releaseInfo, intro, previewImages, policyInfo
         }).then(ctx.success)
     }
 
@@ -282,13 +281,11 @@ module.exports = class ReleaseController extends Controller {
      */
     async detail(ctx) {
 
-        const fullReleaseName = ctx.checkQuery('fullReleaseName').exist().isFullReleaseName().value
+        const releaseName = ctx.checkQuery('releaseName').exist().isFullReleaseName().value
         ctx.validate(false)
 
-        const [username, releaseName] = fullReleaseName.split('/')
-
         const condition = {
-            username: new RegExp(`^${username}$`, "i"), releaseName: new RegExp(`^${releaseName}$`, "i")
+            releaseName: new RegExp(`^${releaseName}$`, "i")
         }
 
         await this.releaseProvider.findOne(condition).then(ctx.success)
