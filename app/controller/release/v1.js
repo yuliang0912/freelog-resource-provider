@@ -106,7 +106,7 @@ module.exports = class ReleaseController extends Controller {
     async create(ctx) {
 
         const resourceId = ctx.checkBody('resourceId').exist().isResourceId().value
-        const releaseName = ctx.checkBody('releaseName').exist().type('string').trim().len(1, 100).value
+        const releaseName = ctx.checkBody('releaseName').exist().isReleaseName().value
         const resolveReleases = ctx.checkBody('resolveReleases').exist().isArray().value
         //第一次创建发行方案上抛范围设置为发行的基础上抛
         const baseUpcastReleases = ctx.checkBody('baseUpcastReleases').exist().isArray().value
@@ -147,7 +147,7 @@ module.exports = class ReleaseController extends Controller {
     async update(ctx) {
 
         const releaseId = ctx.checkParams('id').isMongoObjectId().value
-        const releaseName = ctx.checkBody('releaseName').optional().type('string').trim().len(1, 100).value
+        const releaseName = ctx.checkBody('releaseName').optional().isReleaseName().value
         const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
         const intro = ctx.checkBody('intro').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
@@ -282,12 +282,10 @@ module.exports = class ReleaseController extends Controller {
      */
     async detail(ctx) {
 
-        const fullReleaseName = ctx.checkQuery('fullReleaseName').exist().type('string').match(/^[a-zA-Z0-9]+[a-zA-Z0-9-]*[a-zA-Z0-9]+\//).value
+        const fullReleaseName = ctx.checkQuery('fullReleaseName').exist().isFullReleaseName().value
         ctx.validate(false)
 
-        const index = fullReleaseName.indexOf('/')
-        const username = fullReleaseName.substr(0, index)
-        const releaseName = fullReleaseName.substr(index + 1)
+        const [username, releaseName] = fullReleaseName.split('/')
 
         const condition = {
             username: new RegExp(`^${username}$`, "i"), releaseName: new RegExp(`^${releaseName}$`, "i")
