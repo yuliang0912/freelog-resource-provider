@@ -93,7 +93,6 @@ module.exports = class ReleaseController extends Controller {
         if (lodash.isEmpty(condition)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
         }
-        condition.status = 1
 
         await this.releaseProvider.find(condition, projection.join(' ')).then(ctx.success)
     }

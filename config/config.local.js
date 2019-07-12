@@ -16,9 +16,13 @@ module.exports = {
         "username": "yuliang"
     },
 
+    // mongoose: {
+    //     url: "mongodb://127.0.0.1:27017/resource"
+    // }
+
     mongoose: {
-        url: "mongodb://127.0.0.1:27017/resource"
-    }
+        url: "mongodb://172.18.215.231:27018/resource"
+    },
 
     // mongoose: {
     //     url: "mongodb://119.23.45.143:27018/resource"
