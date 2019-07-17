@@ -19,6 +19,16 @@ module.exports = {
         url: "mongodb://172.18.215.231:27018/resource"
     },
 
+    rabbitMq: {
+        connOptions: {
+            host: '172.18.215.231',
+            port: 5673,
+            login: 'test_user_auth',
+            password: 'rabbit@freelog',
+            authMechanism: 'AMQPLAIN'
+        },
+    },
+
     /**
      * 上传文件相关配置
      */

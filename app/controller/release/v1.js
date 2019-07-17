@@ -29,6 +29,7 @@ module.exports = class ReleaseController extends Controller {
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().trim().value
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        const status = ctx.checkQuery('status').optional().toInt().in([0, 1]).value
 
         ctx.validate(Boolean(isSelf))
 
@@ -38,9 +39,11 @@ module.exports = class ReleaseController extends Controller {
         }
         if (isSelf) {
             condition.userId = ctx.request.userId
-        } else {
-            condition.status = 1
         }
+        if (lodash.isInteger(status)) {
+            condition.status = status
+        }
+
         if (lodash.isString(keywords) && keywords.length > 0) {
             let searchRegExp = new RegExp(keywords, "i")
             if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) {

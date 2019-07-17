@@ -95,6 +95,25 @@ module.exports = app => {
             privateKey: '9d3761da71ee041e648cafb2e322d968'
         },
 
-        customFileLoader: ['app/event-handler/app-events-listener.js']
+        customFileLoader: ['app/event-handler/app-events-listener.js'],
+
+        rabbitMq: {
+            connOptions: {
+                host: '192.168.164.165',
+                port: 5672,
+                login: 'guest',
+                password: 'guest',
+                authMechanism: 'AMQPLAIN',
+                heartbeat: 120  //每2分钟保持一次连接
+            },
+            implOptions: {
+                reconnect: true,
+                reconnectBackoffTime: 20000  //10秒尝试连接一次
+            },
+            exchange: {
+                name: 'freelog-resource-exchange',
+            },
+            queues: []
+        }
     }
 }

@@ -3,8 +3,8 @@
 const semver = require('semver')
 const lodash = require('lodash')
 const Service = require('egg').Service
-const {signReleaseContractEvent} = require('../enum/resource-events')
-const {ApplicationError, LogicError} = require('egg-freelog-base/error')
+const {ApplicationError} = require('egg-freelog-base/error')
+const {createReleaseSchemeEvent, signReleaseContractEvent} = require('../enum/resource-events')
 const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
 
 module.exports = class ReleaseService extends Service {
@@ -46,13 +46,15 @@ module.exports = class ReleaseService extends Service {
             throw new ApplicationError(ctx.gettext('用户名缺失,请补充账户信息'))
         }
 
+        const createDate = new Date()
         const releaseInfo = {
             _id: releaseId, username, policies: [],
-            userId, resourceType, intro, previewImages,
+            userId, resourceType, intro, previewImages, createDate,
             releaseName: `${username}/${releaseName}`,
-            latestVersion: {resourceId, version, createDate: new Date()},
-            resourceVersions: [{resourceId, version, createDate: new Date()}],
-            baseUpcastReleases: upcastReleases
+            latestVersion: {resourceId, version, createDate},
+            resourceVersions: [{resourceId, version, createDate}],
+            baseUpcastReleases: upcastReleases,
+            updateDate: createDate
         }
         if (!lodash.isEmpty(policies)) {
             releaseInfo.policies = this._compilePolicies(policies)
@@ -64,7 +66,7 @@ module.exports = class ReleaseService extends Service {
         //contractActivatedStatus需要考虑何时计算.以及后续对合同状态的监听
         const releaseSchemeInfo = {
             releaseId, resourceId, upcastReleases, resolveReleases, userId, version,
-            contractStatus: resolveReleases.length ? 0 : 1,
+            contractStatus: resolveReleases.length ? 0 : 1, createDate, updateDate: createDate
         }
 
         const releaseCreateTask = this.releaseProvider.create(releaseInfo)
@@ -75,6 +77,8 @@ module.exports = class ReleaseService extends Service {
             this.releaseSchemeProvider.deleteOne({releaseId})
             throw error
         })
+
+        app.emit(createReleaseSchemeEvent, release, releaseScheme)
 
         this.resourceProvider.updateOne({resourceId}, {isReleased: 1})
 
@@ -168,7 +172,8 @@ module.exports = class ReleaseService extends Service {
                     versions: lodash.uniqWith(list, (x, y) => x.releaseId === y.releaseId && x.version === y.version).map(item => Object({
                         version: item.version,
                         resolveReleases: recursionAuthTree(item)
-                    }))
+                    })),
+                    versionRanges: lodash.chain(list).map(x => x.versionRange).uniq().value()
                 }
             })
         }

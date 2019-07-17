@@ -5,10 +5,15 @@
 'use strict'
 
 const lodash = require('lodash')
+const rabbitClient = require('./helper/rabbit_mq_client')
 const previewImageOssKey = Symbol("resource#previewImageOssKey")
 
 module.exports = {
 
+    get rabbitClient() {
+        return new rabbitClient(this.config.rabbitMq)
+    },
+    
     /**
      * 预览图上传的oss对象
      */

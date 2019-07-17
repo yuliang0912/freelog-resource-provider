@@ -1,6 +1,7 @@
 'use strict'
 
 const lodash = require('lodash')
+const {ReleaseSchemeBindContractEvent} = require('../enum/rabbit-mq-event')
 
 module.exports = class SignReleaseContractEventHandler {
 
@@ -37,5 +38,26 @@ module.exports = class SignReleaseContractEventHandler {
         await releaseSchemeInfo.updateOne({resolveReleases: releaseSchemeInfo.resolveReleases}).catch(error => {
             console.log('合同ID赋值操作失败')
         })
+
+        await this.sendSchemeBindContractEventToMessageQueue(releaseSchemeInfo).catch(error => {
+            console.log('方案绑定合同MQ消息发送失败,schemeId:' + schemeId)
+        })
+    }
+
+    /**
+     * 法师报告
+     * @returns {Promise<void>}
+     */
+    async sendSchemeBindContractEventToMessageQueue(releaseSchemeInfo) {
+
+        const {releaseId, schemeId, resourceId, version} = releaseSchemeInfo
+
+        const params = {
+            routingKey: ReleaseSchemeBindContractEvent.routingKey,
+            eventName: ReleaseSchemeBindContractEvent.eventName,
+            body: {releaseId, schemeId, resourceId, version}
+        }
+
+        return this.app.rabbitClient.publish(params)
     }
 }

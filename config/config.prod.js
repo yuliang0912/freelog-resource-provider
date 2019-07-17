@@ -18,4 +18,14 @@ module.exports = {
         },
         amzS3: {}
     },
+
+    rabbitMq: {
+        connOptions: {
+            host: '172.18.215.231',
+            port: 5672,
+            login: 'prod_user_auth',
+            password: 'rabbit@freelog',
+            authMechanism: 'AMQPLAIN'
+        },
+    },
 }
