@@ -129,7 +129,12 @@ module.exports = class ReleaseController extends Controller {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'))
         }
 
-        await this._checkReleaseName(releaseName)
+        const {username = null} = ctx.request.identityInfo.userInfo
+        if (username === null) {
+            throw new ApplicationError(ctx.gettext('用户名缺失,请补充账户信息'))
+        }
+
+        await this._checkReleaseName(username, releaseName)
         const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {
             msg: ctx.gettext('params-validate-failed', 'resourceId')
         }))
@@ -294,6 +299,42 @@ module.exports = class ReleaseController extends Controller {
     }
 
     /**
+     * 根据发行ID和版本范围查询最佳匹配的具体版本号
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async maxSatisfyingVersion(ctx) {
+
+        const releaseIds = ctx.checkQuery('releaseIds').exist().isSplitMongoObjectId().toSplitArray().len(1).value
+        const versionRanges = ctx.checkQuery('versionRanges').exist().toSplitArray().len(1).value
+        ctx.validate()
+
+        if (releaseIds.length !== versionRanges.length) {
+            throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'releaseIds,versionRanges'))
+        }
+        if (versionRanges.some(x => !semver.validRange(x))) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'versionRanges'))
+        }
+
+        const releaseMap = await this.releaseProvider.find({_id: {$in: releaseIds}}, 'resourceVersions')
+            .then(list => new Map(list.map(x => [x.releaseId, x.resourceVersions])))
+
+        if (releaseMap.size !== lodash.uniq(releaseIds).length) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'releaseIds'))
+        }
+
+        const results = releaseIds.map((releaseId, index) => {
+            let versionRange = versionRanges[index]
+            let resourceVersions = releaseMap.get(releaseId).map(x => x.version)
+            return {
+                releaseId, version: semver.maxSatisfying(resourceVersions, versionRange)
+            }
+        })
+
+        ctx.success(results)
+    }
+
+    /**
      * 校验上抛和处理的数据格式
      * @param upcastReleases
      * @param resolveReleases
@@ -324,7 +365,7 @@ module.exports = class ReleaseController extends Controller {
      * @returns {Promise<boolean>}
      * @private
      */
-    async _checkReleaseName(releaseName) {
+    async _checkReleaseName(username, releaseName) {
 
         if (releaseName === undefined || releaseName === null) {
             return true
@@ -333,7 +374,7 @@ module.exports = class ReleaseController extends Controller {
         const {ctx} = this
         const checkReleaseNameCondition = {
             userId: ctx.request.userId,
-            releaseName: new RegExp(`^${releaseName}$`, "i")
+            releaseName: new RegExp(`^${username}/${releaseName}$`, "i")
         }
 
         await this.releaseProvider.findOne(checkReleaseNameCondition, 'releaseName').then(name => {

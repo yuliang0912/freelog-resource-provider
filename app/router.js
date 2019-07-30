@@ -29,6 +29,8 @@ module.exports = app => {
     router.get('release-upcast-tree', '/v1/releases/:releaseId/upcastTree', release.v1.releaseUpcastTree)
     router.get('release-dependency-tree', '/v1/releases/:releaseId/dependencyTree', release.v1.dependencyTree)
     router.get('release-detail', '/v1/releases/detail', release.v1.detail)
+    router.get('release-max-satisfying-version', '/v1/releases/maxSatisfyingVersion', release.v1.maxSatisfyingVersion)
+    
     router.get('resource-download', '/v1/resources/:resourceId/download', resource.v1.download)
     router.get('mock-resource-download', '/v1/resources/mocks/:mockResourceId/download', mockResource.v1.download)
     router.get('release-is-collection', '/v1/collections/releases/isCollection', collection.v1.isCollection)
