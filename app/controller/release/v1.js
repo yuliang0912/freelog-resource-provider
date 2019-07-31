@@ -307,7 +307,7 @@ module.exports = class ReleaseController extends Controller {
 
         const releaseIds = ctx.checkQuery('releaseIds').exist().isSplitMongoObjectId().toSplitArray().len(1).value
         const versionRanges = ctx.checkQuery('versionRanges').exist().toSplitArray().len(1).value
-        ctx.validate()
+        ctx.validate(false)
 
         if (releaseIds.length !== versionRanges.length) {
             throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'releaseIds,versionRanges'))
