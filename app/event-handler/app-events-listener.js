@@ -8,7 +8,8 @@ const CreateResourceEventHandler = require('./create-resource-event-handler')
 const CreateMockResourceEventHandler = require('./create-mock-event-handler')
 const UpdateMockResourceFileEventHandler = require('./update-mock-file-event-handler')
 const DeleteMockResourceEventHandler = require('./delete-mock-resource-event-handler')
-const SignReleaseContractEventHandler = require('./sign-release-contract-event-handler')
+//const SignReleaseContractEventHandler = require('./sign-release-contract-event-handler')
+const ReleaseSchemeBindContractEventHandler = require('./release-scheme-bind-contract-event-handler')
 const MockConvertToResourceEventHandler = require('./mock-convert-resource-event-handler')
 
 module.exports = class AppEventsListener {
@@ -29,7 +30,7 @@ module.exports = class AppEventsListener {
         this.registerEventAndHandler(ResourceEvents.createMockResourceEvent)
         this.registerEventAndHandler(ResourceEvents.updateMockResourceFileEvent)
         this.registerEventAndHandler(ResourceEvents.createReleaseSchemeEvent)
-        this.registerEventAndHandler(ResourceEvents.signReleaseContractEvent)
+        this.registerEventAndHandler(ResourceEvents.releaseSchemeBindContractEvent)
         this.registerEventAndHandler(ResourceEvents.mockConvertToResourceEvent)
     }
 
@@ -58,7 +59,7 @@ module.exports = class AppEventsListener {
         patrun.add({event: ResourceEvents.createReleaseSchemeEvent.toString()}, new CreateSchemeEventHandler(app))
         patrun.add({event: ResourceEvents.deleteMockResourceEvent.toString()}, new DeleteMockResourceEventHandler(app))
         patrun.add({event: ResourceEvents.createMockResourceEvent.toString()}, new CreateMockResourceEventHandler(app))
-        patrun.add({event: ResourceEvents.signReleaseContractEvent.toString()}, new SignReleaseContractEventHandler(app))
+        patrun.add({event: ResourceEvents.releaseSchemeBindContractEvent.toString()}, new ReleaseSchemeBindContractEventHandler(app))
         patrun.add({event: ResourceEvents.mockConvertToResourceEvent.toString()}, new MockConvertToResourceEventHandler(app))
         patrun.add({event: ResourceEvents.updateMockResourceFileEvent.toString()}, new UpdateMockResourceFileEventHandler(app))
     }

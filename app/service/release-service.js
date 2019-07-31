@@ -4,7 +4,7 @@ const semver = require('semver')
 const lodash = require('lodash')
 const Service = require('egg').Service
 const {ApplicationError} = require('egg-freelog-base/error')
-const {createReleaseSchemeEvent, signReleaseContractEvent} = require('../enum/resource-events')
+const {createReleaseSchemeEvent, releaseSchemeBindContractEvent} = require('../enum/resource-events')
 const releasePolicyCompiler = require('egg-freelog-base/app/extend/policy-compiler/release-policy-compiler')
 
 module.exports = class ReleaseService extends Service {
@@ -83,14 +83,12 @@ module.exports = class ReleaseService extends Service {
         this.resourceProvider.updateOne({resourceId}, {isReleased: 1})
 
         //发行的状态应该是动态计算的,包括上架的策略,依赖的发行是否签约完成,并且获得激活授权
-        this.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
-            app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
-        }).catch(error => {
+        return this.batchSignAndBindReleaseSchemeContracts(releaseScheme).catch(error => {
             console.error('创建发行批量签约异常:', error)
             releaseScheme.updateOne({contractStatus: -1}).exec()
+        }).then(() => {
+            return release
         })
-
-        return release
     }
 
 
@@ -207,30 +205,52 @@ module.exports = class ReleaseService extends Service {
         return recursionUpcastTree(dependencyTree[0])
     }
 
-
     /**
      * 批量签约
      * @returns {Promise<Array>}
      */
-    async batchSignReleaseContracts(releaseId, resolveReleases) {
+    async batchSignAndBindReleaseSchemeContracts(schemeInfo, changedResolveRelease = []) {
 
-        const {ctx, app} = this
-        if (!resolveReleases.length) {
+        const {releaseId, schemeId, resolveReleases} = schemeInfo
+        const beSignReleases = changedResolveRelease.length ? changedResolveRelease : resolveReleases
+        if (!beSignReleases.length) {
             return []
         }
 
-        const batchSignReleaseContractParams = {
-            targetId: releaseId,
-            partyTwoId: releaseId,
-            contractType: app.contractType.ResourceToResource,
-            signReleases: resolveReleases.map(item => Object({
-                releaseId: item.releaseId,
-                policyIds: item.contracts.map(x => x.policyId)
-            }))
-        }
+        const {ctx, app} = this
+        const contracts = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
+            method: 'post', contentType: 'json', data: {
+                targetId: releaseId,
+                partyTwoId: releaseId,
+                contractType: app.contractType.ResourceToResource,
+                signReleases: beSignReleases.map(item => Object({
+                    releaseId: item.releaseId,
+                    policyIds: item.contracts.map(x => x.policyId)
+                }))
+            }
+        })
 
-        return ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
-            method: 'post', contentType: 'json', data: batchSignReleaseContractParams
+        const contractMap = new Map(contracts.map(x => [`${x.partyOne}_${x.policyId}`, x]))
+
+        const updatedResolveReleases = resolveReleases.map(resolveRelease => {
+            let changedResolveRelease = beSignReleases.find(x => x.releaseId === resolveRelease.releaseId)
+            if (changedResolveRelease) {
+                resolveRelease.contracts = changedResolveRelease.contracts.map(contractInfo => {
+                    let signedContractInfo = contractMap.get(`${changedResolveRelease.releaseId}_${contractInfo.policyId}`)
+                    if (signedContractInfo) {
+                        contractInfo.contractId = signedContractInfo.contractId
+                    }
+                    return contractInfo
+                })
+            }
+            return resolveRelease
+        })
+
+        return this.releaseSchemeProvider.findOneAndUpdate({_id: schemeId}, {
+            resolveReleases: updatedResolveReleases, contractStatus: 2
+        }, {new: true}).then(model => {
+            app.emit(releaseSchemeBindContractEvent, model, Boolean(changedResolveRelease.length))
+            return model
         })
     }
 

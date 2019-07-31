@@ -1,9 +1,8 @@
 'use strict'
 
-const lodash = require('lodash')
 const {ReleaseSchemeBindContractEvent, ReleaseSchemeCreatedEvent} = require('../enum/rabbit-mq-event')
 
-module.exports = class SignReleaseContractEventHandler {
+module.exports = class ReleaseSchemeBindContractEventHandler {
 
     constructor(app) {
         this.app = app
@@ -16,43 +15,17 @@ module.exports = class SignReleaseContractEventHandler {
      * @param eventName
      * @returns {Promise<void>}
      */
-    async handle(eventName, schemeId, contracts) {
+    async handle(eventName, schemeInfo, isUpdateBind = false) {
 
-        if (lodash.isEmpty(contracts)) {
-            return
+        if (isUpdateBind) {
+            return this.sendSchemeBindContractEventToMessageQueue(schemeInfo).catch(error => {
+                console.log('方案绑定合同MQ消息发送失败,schemeId:' + schemeInfo.schemeId)
+            })
         }
 
-        const contractMap = new Map(contracts.map(x => [`${x.partyOne}_${x.policyId}`, x]))
-        const releaseSchemeInfo = await this.releaseSchemeProvider.findById(schemeId)
-
-        const isInitializedScheme = releaseSchemeInfo.resolveReleases.some(x => x.contracts.some(m => m.contractId))
-
-        for (let i = 0, j = releaseSchemeInfo.resolveReleases.length; i < j; i++) {
-            const resolveRelease = releaseSchemeInfo.resolveReleases[i]
-            for (let x = 0; x < resolveRelease.contracts.length; x++) {
-                let contract = resolveRelease.contracts[x]
-                let signedContractInfo = contractMap.get(`${resolveRelease.releaseId}_${contract.policyId}`)
-                if (signedContractInfo) {
-                    contract.contractId = signedContractInfo.contractId
-                }
-            }
-        }
-
-        await releaseSchemeInfo.updateOne({
-            resolveReleases: releaseSchemeInfo.resolveReleases, contractStatus: 2
-        }).catch(error => {
-            console.log('合同ID赋值操作失败')
+        this.sendSchemeCreatedEventToMessageQueue(schemeInfo).catch(error => {
+            console.log('方案创建消息发送失败,schemeId:' + schemeInfo.schemeId)
         })
-
-        if (isInitializedScheme) {
-            await this.sendSchemeBindContractEventToMessageQueue(releaseSchemeInfo).catch(error => {
-                console.log('方案绑定合同MQ消息发送失败,schemeId:' + schemeId)
-            })
-        } else {
-            await this.sendSchemeCreatedEventToMessageQueue(releaseSchemeInfo).catch(error => {
-                console.log('方案创建消息发送失败,schemeId:' + schemeId)
-            })
-        }
     }
 
     /**

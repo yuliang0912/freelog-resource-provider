@@ -39,5 +39,5 @@ module.exports = {
     /**
      * 与发行签约事件
      */
-    signReleaseContractEvent: Symbol('release#signReleaseContractEvent'),
+    releaseSchemeBindContractEvent: Symbol('release#releaseSchemeBindContractEvent'),
 }

@@ -4,7 +4,6 @@ const lodash = require('lodash')
 const semver = require('semver')
 const Controller = require('egg').Controller
 const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
-const {signReleaseContractEvent} = require('../../enum/resource-events')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
 
 module.exports = class ReleaseAuthSchemeController extends Controller {
@@ -167,10 +166,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
             return ctx.success(true)
         }
 
-        await ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
-            ctx.app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
-            ctx.success(Boolean(contracts.length))
-        })
+        await ctx.service.releaseService.batchSignAndBindReleaseSchemeContracts(releaseScheme, resolveReleases).then(ctx.success)
     }
 
 

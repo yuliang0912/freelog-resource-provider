@@ -3,7 +3,7 @@
 const lodash = require('lodash')
 const Service = require('egg').Service
 const {ApplicationError, AuthorizationError} = require('egg-freelog-base/error')
-const {createReleaseSchemeEvent, signReleaseContractEvent} = require('../enum/resource-events')
+const {createReleaseSchemeEvent} = require('../enum/resource-events')
 
 module.exports = class ReleaseSchemeService extends Service {
 
@@ -45,14 +45,10 @@ module.exports = class ReleaseSchemeService extends Service {
 
         app.emit(createReleaseSchemeEvent, releaseInfo, releaseScheme)
 
-        ctx.service.releaseService.batchSignReleaseContracts(releaseId, resolveReleases).then(contracts => {
-            app.emit(signReleaseContractEvent, releaseScheme.id, contracts)
-        }).catch(error => {
-            console.error('创建方案批量签约异常:', error)
+        return ctx.service.releaseService.batchSignAndBindReleaseSchemeContracts(releaseScheme).catch(error => {
+            console.error('创建发行批量签约异常:', error)
             releaseScheme.updateOne({contractStatus: -1}).exec()
         })
-
-        return releaseScheme
     }
 
     /**
@@ -77,19 +73,20 @@ module.exports = class ReleaseSchemeService extends Service {
         for (let i = 0, j = resolveReleases.length; i < j; i++) {
             let {releaseId, contracts} = resolveReleases[i]
             let intrinsicResolve = updatedResolveReleases.find(x => x.releaseId === releaseId)
+            if (!intrinsicResolve) {
+                continue
+            }
             intrinsicResolve.contracts = contracts
             beSignedContractReleases.push(intrinsicResolve)
         }
 
         //待签约的策略身份授权和签约授权校验
         await this.validatePolicyIdentityAndSignAuth(beSignedContractReleases, true)
-        await releaseScheme.updateOne({resolveReleases: updatedResolveReleases})
 
-        ctx.service.releaseService.batchSignReleaseContracts(releaseInfo.releaseId, beSignedContractReleases).then(contracts => {
-            app.emit(signReleaseContractEvent, {schemeId: releaseScheme.id, contracts})
+        return ctx.service.releaseService.batchSignAndBindReleaseSchemeContracts(releaseScheme, updatedResolveReleases).catch(error => {
+            console.error('创建发行批量签约异常:', error)
+            releaseScheme.updateOne({contractStatus: -1}).exec()
         })
-
-        return releaseScheme
     }
 
     /**
