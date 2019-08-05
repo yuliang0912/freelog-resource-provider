@@ -24,7 +24,7 @@ module.exports = class ReleaseSchemeBindContractEventHandler {
         }
 
         this.sendSchemeCreatedEventToMessageQueue(schemeInfo).catch(error => {
-            console.log('方案创建消息发送失败,schemeId:' + schemeInfo.schemeId)
+            console.log('方案创建消息发送失败,schemeId:' + schemeInfo.schemeId, error)
         })
     }
 
@@ -39,6 +39,10 @@ module.exports = class ReleaseSchemeBindContractEventHandler {
         const ctx = this.app.createAnonymousContext()
         const {releaseId, schemeId, resourceId, version} = releaseSchemeInfo
         const releaseInfo = await this.releaseProvider.findById(releaseId)
+
+        if (!releaseInfo) {
+            return
+        }
 
         /**
          * releaseAuthTree中versionRanges若为空数组,则代表实际未使用,

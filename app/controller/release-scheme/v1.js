@@ -157,16 +157,11 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         const releaseScheme = await this.releaseSchemeProvider.findOne({releaseId, version})
             .tap(model => ctx.entityNullObjectCheck(model))
 
-        const resolveReleases = releaseScheme.resolveReleases.map(x => Object({
-            releaseId: x.releaseId,
-            contracts: x.contracts.filter(x => !x.contractId)
-        })).filter(x => x.contracts.length)
-
-        if (!resolveReleases.length) {
-            return ctx.success(true)
+        if (!releaseScheme.resolveReleases.some(x => x.contracts.some(m => !m.contractId))) {
+            return ctx.success(releaseScheme)
         }
 
-        await ctx.service.releaseService.batchSignAndBindReleaseSchemeContracts(releaseScheme, resolveReleases).then(ctx.success)
+        await ctx.service.releaseService.batchSignAndBindReleaseSchemeContracts(releaseScheme).then(ctx.success)
     }
 
 

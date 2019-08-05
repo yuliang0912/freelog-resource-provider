@@ -5,12 +5,14 @@
 'use strict'
 
 const Subscription = require('egg').Subscription;
+const {releaseSchemeBindContractEvent} = require('../enum/resource-events')
 
 module.exports = class ClearExpiredUploadFile extends Subscription {
 
     static get schedule() {
         return {
             type: 'worker',
+            immediate: true,
             cron: '0 0 4 */1 * *', //每天凌晨4点执行一次
         }
     }
@@ -24,6 +26,12 @@ module.exports = class ClearExpiredUploadFile extends Subscription {
         const {app} = this
 
         await app.dal.temporaryUploadFileProvider.deleteMany({expireDate: {$lt: Date()}})
+
+        // app.dal.releaseSchemeProvider.find({}).then(list => {
+        //     list.forEach(scheme => {
+        //         app.emit(releaseSchemeBindContractEvent, scheme)
+        //     })
+        // })
     }
 
 }

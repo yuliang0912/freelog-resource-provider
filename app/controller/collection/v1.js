@@ -1,5 +1,6 @@
 'use strict'
 
+const lodash = require('lodash')
 const Controller = require('egg').Controller;
 
 module.exports = class CollectionController extends Controller {
@@ -52,8 +53,13 @@ module.exports = class CollectionController extends Controller {
         if (resourceType) {
             condition.resourceType = resourceType
         }
-        if (keywords) {
-            condition.resourceName = new RegExp(keywords)
+        if (lodash.isString(keywords) && keywords.length > 0) {
+            let searchRegExp = new RegExp(keywords, "i")
+            if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) {
+                condition.$or = [{releaseName: searchRegExp}, {releaseId: keywords.toLowerCase()}]
+            } else {
+                condition.releaseName = searchRegExp
+            }
         }
 
         const totalItem = await this.collectionProvider.count(condition)
