@@ -74,9 +74,9 @@ module.exports = class CollectionController extends Controller {
 
         result.dataList = collectionReleases.map(collectionInfo => {
             let {releaseId, createDate} = collectionInfo
-            let {releaseName, resourceType, policies, userId, username, latestVersion, updateDate, status} = releaseMap.get(releaseId)
+            let {releaseName, resourceType, policies, userId, username, previewImages, latestVersion, updateDate, status} = releaseMap.get(releaseId)
             return {
-                releaseId, releaseName, resourceType, policies, latestVersion,
+                releaseId, releaseName, resourceType, policies, latestVersion, previewImages,
                 authorId: userId,
                 authorName: username,
                 collectionDate: createDate,
