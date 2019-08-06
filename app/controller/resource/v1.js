@@ -29,6 +29,7 @@ module.exports = class ResourcesController extends Controller {
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().trim().value
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
+        const isReleased = ctx.checkQuery('isReleased').optional().toInt().in([0, 1, 2]).value
 
         ctx.validate(Boolean(isSelf))
 
@@ -46,6 +47,9 @@ module.exports = class ResourcesController extends Controller {
         }
         if (isSelf) {
             condition.userId = ctx.request.userId
+        }
+        if (isReleased !== 2) {
+            condition.isReleased = isReleased
         }
 
         var dataList = []
