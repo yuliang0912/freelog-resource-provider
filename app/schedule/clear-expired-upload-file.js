@@ -27,7 +27,7 @@ module.exports = class ClearExpiredUploadFile extends Subscription {
 
         await app.dal.temporaryUploadFileProvider.deleteMany({expireDate: {$lt: Date()}})
 
-        // app.dal.releaseSchemeProvider.find({}).then(list => {
+        // app.dal.releaseSchemeProvider.find({}, null, {createDate: 1}).then(list => {
         //     list.forEach(scheme => {
         //         app.emit(releaseSchemeBindContractEvent, scheme)
         //     })

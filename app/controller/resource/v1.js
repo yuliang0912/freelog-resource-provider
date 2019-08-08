@@ -34,8 +34,14 @@ module.exports = class ResourcesController extends Controller {
         ctx.validate(Boolean(isSelf))
 
         const condition = {}
+        if (isSelf) {
+            condition.userId = ctx.request.userId
+        }
         if (resourceType) {
             condition.resourceType = resourceType
+        }
+        if (isReleased === 1 || isReleased === 2) {
+            condition.isReleased = isReleased
         }
         if (lodash.isString(keywords) && keywords.length > 0) {
             const searchRegExp = new RegExp(keywords, "i")
@@ -44,12 +50,6 @@ module.exports = class ResourcesController extends Controller {
             } else {
                 condition.aliasName = searchRegExp
             }
-        }
-        if (isSelf) {
-            condition.userId = ctx.request.userId
-        }
-        if (isReleased !== 2) {
-            condition.isReleased = isReleased
         }
 
         var dataList = []
