@@ -23,7 +23,7 @@ module.exports = class CreateSchemeEventHandler {
             $addToSet: {resourceVersions: latestVersion}, latestVersion
         })
 
-        if (!releaseInfo.resolveReleases.length) { // 未解决其他发行,不牵扯到合约问题,则直接发送事件
+        if (!releaseSchemeInfo.resolveReleases.length) { // 未解决其他发行,不牵扯到合约问题,则直接发送事件
             await this.sendSchemeCreatedEventToMessageQueue(releaseInfo, releaseSchemeInfo)
         }
     }
