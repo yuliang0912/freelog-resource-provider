@@ -40,7 +40,7 @@ module.exports = class ResourcesController extends Controller {
         if (resourceType) {
             condition.resourceType = resourceType
         }
-        if (isReleased === 1 || isReleased === 2) {
+        if (isReleased === 0 || isReleased === 1) {
             condition.isReleased = isReleased
         }
         if (lodash.isString(keywords) && keywords.length > 0) {
