@@ -87,7 +87,7 @@ module.exports = class ReleaseService extends Service {
             console.error('创建发行批量签约异常:', error)
             releaseScheme.updateOne({contractStatus: -1}).exec()
         })
-        
+
         return latestReleaseInfo
     }
 
@@ -214,7 +214,7 @@ module.exports = class ReleaseService extends Service {
         const {releaseId, schemeId, resolveReleases} = schemeInfo
         const beSignReleases = changedResolveRelease.length ? changedResolveRelease : resolveReleases
         if (!beSignReleases.length) {
-            return []
+            return schemeInfo
         }
 
         const {ctx, app} = this
