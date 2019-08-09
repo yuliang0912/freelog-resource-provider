@@ -58,7 +58,7 @@ module.exports = class ReleaseSchemeBindContractEventHandler {
                 releaseId, schemeId, resourceId, version,
                 resolveReleases: releaseAuthTree.map(item => Object({
                     releaseId: item.releaseId,
-                    contracts: item.contracts.map(x => x.contractId),
+                    contracts: item.contracts,
                     versionRanges: item.versionRanges
                 }))
             }
