@@ -29,6 +29,13 @@ module.exports = class ReleaseSchemeService extends Service {
         const {resourceId, systemMeta} = resourceInfo
         const {releaseId, baseUpcastReleases} = releaseInfo
 
+        const cycleDependCheckResult = await this.cycleDependCheck(releaseId, systemMeta.dependencies)
+        if (cycleDependCheckResult.ret) {
+            throw new ApplicationError(ctx.gettext('release-circular-dependency-error'), {
+                releaseId, deep: cycleDependCheckResult.deep
+            })
+        }
+
         //处理的依赖和上抛基本参数数据校验
         const {upcastReleases} = await this.validateUpcastAndResolveReleaseParams(systemMeta.dependencies, resolveReleases, baseUpcastReleases)
 
@@ -186,6 +193,31 @@ module.exports = class ReleaseSchemeService extends Service {
         if (identityAuthFailedPolices.length) {
             throw new AuthorizationError(ctx.gettext('release-policy-identity-authorization-failed'), {identityAuthFailedPolices})
         }
+    }
+
+    /**
+     * 循环依赖检查
+     * 检查条件为依赖的发行或者其子级所有发行中是否存在某个版本也依赖当前发行,不考虑发行的版本
+     */
+    async cycleDependCheck(releaseId, dependencies, deep = 1) {
+
+        if (deep > 20) {
+            throw new ApplicationError('资源嵌套层级超过系统限制')
+        }
+        if (lodash.isEmpty(dependencies)) {
+            return {ret: false}
+        }
+        if (dependencies.some(x => x.releaseId === releaseId)) {
+            return {ret: true, deep}
+        }
+
+        const dependReleases = await this.releaseProvider.find({_id: {$in: dependencies.map(x => x.releaseId)}}, 'resourceVersions')
+        const dependResourceIds = lodash.chain(dependReleases).map(x => x.resourceVersions).flattenDeep().map(x => x.resourceId).uniq().value()
+        const dependResources = await this.resourceProvider.find({resourceId: {$in: dependResourceIds}}, 'systemMeta')
+
+        const dependSubReleases = lodash.chain(dependResources).map(m => m.systemMeta.dependencies).flattenDeep().value()
+
+        return this.cycleDependCheck(releaseId, dependSubReleases, deep + 1)
     }
 
 
