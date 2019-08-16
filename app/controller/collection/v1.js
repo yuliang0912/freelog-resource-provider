@@ -2,6 +2,7 @@
 
 const lodash = require('lodash')
 const Controller = require('egg').Controller;
+const {LoginUser} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class CollectionController extends Controller {
 
@@ -19,8 +20,7 @@ module.exports = class CollectionController extends Controller {
     async create(ctx) {
 
         const releaseId = ctx.checkBody('releaseId').isMongoObjectId().value
-
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const {releaseName, resourceType, latestVersion, userId, username} = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
@@ -47,7 +47,7 @@ module.exports = class CollectionController extends Controller {
         const pageSize = ctx.checkQuery("pageSize").default(10).gt(0).lt(101).toInt().value
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         let condition = {userId: ctx.request.userId}
         if (resourceType) {
@@ -100,7 +100,7 @@ module.exports = class CollectionController extends Controller {
     async isCollection(ctx) {
 
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const condition = {
             userId: ctx.request.userId,
@@ -122,7 +122,7 @@ module.exports = class CollectionController extends Controller {
     async show(ctx) {
 
         const releaseId = ctx.checkParams('id').isMongoObjectId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.collectionProvider.findOne({
             releaseId,
@@ -138,7 +138,7 @@ module.exports = class CollectionController extends Controller {
     async destroy(ctx) {
 
         const releaseId = ctx.checkParams('id').isMongoObjectId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.collectionProvider.deleteOne({
             releaseId,

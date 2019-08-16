@@ -2,6 +2,7 @@
 
 const Controller = require('egg').Controller
 const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class DraftResourceBucketController extends Controller {
 
@@ -18,7 +19,8 @@ module.exports = class DraftResourceBucketController extends Controller {
      */
     async index(ctx) {
 
-        ctx.validate()
+        ctx.validateVisitorIdentity(LoginUser)
+
         await this.mockResourceBucketProvider.find({userId: ctx.request.userId}).then(ctx.success)
 
     }
@@ -32,7 +34,7 @@ module.exports = class DraftResourceBucketController extends Controller {
 
         //只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
         const bucketName = ctx.checkBody('bucketName').exist().isBucketName().len(1, 63).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const isExist = await this.mockResourceBucketProvider.count({bucketName})
         if (isExist) {
@@ -54,7 +56,7 @@ module.exports = class DraftResourceBucketController extends Controller {
      */
     async count(ctx) {
 
-        ctx.validate()
+        ctx.validateVisitorIdentity(LoginUser)
 
         await this.mockResourceBucketProvider.count({userId: ctx.request.userId}).then(ctx.success)
     }
@@ -67,7 +69,7 @@ module.exports = class DraftResourceBucketController extends Controller {
     async destroy(ctx) {
 
         const bucketName = ctx.checkParams('id').isBucketName().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const bucketInfo = await this.mockResourceBucketProvider.findOne({bucketName}).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'bucketName'),
@@ -90,7 +92,7 @@ module.exports = class DraftResourceBucketController extends Controller {
     async isExistBucketName(ctx) {
 
         const bucketName = ctx.checkQuery('bucketName').exist().isBucketName().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         await this.mockResourceBucketProvider.count({bucketName}).then(data => ctx.success(Boolean(data)))
     }

@@ -1,6 +1,7 @@
 'use strict'
 
 const Controller = require('egg').Controller
+const {LoginUser} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class FileController extends Controller {
 
@@ -17,7 +18,8 @@ module.exports = class FileController extends Controller {
         ctx.allowContentType({
             type: 'multipart',
             msg: ctx.gettext('resource-form-enctype-validate-failed', 'multipart')
-        }).validate()
+        }).validateVisitorIdentity(LoginUser)
+
 
         await ctx.service.temporaryUploadFileService.uploadResourceFile({fileStream, resourceType}).then(ctx.success)
     }
@@ -30,7 +32,7 @@ module.exports = class FileController extends Controller {
     async uploadPreviewImage(ctx) {
 
         const fileStream = await ctx.getFileStream()
-        ctx.validate()
+        ctx.validateVisitorIdentity(LoginUser)
 
         //后期可以优化,先临时存储.等预览图被正式使用时,才复制到对应的oss目录.否则定期删除
         await ctx.service.temporaryUploadFileService.uploadPreviewImage(fileStream).then(ctx.success)

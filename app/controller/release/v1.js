@@ -6,6 +6,7 @@ const Controller = require('egg').Controller
 const {ApplicationError, ArgumentError} = require('egg-freelog-base/error')
 const ReleasePolicyValidator = require('../../extend/json-schema/release-policy-validator')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class ReleaseController extends Controller {
 
@@ -30,8 +31,11 @@ module.exports = class ReleaseController extends Controller {
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1]).value
+        ctx.validateParams()
 
-        ctx.validate(Boolean(isSelf))
+        if (isSelf) {
+            ctx.validateVisitorIdentity(LoginUser)
+        }
 
         const condition = {}
         if (resourceType) {
@@ -83,7 +87,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().value
         const releaseNames = ctx.checkQuery('releaseNames').optional().toSplitArray().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         var condition = {}
         if (!lodash.isEmpty(releaseIds)) {
@@ -115,7 +119,7 @@ module.exports = class ReleaseController extends Controller {
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 500).value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         this._validateUpcastAndResolveReleasesParamFormat(baseUpcastReleases, resolveReleases)
 
@@ -156,8 +160,7 @@ module.exports = class ReleaseController extends Controller {
         const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
         const intro = ctx.checkBody('intro').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
-
-        ctx.validate(true)
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         if ([policyInfo, intro, previewImages].every(x => x === undefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
@@ -194,7 +197,7 @@ module.exports = class ReleaseController extends Controller {
 
         const releaseId = ctx.checkParams('id').exist().isMongoObjectId().value
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate(false)
+        ctx.validateParams()
 
         var releaseInfo = await this.releaseProvider.findById(releaseId)
         if (!releaseInfo) {
@@ -224,7 +227,7 @@ module.exports = class ReleaseController extends Controller {
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default(['versionRange', 'baseUpcastReleases']).value
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
@@ -245,7 +248,7 @@ module.exports = class ReleaseController extends Controller {
 
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
@@ -268,7 +271,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
@@ -288,7 +291,7 @@ module.exports = class ReleaseController extends Controller {
     async detail(ctx) {
 
         const releaseName = ctx.checkQuery('releaseName').exist().isFullReleaseName().value
-        ctx.validate(false)
+        ctx.validateParams()
 
         const condition = {
             releaseName: new RegExp(`^${releaseName}$`, "i")
@@ -306,7 +309,7 @@ module.exports = class ReleaseController extends Controller {
 
         const releaseIds = ctx.checkQuery('releaseIds').exist().isSplitMongoObjectId().toSplitArray().len(1).value
         const versionRanges = ctx.checkQuery('versionRanges').exist().toSplitArray().len(1).value
-        ctx.validate(false)
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         if (releaseIds.length !== versionRanges.length) {
             throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'releaseIds,versionRanges'))

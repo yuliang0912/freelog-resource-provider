@@ -5,6 +5,7 @@ const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
 const {ArgumentError, AuthorizationError, AuthenticationError} = require('egg-freelog-base/error')
 const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class ResourcesController extends Controller {
 
@@ -30,8 +31,10 @@ module.exports = class ResourcesController extends Controller {
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
         const isReleased = ctx.checkQuery('isReleased').optional().toInt().in([0, 1, 2]).value
-
-        ctx.validate(Boolean(isSelf))
+        ctx.validateParams()
+        if (isSelf) {
+            ctx.validateVisitorIdentity(LoginUser)
+        }
 
         const condition = {}
         if (isSelf) {
@@ -69,8 +72,7 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 1000).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-
-        ctx.validate(false)
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         await this.resourceProvider.find({resourceId: {$in: resourceIds}}, projection.join(' ')).then(ctx.success)
     }
@@ -83,7 +85,7 @@ module.exports = class ResourcesController extends Controller {
     async show(ctx) {
 
         const resourceId = ctx.checkParams('id').exist().isResourceId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         await this.resourceProvider.findOne({resourceId}).then(ctx.success)
     }
@@ -101,7 +103,7 @@ module.exports = class ResourcesController extends Controller {
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
         const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         const dependReleasesValidateResult = new ResourceInfoValidator().resourceDependencyValidate(dependencies)
         if (dependReleasesValidateResult.errors.length) {
@@ -134,7 +136,7 @@ module.exports = class ResourcesController extends Controller {
         const description = ctx.checkBody('description').optional().type('string').value
         const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         if (dependencies) {
             const dependReleasesValidateResult = new ResourceInfoValidator().resourceDependencyValidate(dependencies)
@@ -170,7 +172,7 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default(['releaseId', 'releaseName', 'username']).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const results = []
         const releases = await this.releaseProvider.find({'resourceVersions.resourceId': resourceId})
@@ -194,7 +196,7 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default(['releaseId', 'releaseName', 'username', 'version']).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const releases = await this.releaseProvider.find({'resourceVersions.resourceId': {$in: resourceIds}})
 
@@ -220,14 +222,11 @@ module.exports = class ResourcesController extends Controller {
     async download(ctx) {
 
         const resourceId = ctx.checkParams('resourceId').isResourceId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const {userId, clientId} = ctx.request
         const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullObjectCheck(resourceInfo))
 
-        if (!clientId && !userId) {
-            throw new AuthenticationError(ctx.gettext('user-authentication-failed'))
-        }
         if (!clientId && userId && resourceInfo.userId !== userId) {
             throw new AuthorizationError(ctx.gettext('user-authorization-failed'))
         }
@@ -250,7 +249,7 @@ module.exports = class ResourcesController extends Controller {
     async signedResourceInfo(ctx) {
 
         const resourceId = ctx.checkParams('resourceId').isResourceId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const resourceInfo = await this.resourceProvider.findOne({resourceId}).tap(resourceInfo => ctx.entityNullObjectCheck(resourceInfo))
 

@@ -5,6 +5,7 @@ const semver = require('semver')
 const Controller = require('egg').Controller
 const {ArgumentError, ApplicationError} = require('egg-freelog-base/error')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class ReleaseAuthSchemeController extends Controller {
 
@@ -27,7 +28,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         const resourceId = ctx.checkBody('resourceId').exist().isResourceId().value
         const resolveReleases = ctx.checkBody('resolveReleases').exist().isArray().value
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         this._validateResolveReleasesParamFormat(releaseId, resolveReleases)
 
@@ -64,7 +65,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkParams('id').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const resolveReleases = ctx.checkBody('resolveReleases').exist().isArray().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         this._validateResolveReleasesParamFormat(releaseId, resolveReleases)
 
@@ -91,7 +92,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
 
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkParams('id').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         await this.releaseSchemeProvider.findOne({releaseId, version: semver.clean(version)}).then(ctx.success)
     }
@@ -106,7 +107,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
 
         const releaseId = ctx.checkQuery('releaseId').exist().isMongoObjectId().value
         const resourceId = ctx.checkQuery('resourceId').exist().isResourceId().value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         await this.releaseSchemeProvider.findOne({releaseId, resourceId}).then(ctx.success)
     }
@@ -122,7 +123,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const {resourceVersions} = await this.releaseProvider.findById(releaseId, 'resourceVersions')
         const {resourceId} = resourceVersions.find(x => x.version === version) || {}
@@ -144,7 +145,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
 
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullValueAndUserAuthorizationCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'releaseId'),
@@ -174,7 +175,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         //如果传version参数,则需要version与releaseId一一匹配
         const versions = ctx.checkQuery('versions').optional().toSplitArray().len(1).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validate()
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const condition = {}
 
