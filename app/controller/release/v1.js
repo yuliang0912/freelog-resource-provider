@@ -51,9 +51,9 @@ module.exports = class ReleaseController extends Controller {
         if (lodash.isString(keywords) && keywords.length > 0) {
             let searchRegExp = new RegExp(keywords, "i")
             condition.$or = [{releaseName: searchRegExp}, {resourceType: searchRegExp}]
-            if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) {
-                condition.$or.push({_id: searchRegExp})
-            }
+            // if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) { //转换_id会出错
+            //     condition.$or.push({_id: searchRegExp})
+            // }
         }
 
         var dataList = []
