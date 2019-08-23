@@ -32,7 +32,7 @@
     "node": ">=8.0.0"
   },
   "scripts": {
-    "start": "node index",
+    "start": "egg-scripts start --workers=1",
     "stop": "egg-scripts stop"
   },
   "ci": {
