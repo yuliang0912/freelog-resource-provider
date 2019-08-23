@@ -33,16 +33,13 @@ module.exports = class ReleaseController extends Controller {
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1]).value
         ctx.validateParams()
 
+        const condition = {}
         if (isSelf) {
             ctx.validateVisitorIdentity(LoginUser)
+            condition.userId = ctx.request.userId
         }
-
-        const condition = {}
         if (resourceType) {
             condition.resourceType = resourceType
-        }
-        if (isSelf) {
-            condition.userId = ctx.request.userId
         }
         if (lodash.isInteger(status)) {
             condition.status = status
