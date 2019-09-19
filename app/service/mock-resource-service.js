@@ -166,6 +166,53 @@ module.exports = class MockResourceService extends Service {
         })
     }
 
+
+    /**
+     * mock依赖树
+     * @param mockResourceInfo
+     * @param resourceVersion
+     * @param isContainRootNode
+     * @param maxDeep
+     * @param omitFields
+     * @returns {Promise<*>}
+     */
+    async mockDependencyTree(mockResourceInfo) {
+
+        const {ctx} = this
+        const {mocks = [], releases = []} = mockResourceInfo.systemMeta.dependencyInfo || {}
+
+        return this.__buildMockDependencyTree(mocks, releases)
+    }
+
+
+    /**
+     * 构建发行依赖树
+     * @param releases
+     * @returns {Promise<Array>}
+     * @private
+     */
+    async __buildMockDependencyTree(dependMocks = [], dependReleases = []) {
+
+        let dependReleaseTrees = [], dependMockTrees = []
+        if (dependReleases.length) {
+            dependReleaseTrees = await this.ctx.service.releaseService._buildDependencyTree(dependReleases, 200)
+        }
+        if (dependMocks.length) {
+            const mockInfos = await this.mockResourceProvider.find({_id: {$in: dependMocks.map(x => x.mockResourceId)}})
+            for (let i = 0; i < mockInfos.length; i++) {
+                let mockInfo = mockInfos[i]
+                const {mocks = [], releases = []} = mockInfo.systemMeta.dependencyInfo || {}
+                mockInfo.dependencies = await this.__buildMockDependencyTree(mocks, releases)
+                dependMockTrees.push({
+                    mockResourceId: mockInfo.id, mockResourceName: mockInfo.name, dependencies: mockInfo.dependencies,
+                })
+            }
+        }
+
+        return [...dependReleaseTrees, ...dependMockTrees]
+    }
+
+
     /**
      * 检查依赖信息
      * @param dependencyInfo

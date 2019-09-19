@@ -4,7 +4,7 @@ const aliOss = require('ali-oss')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
 const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
-const {LoginUser} = require('egg-freelog-base/app/enum/identity-type')
+const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class MockResourceController extends Controller {
 
@@ -61,6 +61,27 @@ module.exports = class MockResourceController extends Controller {
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         await this.mockResourceProvider.findById(mockId).then(ctx.success)
+    }
+
+    /**
+     * 详情
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async detail(ctx) {
+
+        const mockName = ctx.checkQuery('mockName').exist().len(3).value
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+
+        const splitStrIndex = mockName.indexOf('/')
+        if (splitStrIndex < 0) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'mockName'))
+        }
+
+        const bucketName = mockName.substr(0, splitStrIndex)
+        const name = mockName.substr(splitStrIndex + 1)
+
+        await this.mockResourceProvider.findOne({bucketName, name}).then(ctx.success)
     }
 
 
@@ -220,5 +241,34 @@ module.exports = class MockResourceController extends Controller {
             ctx.set('content-type', systemMeta.mimeType)
             ctx.body = result.stream
         })
+    }
+
+    /**
+     * 获取一个发行的依赖树
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async dependencyTree(ctx) {
+
+        // const mockName = ctx.checkQuery('mockName').exist().len(3).value
+        // ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+        //
+        // const splitStrIndex = mockName.indexOf('/')
+        // if (splitStrIndex < 0) {
+        //     throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'mockName'))
+        // }
+        // const bucketName = mockName.substr(0, splitStrIndex)
+        // const name = mockName.substr(splitStrIndex + 1)
+        // ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+
+        const mockResourceId = ctx.checkParams('mockResourceId').exist().isMongoObjectId().value
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+
+        const mockResourceInfo = await this.mockResourceProvider.findById(mockResourceId).tap(mockResourceInfo =>
+            ctx.entityNullValueAndUserAuthorizationCheck(mockResourceInfo, {
+                msg: ctx.gettext('params-validate-failed', 'mockName')
+            }))
+
+        await ctx.service.mockResourceService.mockDependencyTree(mockResourceInfo).then(ctx.success)
     }
 }
