@@ -259,15 +259,13 @@ module.exports = class MockResourceController extends Controller {
         // }
         // const bucketName = mockName.substr(0, splitStrIndex)
         // const name = mockName.substr(splitStrIndex + 1)
-        // ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const mockResourceId = ctx.checkParams('mockResourceId').exist().isMongoObjectId().value
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
-        const mockResourceInfo = await this.mockResourceProvider.findById(mockResourceId).tap(mockResourceInfo =>
-            ctx.entityNullValueAndUserAuthorizationCheck(mockResourceInfo, {
-                msg: ctx.gettext('params-validate-failed', 'mockName')
-            }))
+        const mockResourceInfo = await this.mockResourceProvider.findById(mockResourceId).tap(model => ctx.entityNullObjectCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'mockResourceId')
+        }))
 
         await ctx.service.mockResourceService.mockDependencyTree(mockResourceInfo).then(ctx.success)
     }
