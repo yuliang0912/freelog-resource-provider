@@ -93,11 +93,11 @@ module.exports = class MockResourceController extends Controller {
     async create(ctx) {
 
         const bucketName = ctx.checkBody('bucketName').exist().isBucketName().trim().value
-        const name = ctx.checkBody('name').exist().type('string').trim().len(1, 100).value
+        const name = ctx.checkBody('name').exist().type('string').isReleaseName().value
         const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 10).default([]).value
         const dependencyInfo = ctx.checkBody('dependencyInfo').optional().isObject().default({}).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
@@ -152,7 +152,7 @@ module.exports = class MockResourceController extends Controller {
         const mockId = ctx.checkParams('id').exist().isMongoObjectId().value
         const meta = ctx.checkBody('meta').optional().isObject().value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 10).value
         const dependencyInfo = ctx.checkBody('dependencyInfo').optional().isObject().value
         const uploadFileId = ctx.checkBody('uploadFileId').optional().isMongoObjectId(ctx.gettext('params-format-validate-failed', 'uploadFileId')).value
         const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLowercase().value

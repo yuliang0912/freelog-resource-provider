@@ -115,7 +115,7 @@ module.exports = class ReleaseController extends Controller {
         const version = ctx.checkBody('version').optional().default('0.1.0').is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 500).value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 10).default([]).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         this._validateUpcastAndResolveReleasesParamFormat(baseUpcastReleases, resolveReleases)
@@ -156,7 +156,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseId = ctx.checkParams('id').isMongoObjectId().value
         const policyInfo = ctx.checkBody('policyInfo').optional().isObject().value
         const intro = ctx.checkBody('intro').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 10).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
         if ([policyInfo, intro, previewImages].every(x => x === undefined)) {

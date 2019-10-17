@@ -100,7 +100,7 @@ module.exports = class ResourcesController extends Controller {
         const aliasName = ctx.checkBody('aliasName').exist().len(1, 100).trim().value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).default([]).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 10).default([]).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).default([]).value
         const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
@@ -134,7 +134,7 @@ module.exports = class ResourcesController extends Controller {
         const aliasName = ctx.checkBody('aliasName').optional().len(1, 100).trim().value
         const meta = ctx.checkBody('meta').optional().isObject().value
         const description = ctx.checkBody('description').optional().type('string').value
-        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 1).value
+        const previewImages = ctx.checkBody('previewImages').optional().isArray().len(1, 10).value
         const dependencies = ctx.checkBody('dependencies').optional().isArray().len(0, 100).value
         ctx.validateParams().validateVisitorIdentity(LoginUser)
 
