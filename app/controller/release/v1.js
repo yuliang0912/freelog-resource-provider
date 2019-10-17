@@ -224,6 +224,7 @@ module.exports = class ReleaseController extends Controller {
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
         const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default(['versionRange', 'baseUpcastReleases']).value
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value
+
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const releaseInfo = await this.releaseProvider.findById(releaseId).tap(model => ctx.entityNullObjectCheck(model, {

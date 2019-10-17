@@ -139,7 +139,7 @@ module.exports = class ReleaseService extends Service {
             releaseId: releaseInfo.releaseId,
             releaseName: releaseInfo.releaseName,
             version: resourceVersion.version,
-            versions: resourceVersion.resourceVersions.map(x => x.version),
+            versions: releaseInfo.resourceVersions.map(x => x.version),
             versionRange: resourceVersion.version,
             resourceId: resourceVersion.resourceId,
             baseUpcastReleases: releaseInfo.baseUpcastReleases,
