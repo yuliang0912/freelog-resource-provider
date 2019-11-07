@@ -204,7 +204,7 @@ module.exports = class MockResourceService extends Service {
                 const {mocks = [], releases = []} = mockInfo.systemMeta.dependencyInfo || {}
                 mockInfo.dependencies = await this.__buildMockDependencyTree(mocks, releases)
                 dependMockTrees.push({
-                    mockResourceId: mockInfo.id, mockResourceName: mockInfo.name, dependencies: mockInfo.dependencies,
+                    mockResourceId: mockInfo.id, mockResourceName: mockInfo.fullName, dependencies: mockInfo.dependencies,
                 })
             }
         }

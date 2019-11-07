@@ -1,6 +1,7 @@
 'use strict'
 
 const aliOss = require('ali-oss')
+const lodash = require('lodash')
 const Controller = require('egg').Controller
 const {ArgumentError} = require('egg-freelog-base/error')
 const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
@@ -250,16 +251,6 @@ module.exports = class MockResourceController extends Controller {
      */
     async dependencyTree(ctx) {
 
-        // const mockName = ctx.checkQuery('mockName').exist().len(3).value
-        // ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
-        //
-        // const splitStrIndex = mockName.indexOf('/')
-        // if (splitStrIndex < 0) {
-        //     throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'mockName'))
-        // }
-        // const bucketName = mockName.substr(0, splitStrIndex)
-        // const name = mockName.substr(splitStrIndex + 1)
-
         const mockResourceId = ctx.checkParams('mockResourceId').exist().isMongoObjectId().value
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
@@ -268,5 +259,26 @@ module.exports = class MockResourceController extends Controller {
         }))
 
         await ctx.service.mockResourceService.mockDependencyTree(mockResourceInfo).then(ctx.success)
+    }
+
+    /**
+     * 获取资源加密过的下载URL地址
+     * @returns {Promise<void>}
+     */
+    async signedMockResourceInfo(ctx) {
+
+        const mockResourceId = ctx.checkParams('mockResourceId').isMongoObjectId().value
+        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+
+        const mockResourceInfo = await this.mockResourceProvider.findById(mockResourceId).tap(model => ctx.entityNullObjectCheck(model, {
+            msg: ctx.gettext('params-validate-failed', 'mockResourceId')
+        }))
+
+        const {fileOss, systemMeta} = mockResourceInfo
+        const response = {expires: 60, 'response-content-type': systemMeta.mimeType}
+
+        const resourceFileUrl = this.client.signatureUrl(fileOss.objectKey, response)
+
+        ctx.success(Object.assign(lodash.pick(mockResourceInfo, ['name', 'bucketName', 'previewImages', 'resourceType', 'systemMeta', 'meta']), {resourceFileUrl}))
     }
 }
