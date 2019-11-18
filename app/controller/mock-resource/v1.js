@@ -252,13 +252,14 @@ module.exports = class MockResourceController extends Controller {
     async dependencyTree(ctx) {
 
         const mockResourceId = ctx.checkParams('mockResourceId').exist().isMongoObjectId().value
+        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
 
         const mockResourceInfo = await this.mockResourceProvider.findById(mockResourceId).tap(model => ctx.entityNullObjectCheck(model, {
             msg: ctx.gettext('params-validate-failed', 'mockResourceId')
         }))
 
-        await ctx.service.mockResourceService.mockDependencyTree(mockResourceInfo).then(ctx.success)
+        await ctx.service.mockResourceService.mockDependencyTree(mockResourceInfo, isContainRootNode).then(ctx.success)
     }
 
     /**

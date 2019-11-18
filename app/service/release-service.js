@@ -140,6 +140,7 @@ module.exports = class ReleaseService extends Service {
             releaseName: releaseInfo.releaseName,
             version: resourceVersion.version,
             versions: releaseInfo.resourceVersions.map(x => x.version),
+            resourceType: releaseInfo.resourceType,
             versionRange: resourceVersion.version,
             resourceId: resourceVersion.resourceId,
             baseUpcastReleases: releaseInfo.baseUpcastReleases,
@@ -298,7 +299,6 @@ module.exports = class ReleaseService extends Service {
             const {version, resourceId} = this._getReleaseMaxSatisfying(resourceVersions, dependencyInfo.versionRange)
             dependencyInfo.version = version
             dependencyInfo.resourceId = resourceId
-            dependencyInfo.versions = resourceVersions.map(x => x.version)
             resourceIds.push(resourceId)
         }
 
@@ -311,11 +311,11 @@ module.exports = class ReleaseService extends Service {
 
         const results = [], tasks = []
         for (let i = 0, j = releaseList.length; i < j; i++) {
-            let {releaseId, releaseName, baseUpcastReleases} = releaseList[i]
-            let {resourceInfo, versionRange, versions, version} = dependencyMap.get(releaseId)
+            let {releaseId, resourceType, releaseName, resourceVersions, baseUpcastReleases} = releaseList[i]
+            let {resourceId, resourceInfo, versionRange, version} = dependencyMap.get(releaseId)
             let result = {
-                releaseId, releaseName, versions, version, versionRange, baseUpcastReleases,
-                resourceId: resourceInfo.resourceId,
+                releaseId, releaseName, version, resourceType, versionRange, baseUpcastReleases, resourceId,
+                versions: resourceVersions.map(x => x.version)
             }
             if (omitFields.length) {
                 result = lodash.omit(result, omitFields)

@@ -6,7 +6,7 @@ const Controller = require('egg').Controller
 const {ApplicationError, ArgumentError} = require('egg-freelog-base/error')
 const ReleasePolicyValidator = require('../../extend/json-schema/release-policy-validator')
 const SchemeResolveAndUpcastValidator = require('../../extend/json-schema/scheme-resolve-upcast-validator')
-const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
+const {UnLoginUser, LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
 
 module.exports = class ReleaseController extends Controller {
 
@@ -84,7 +84,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().value
         const releaseNames = ctx.checkQuery('releaseNames').optional().toSplitArray().value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)
+        ctx.validateParams().validateVisitorIdentity(UnLoginUser | LoginUser | InternalClient)
 
         var condition = {}
         if (!lodash.isEmpty(releaseIds)) {
@@ -222,7 +222,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseId = ctx.checkParams('releaseId').exist().isMongoObjectId().value
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value
-        const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default(['versionRange', 'baseUpcastReleases']).value
+        const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default(['baseUpcastReleases']).value
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value
 
         ctx.validateParams().validateVisitorIdentity(LoginUser | InternalClient)

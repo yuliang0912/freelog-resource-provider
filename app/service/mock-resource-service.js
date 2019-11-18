@@ -170,18 +170,23 @@ module.exports = class MockResourceService extends Service {
     /**
      * mock依赖树
      * @param mockResourceInfo
-     * @param resourceVersion
      * @param isContainRootNode
-     * @param maxDeep
-     * @param omitFields
      * @returns {Promise<*>}
      */
-    async mockDependencyTree(mockResourceInfo) {
+    async mockDependencyTree(mockResourceInfo, isContainRootNode = false) {
 
-        const {ctx} = this
         const {mocks = [], releases = []} = mockResourceInfo.systemMeta.dependencyInfo || {}
 
-        return this.__buildMockDependencyTree(mocks, releases)
+        if (!isContainRootNode) {
+            return this.__buildMockDependencyTree(mocks, releases)
+        }
+
+        return [{
+            mockResourceId: mockResourceInfo.id,
+            mockResourceName: mockResourceInfo.fullName,
+            resourceType: mockResourceInfo.resourceType,
+            dependencies: await this.__buildMockDependencyTree(mocks, releases)
+        }]
     }
 
 
@@ -204,7 +209,10 @@ module.exports = class MockResourceService extends Service {
                 const {mocks = [], releases = []} = mockInfo.systemMeta.dependencyInfo || {}
                 mockInfo.dependencies = await this.__buildMockDependencyTree(mocks, releases)
                 dependMockTrees.push({
-                    mockResourceId: mockInfo.id, mockResourceName: mockInfo.fullName, dependencies: mockInfo.dependencies,
+                    mockResourceId: mockInfo.id,
+                    mockResourceName: mockInfo.fullName,
+                    resourceType: mockInfo.resourceType,
+                    dependencies: mockInfo.dependencies,
                 })
             }
         }
