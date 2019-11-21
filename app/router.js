@@ -13,6 +13,7 @@ module.exports = app => {
     router.post('upload-file', '/v1/resources/temporaryFiles/uploadResourceFile', temporaryFile.v1.uploadResourceFile)
     router.post('upload-preview-image', '/v1/resources/temporaryFiles/uploadPreviewImage', temporaryFile.v1.uploadPreviewImage)
     router.post('mock-convert-resource', '/v1/resources/mocks/:mockId/convert', mockResource.v1.convertToResource)
+    router.post('rebuild-schemeId', '/v1/releases/versions/rebuildSchemeId', releaseScheme.v1.rebuildSchemeId)
 
     //get-method-api
     router.get('resource-list', '/v1/resources/list', resource.v1.list)
@@ -40,6 +41,7 @@ module.exports = app => {
     router.get('bucket-count', '/v1/resources/mocks/buckets/count', mockResourceBucket.v1.count)
     router.get('release-version-resource-info', '/v1/releases/:releaseId/versions/:version/resource', releaseScheme.v1.resourceInfo)
     router.put('release-scheme-retry-sign-contract', '/v1/releases/:releaseId/versions/:version/retrySignContracts', releaseScheme.v1.retrySignContracts)
+
 
     //restful-api
     router.resources('release-info', '/v1/releases', release.v1)

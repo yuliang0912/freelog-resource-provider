@@ -12,7 +12,7 @@ module.exports = app => {
 
     const toObjectOptions = {
         transform(doc, ret, options) {
-            return Object.assign({schemeId: doc.id}, lodash.omit(ret, ['_id', 'dependencies', 'upcastReleases']))
+            return lodash.omit(ret, ['_id', 'dependencies', 'upcastReleases'])
         }
     }
 
@@ -36,6 +36,7 @@ module.exports = app => {
 
     //发行体的对内处理方案
     const ReleaseSchemeSchema = new mongoose.Schema({
+        schemeId: {type: String, required: true},
         releaseId: {type: String, required: true},
         resourceId: {type: String, required: true},
         version: {type: String, required: true},
@@ -52,10 +53,12 @@ module.exports = app => {
         toObject: toObjectOptions
     })
 
-    ReleaseSchemeSchema.virtual('schemeId').get(function () {
-        return this.id
-    })
+    //方案ID目前是使用mongoObjectId,用算法计算releaseId和resourceId可能更合理一些.暂未调整
+    // ReleaseSchemeSchema.virtual('schemeId').get(function () {
+    //     return this.id
+    // })
 
+    ReleaseSchemeSchema.index({schemeId: 1}, {unique: true})
     ReleaseSchemeSchema.index({releaseId: 1, version: 1}, {unique: true})
     ReleaseSchemeSchema.index({releaseId: 1, resourceId: 1}, {unique: true})
 

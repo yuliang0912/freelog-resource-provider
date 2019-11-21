@@ -1,9 +1,11 @@
 'use strict'
 
+const semver = require('semver')
 const lodash = require('lodash')
 const Service = require('egg').Service
 const {ApplicationError, AuthorizationError} = require('egg-freelog-base/error')
 const {createReleaseSchemeEvent} = require('../enum/resource-events')
+const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
 
 module.exports = class ReleaseSchemeService extends Service {
 
@@ -43,6 +45,7 @@ module.exports = class ReleaseSchemeService extends Service {
         await this.validatePolicyIdentityAndSignAuth(resolveReleases, true)
 
         const model = {
+            schemeId: this.generateSchemeId(releaseId, version),
             releaseId, resourceId, upcastReleases, resolveReleases, userId, version
         }
 
@@ -67,8 +70,9 @@ module.exports = class ReleaseSchemeService extends Service {
      */
     async updateReleaseScheme({releaseInfo, version, resolveReleases}) {
 
-        const {ctx, app} = this
-        const releaseScheme = await this.releaseSchemeProvider.findOne({releaseId: releaseInfo.releaseId, version})
+        const {ctx} = this
+        const schemeId = this.generateSchemeId(releaseInfo.releaseId, version)
+        const releaseScheme = await this.releaseSchemeProvider.findOne({schemeId})
 
         const invalidResolveReleases = lodash.differenceBy(resolveReleases, releaseScheme.resolveReleases, x => x.releaseId)
         if (invalidResolveReleases.length) {
@@ -220,216 +224,13 @@ module.exports = class ReleaseSchemeService extends Service {
         return this.cycleDependCheck(releaseId, dependSubReleases, deep + 1)
     }
 
-
     /**
-     * 校验用来解决依赖的合约是否合法有效
-     * @param releaseScheme
-     * @returns {Promise<void>}
+     * 生成发行方案ID
+     * @param releaseId
+     * @param version
+     * @returns {*|string}
      */
-    // async validateContractLegality(releaseId, resolveReleases) {
-    //
-    //     const {ctx} = this
-    //
-    //     const changedContracts = lodash.reduce(resolveReleases, (value, item) => value.concat(item.contracts.map(x => x.contractId)), []).filter(x => x)
-    //     if (!changedContracts.length) {
-    //         return
-    //     }
-    //     //如果没有发行ID,则代表新创建.新创建的发行里面存在合约就是错误
-    //     if (!releaseId) {
-    //         throw new ArgumentError(ctx.gettext('params-validate-failed', 'resolveReleases'), resolveReleases)
-    //     }
-    //
-    //     const contractMap = await ctx.curlIntranetApi(`${ctx.webApi.contractInfo}/list?contractIds=${changedContracts.toString()}`)
-    //         .then(list => new Map(list.map(x => [x.contractId, x])))
-    //
-    //     const invalidContracts = []
-    //     for (let i = 0, j = resolveReleases.length; i < j; i++) {
-    //         const resolveRelease = resolveReleases[i]
-    //         for (let x = 0, y = resolveRelease.contracts.length; x < y; x++) {
-    //             const {contractId, policyId} = resolveRelease.contracts[x]
-    //             const contractInfo = contractMap.get(contractId)
-    //             if (!contractInfo || contractInfo.partyTwo !== releaseId || contractInfo.status === 6
-    //                 || contractInfo.partyOne !== resolveRelease.releaseId || contractInfo.segmentId !== policyId) {
-    //                 invalidContracts.push(resolveRelease)
-    //             }
-    //         }
-    //     }
-    //     if (invalidContracts.length) {
-    //         throw new ArgumentError(ctx.gettext('params-validate-failed', 'resolveReleases'), invalidContracts)
-    //     }
-    // }
-
-    /**
-     * 更新发行方案
-     * @param releaseInfo
-     * @param schemeName
-     * @param upcastReleases
-     * @param resolveReleases
-     * @param priority
-     * @returns {Promise<void>}
-     */
-    // async updateReleaseScheme({releaseScheme, resolveReleases}) {
-    //
-    //     const {ctx} = this
-    //
-    //     //依赖解决的部分可以切换合约.上抛则不可变动
-    //     const invalidResolveReleases = lodash.differenceBy(resolveReleases, releaseScheme.resolveReleases, x => x.releaseId)
-    //     if (invalidResolveReleases.length) {
-    //         throw new ArgumentError(ctx.gettext('params-validate-failed', 'resolveReleases'))
-    //     }
-    //
-    //     const changedResolveReleases = resolveReleases.filter(item => {
-    //         return releaseScheme.resolveReleases.some(x => x.releaseId === item.releaseId && item.policyId !== x.policyId)
-    //     })
-    //     /**
-    //      * TODO:如果存在变动的策略,则签约或者使用旧合约即可
-    //      */
-    //     if (changedResolveReleases.length) {
-    //
-    //     }
-    //
-    //     var model = {}
-    //     if (lodash.isInteger(priority)) {
-    //         model.priority = priority
-    //     }
-    //     if (lodash.isString(schemeName)) {
-    //         model.schemeName = schemeName
-    //     }
-    //
-    //     return this.releaseProvider.updateOne({_id: releaseScheme.id}, model)
-    // }
-
-    /**
-     * 资源的授权方案参数校验
-     * @private
-     */
-    // async validateUpcastAndResolveReleaseParams(releaseInfo, dependencies, upcastReleases, resolveReleases) {
-    //
-    //     const {ctx} = this
-    //     const releaseMap = new Map()
-    //     const unionReleaseMap = new Map([...upcastReleases, ...resolveReleases].map(x => [x.releaseId, x]))
-    //
-    //     //上抛与解决的发行体之间不能存在交集
-    //     const intersectionReleases = lodash.intersectionBy(upcastReleases, resolveReleases, x => x.releaseId)
-    //     if (intersectionReleases.length || (upcastReleases.length + resolveReleases.length) != unionReleaseMap.size) {
-    //         throw new LogicError(ctx.gettext('params-relevance-validate-failed', 'upcastReleases,resolveReleases'), {intersectionReleases})
-    //     }
-    //     if (unionReleaseMap.size) {
-    //         await this.releaseProvider.find({_id: {$in: [...unionReleaseMap.keys()]}}).each(x => releaseMap.set(x.releaseId, x))
-    //     }
-    //
-    //     //检查发行有效性,策略有效性,上抛发行是否合理,声明处理的发行是否合理以及未处理的依赖项
-    //     const invalidPolicies = [], invalidUpcastReleases = [], invalidResolveReleases = [],
-    //         untreatedDependencies = []
-    //
-    //     //递归计算每一层的上抛
-    //     const recursionCheckDependencies = (releases) => releases.forEach(item => {
-    //
-    //         const {releaseId, releaseName, quoters} = item
-    //         const releaseParam = unionReleaseMap.get(releaseId)
-    //         if (!releaseParam) {
-    //             untreatedDependencies.push({releaseId, releaseName})
-    //             return
-    //         }
-    //         const releaseInfo = releaseMap.get(releaseId)
-    //         const isResolveRelease = Boolean(releaseParam.contracts)
-    //         if (!releaseInfo || releaseInfo.status !== 1) {
-    //             isResolveRelease ? invalidResolveReleases.push(releaseParam) : invalidUpcastReleases.push(releaseParam)
-    //             return
-    //         }
-    //
-    //         if (isResolveRelease && lodash.differenceWith(releaseParam.contracts, releaseInfo.policies, (x, y) => x.policyId === y.policyId && y.status === 1).length) {
-    //             invalidPolicies.push(releaseParam)
-    //             return
-    //         }
-    //
-    //         releaseParam.validate = true
-    //         releaseParam.releaseName = releaseInfo.releaseName
-    //         if (!releaseParam.quoters) {
-    //             releaseParam.quoters = quoters
-    //         } else {
-    //             releaseParam.quoters = lodash.unionBy(releaseParam.quoters.concat(quoters), x => x.releaseId)
-    //         }
-    //         //声明解决的,则需要递归计算子依赖处理情况
-    //         isResolveRelease && recursionCheckDependencies(releaseInfo.baseUpcastReleases)
-    //     })
-    //
-    //     dependencies.map(x => x.quoters = [releaseInfo])
-    //
-    //     recursionCheckDependencies(dependencies || [])
-    //
-    //     if (invalidUpcastReleases.length) {
-    //         throw new ApplicationError(ctx.gettext('resource-depend-release-info-validate-failed'), {invalidUpcastReleases})
-    //     }
-    //     if (invalidResolveReleases.length) {
-    //         throw new ApplicationError(ctx.gettext('resource-depend-release-info-validate-failed'), {invalidResolveReleases})
-    //     }
-    //     if (untreatedDependencies.length) {
-    //         throw new ApplicationError(ctx.gettext('resource-depend-upcast-resolve-integrity-validate-failed'), {untreatedDependencies})
-    //     }
-    //     if (invalidPolicies.length) {
-    //         throw new ApplicationError(ctx.gettext('release-available-policy-not-found'), {invalidPolicies})
-    //     }
-    //     if (upcastReleases.some(x => !x.validate)) {
-    //         throw new ApplicationError(ctx.gettext('params-validate-failed', 'upcastReleases'))
-    //     }
-    //     if (resolveReleases.some(x => !x.validate)) {
-    //         throw new ApplicationError(ctx.gettext('params-validate-failed', 'resolveReleases'))
-    //     }
-    //     return {upcastReleases, resolveReleases}
-    // }
-
-    /**
-     * 资源的授权方案参数校验
-     * @private
-     */
-    // async validateUpcastAndResolveReleaseParams(dependencies, upcastReleases, resolveReleases) {
-    //
-    //     const {ctx} = this
-    //     const unionReleases = [...upcastReleases, ...resolveReleases]
-    //
-    //     //上抛与解决的发行体之间不能存在交集
-    //     const intersectionReleases = lodash.intersectionBy(upcastReleases, resolveReleases, x => x.releaseId)
-    //     if (intersectionReleases.length) {
-    //         throw new LogicError(ctx.gettext('params-relevance-validate-failed', 'upcastReleases,resolveReleases'), {intersectionReleases})
-    //     }
-    //
-    //     //检查是否存在未处理的(依赖了,但是没上抛,也没处理)发行
-    //     const untreatedReleases = lodash.differenceBy(dependencies, unionReleases, x => x.releaseId)
-    //     if (untreatedReleases.length) {
-    //         throw new LogicError(ctx.gettext('params-relevance-validate-failed', 'upcastReleases,resolveReleases'), {untreatedReleases})
-    //     }
-    //
-    //     //是否存在多余的上抛或者处理(不在依赖范围内的)
-    //     const redundantReleases = lodash.differenceBy(unionReleases, dependencies, x => x.releaseId)
-    //     if (redundantReleases.length) {
-    //         throw new LogicError(ctx.gettext('params-relevance-validate-failed', 'upcastReleases,resolveReleases'), {redundantReleases})
-    //     }
-    //
-    //     //检查发行的状态和有效性,以及策略ID的关联正确性
-    //     const invalidReleases = [], invalidPolicies = []
-    //     const releaseMap = await this.releaseProvider.find({_id: {$in: unionReleases.map(x => x.releaseId)}})
-    //         .then(list => new Map(list.map(x => [x.releaseId, x])))
-    //
-    //     unionReleases.forEach(item => {
-    //         let releaseInfo = releaseMap.get(item.releaseId)
-    //         if (releaseInfo) {
-    //             item.releaseName = releaseInfo.releaseName
-    //         }
-    //         if (!releaseInfo || releaseInfo.status !== 1) {
-    //             invalidReleases.push(item)
-    //         }
-    //         if (!releaseInfo.policies.some(x => x.policyId === item.policyId && x.status === 1)) {
-    //             invalidPolicies.push(item)
-    //         }
-    //     })
-    //     if (invalidReleases.length) {
-    //         throw new ApplicationError(ctx.gettext('resource-depend-validate-failed'), {invalidReleases})
-    //     }
-    //     if (invalidPolicies.length) {
-    //         throw new ApplicationError(ctx.gettext('params-validate-failed', 'policyId'), {invalidPolicies})
-    //     }
-    //
-    //     return {upcastReleases, resolveReleases}
-    // }
+    generateSchemeId(releaseId, version) {
+        return cryptoHelper.md5(`${releaseId}-${semver.clean(version)}`)
+    }
 }

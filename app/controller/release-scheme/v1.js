@@ -170,7 +170,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
      */
     async list(ctx) {
 
-        const schemeIds = ctx.checkQuery('schemeIds').optional().isSplitMongoObjectId().toSplitArray().len(1).value
+        const schemeIds = ctx.checkQuery('schemeIds').optional().toSplitArray().len(1).value
         const releaseIds = ctx.checkQuery('releaseIds').optional().isSplitMongoObjectId().toSplitArray().len(1).value
         //如果传version参数,则需要version与releaseId一一匹配
         const versions = ctx.checkQuery('versions').optional().toSplitArray().len(1).value
@@ -183,7 +183,7 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'))
         }
         if (!lodash.isEmpty(schemeIds)) {
-            condition._id = {$in: schemeIds}
+            condition.schemeId = {$in: schemeIds}
         }
         if (versions && (!releaseIds || (releaseIds && versions.length !== releaseIds.length))) {
             throw new ArgumentError(ctx.gettext('params-comb-validate-failed', 'releaseIds,versions'))
@@ -200,6 +200,22 @@ module.exports = class ReleaseAuthSchemeController extends Controller {
         await this.releaseSchemeProvider.find(condition, projection.join(' ')).then(ctx.success)
     }
 
+
+    /**
+     * 重新构建schemeId 开发专用
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    async rebuildSchemeId(ctx) {
+
+        const releaseSchemes = await this.releaseSchemeProvider.find({})
+
+        releaseSchemes.forEach(item => {
+            item.updateOne({schemeId: ctx.service.releaseSchemeService.generateSchemeId(item.releaseId, item.version)}).then()
+        })
+
+        ctx.success(releaseSchemes.length)
+    }
 
     /**
      * 校验上抛和处理的数据格式

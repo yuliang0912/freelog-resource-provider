@@ -65,6 +65,7 @@ module.exports = class ReleaseService extends Service {
 
         //contractActivatedStatus需要考虑何时计算.以及后续对合同状态的监听
         const releaseSchemeInfo = {
+            schemeId: ctx.service.releaseSchemeService.generateSchemeId(releaseId, version),
             releaseId, resourceId, upcastReleases, resolveReleases, userId, version,
             contractStatus: resolveReleases.length ? 0 : 1, createDate, updateDate: createDate
         }
@@ -129,13 +130,14 @@ module.exports = class ReleaseService extends Service {
      */
     async releaseDependencyTree(releaseInfo, resourceVersion, isContainRootNode, maxDeep = 100, omitFields = []) {
 
+        const {ctx} = this
         const resourceInfo = await this.resourceProvider.findOne({resourceId: resourceVersion.resourceId}, 'systemMeta.dependencies')
 
         if (!isContainRootNode) {
             return this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, omitFields)
         }
 
-        return [{
+        let rootTreeNode = {
             releaseId: releaseInfo.releaseId,
             releaseName: releaseInfo.releaseName,
             version: resourceVersion.version,
@@ -143,9 +145,12 @@ module.exports = class ReleaseService extends Service {
             resourceType: releaseInfo.resourceType,
             versionRange: resourceVersion.version,
             resourceId: resourceVersion.resourceId,
+            releaseSchemeId: ctx.service.releaseSchemeService.generateSchemeId(releaseInfo.releaseId, resourceVersion.version),
             baseUpcastReleases: releaseInfo.baseUpcastReleases,
             dependencies: await this._buildDependencyTree(resourceInfo.systemMeta.dependencies, maxDeep, 1, omitFields)
-        }]
+        }
+
+        return [lodash.omit(rootTreeNode, omitFields)]
     }
 
     /**
@@ -158,11 +163,10 @@ module.exports = class ReleaseService extends Service {
 
         const dependencyTree = await this.releaseDependencyTree(releaseInfo, resourceVersion, true)
 
-        const releaseSchemeMap = await this._getReleaseSchemesFormDependencyTree(dependencyTree).then(list => new Map(list.map(x => [`${x.releaseId}_${x.resourceId}`, x])))
+        const releaseSchemeMap = await this._getReleaseSchemesFormDependencyTree(dependencyTree).then(list => new Map(list.map(x => [x.schemeId, x])))
 
         const recursionAuthTree = (releaseNode) => {
-
-            const releaseScheme = releaseSchemeMap.get(`${releaseNode.releaseId}_${releaseNode.resourceId}`)
+            const releaseScheme = releaseSchemeMap.get(releaseNode.releaseSchemeId)
             return releaseScheme.resolveReleases.map(resolveRelease => {
                 const list = this._findReleaseVersionFromDependencyTree(releaseNode.dependencies, resolveRelease)
                 return {
@@ -180,7 +184,6 @@ module.exports = class ReleaseService extends Service {
 
         return recursionAuthTree(dependencyTree[0])
     }
-
 
     /**
      * 发行的上抛树
@@ -248,14 +251,13 @@ module.exports = class ReleaseService extends Service {
             return resolveRelease
         })
 
-        return this.releaseSchemeProvider.findOneAndUpdate({_id: schemeId}, {
+        return this.releaseSchemeProvider.findOneAndUpdate({schemeId}, {
             resolveReleases: updatedResolveReleases, contractStatus: 2
         }, {new: true}).then(model => {
             app.emit(releaseSchemeBindContractEvent, model, Boolean(changedResolveRelease.length))
             return model
         })
     }
-
 
     /**
      * 从依赖树中获取指定的所有发行版本
@@ -289,6 +291,7 @@ module.exports = class ReleaseService extends Service {
             return []
         }
 
+        const {ctx} = this
         const resourceIds = []
         const dependencyMap = new Map(dependencies.map(item => [item.releaseId, {versionRange: item.versionRange}]))
         const releaseList = await this.releaseProvider.find({_id: {$in: Array.from(dependencyMap.keys())}})
@@ -299,23 +302,25 @@ module.exports = class ReleaseService extends Service {
             const {version, resourceId} = this._getReleaseMaxSatisfying(resourceVersions, dependencyInfo.versionRange)
             dependencyInfo.version = version
             dependencyInfo.resourceId = resourceId
+            dependencyInfo.releaseSchemeId = ctx.service.releaseSchemeService.generateSchemeId(releaseId, version)
+            dependencyInfo.versions = resourceVersions.map(x => x.version)
             resourceIds.push(resourceId)
         }
 
         const resourceMap = await this.resourceProvider.find({resourceId: {$in: resourceIds}})
             .then(list => new Map(list.map(x => [x.resourceId, x])))
 
-        for (var value of dependencyMap.values()) {
-            value.resourceInfo = resourceMap.get(value.resourceId)
+        for (var dependencyInfo of dependencyMap.values()) {
+            dependencyInfo.resourceInfo = resourceMap.get(dependencyInfo.resourceId)
         }
 
         const results = [], tasks = []
         for (let i = 0, j = releaseList.length; i < j; i++) {
-            let {releaseId, resourceType, releaseName, resourceVersions, baseUpcastReleases} = releaseList[i]
-            let {resourceId, resourceInfo, versionRange, version} = dependencyMap.get(releaseId)
+            let {releaseId, resourceType, releaseName, baseUpcastReleases} = releaseList[i]
+            let {releaseSchemeId, resourceId, resourceInfo, versionRange, versions, version} = dependencyMap.get(releaseId)
             let result = {
-                releaseId, releaseName, version, resourceType, versionRange, baseUpcastReleases, resourceId,
-                versions: resourceVersions.map(x => x.version)
+                releaseId, releaseName, versions, version, resourceType,
+                versionRange, baseUpcastReleases, resourceId, releaseSchemeId,
             }
             if (omitFields.length) {
                 result = lodash.omit(result, omitFields)
@@ -337,24 +342,20 @@ module.exports = class ReleaseService extends Service {
      */
     async _getReleaseSchemesFormDependencyTree(dependencyTree) {
 
-        const releaseVersionMap = new Map()
+        const releaseSchemeIds = []
+
         const recursion = (dependencies) => dependencies.forEach((item) => {
-            if (releaseVersionMap.has(item.releaseId)) {
-                releaseVersionMap.get(item.releaseId).push(item.resourceId)
-            } else {
-                releaseVersionMap.set(item.releaseId, [item.resourceId])
-            }
+            releaseSchemeIds.push(item.releaseSchemeId)
             recursion(item.dependencies)
         })
 
         recursion(dependencyTree)
 
-        const condition = []
-        for (var [key, value] of releaseVersionMap) {
-            condition.push({releaseId: key, resourceId: {$in: lodash.uniq(value)}})
+        if (!releaseSchemeIds.length) {
+            return []
         }
 
-        return this.releaseSchemeProvider.find({$or: condition})
+        return this.releaseSchemeProvider.find({schemeId: {$in: releaseSchemeIds}})
     }
 
     /**
