@@ -291,11 +291,7 @@ module.exports = class ReleaseController extends Controller {
         const releaseName = ctx.checkQuery('releaseName').exist().isFullReleaseName().value
         ctx.validateParams()
 
-        const condition = {
-            releaseName: new RegExp(`^${releaseName}$`, "i")
-        }
-
-        await this.releaseProvider.findOne(condition).then(ctx.success)
+        await this.releaseProvider.findOne({releaseName}).then(ctx.success)
     }
 
     /**
