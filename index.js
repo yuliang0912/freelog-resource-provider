@@ -9,3 +9,5 @@ require('egg').startCluster({
     port: process.env.PORT || 7001,
     workers: 1
 });
+
+//`^${lodash.escapeRegExp("yuliang(abc)")}$`
