@@ -27,7 +27,7 @@ module.exports = app => {
         toObject: toObjectOptions
     })
 
-    CollectionSchema.index({resourceId: 1, userId: 1}, {unique: true});
+    CollectionSchema.index({releaseId: 1, userId: 1}, {unique: true});
 
     return mongoose.model('collection', CollectionSchema)
 }
