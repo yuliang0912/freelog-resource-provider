@@ -77,9 +77,9 @@ module.exports = class CollectionController extends Controller {
             if (!releaseMap.has(releaseId)) {
                 return {releaseId}
             }
-            let {releaseName, resourceType, policies, userId, username, previewImages, latestVersion, updateDate, status} = releaseMap.get(releaseId)
+            let {releaseName, resourceType, policies, userId, username, previewImages, resourceVersions, latestVersion, updateDate, status} = releaseMap.get(releaseId)
             return {
-                releaseId, releaseName, resourceType, policies, latestVersion, previewImages,
+                releaseId, releaseName, resourceType, policies, latestVersion, previewImages, resourceVersions,
                 authorId: userId,
                 authorName: username,
                 collectionDate: createDate,
