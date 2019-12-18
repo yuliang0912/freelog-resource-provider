@@ -94,7 +94,7 @@ module.exports = class MockResourceController extends Controller {
     async create(ctx) {
 
         const bucketName = ctx.checkBody('bucketName').exist().isBucketName().trim().value
-        const name = ctx.checkBody('name').exist().type('string').isReleaseName().value
+        const name = ctx.checkBody('name').exist().type('string').isMockResourceName().value
         const uploadFileId = ctx.checkBody('uploadFileId').exist().isMongoObjectId().value
         const meta = ctx.checkBody('meta').optional().default({}).isObject().value
         const description = ctx.checkBody('description').optional().type('string').value

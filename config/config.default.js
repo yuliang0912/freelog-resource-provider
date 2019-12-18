@@ -88,7 +88,6 @@ module.exports = app => {
             pageUrl: '/public/404.html',
         },
 
-
         clientCredentialInfo: {
             clientId: 1002,
             publicKey: 'ad472200bda12d65666df7b97282a7c6',
