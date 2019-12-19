@@ -16,6 +16,7 @@ module.exports = app => {
     router.post('rebuild-schemeId', '/v1/releases/versions/rebuildSchemeId', releaseScheme.v1.rebuildSchemeId)
 
     //get-method-api
+    router.get('resource-file', '/v1/resources/file', resource.v1.file)
     router.get('resource-list', '/v1/resources/list', resource.v1.list)
     router.get('resource-releases', '/v1/resources/:resourceId/releases', resource.v1.releases)
     router.get('resource-joined-releases', '/v1/resources/releases', resource.v1.batchReleases)

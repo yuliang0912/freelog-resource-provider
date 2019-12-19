@@ -6,6 +6,8 @@ const Controller = require('egg').Controller
 const {ArgumentError, AuthorizationError, AuthenticationError} = require('egg-freelog-base/error')
 const ResourceInfoValidator = require('../../extend/json-schema/resource-info-validator')
 const {LoginUser, InternalClient} = require('egg-freelog-base/app/enum/identity-type')
+const fs = require("fs")
+const path = require('path')
 
 module.exports = class ResourcesController extends Controller {
 
@@ -15,6 +17,21 @@ module.exports = class ResourcesController extends Controller {
         this.resourceProvider = app.dal.resourceProvider
         this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
         this.client = new aliOss(app.config.uploadConfig.aliOss)
+    }
+
+    async file(ctx) {
+
+        const fileName = ctx.checkQuery('fileName').value
+        ctx.validateParams()
+
+        var readFileAsync = new Promise(function (resolve, reject) {
+            fs.readFile(path.join(ctx.app.baseDir, '/app/public/', fileName), function (error, file) {
+                error ? reject(error) : resolve(file)
+            })
+        })
+
+        await readFileAsync.then(data => ctx.body = data.toString())
+
     }
 
     /**
