@@ -19,6 +19,7 @@ module.exports = class ResourcesController extends Controller {
         this.client = new aliOss(app.config.uploadConfig.aliOss)
     }
 
+
     async file(ctx) {
 
         const fileName = ctx.checkQuery('fileName').value
