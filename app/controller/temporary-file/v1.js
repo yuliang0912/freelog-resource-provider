@@ -20,7 +20,6 @@ module.exports = class FileController extends Controller {
             msg: ctx.gettext('resource-form-enctype-validate-failed', 'multipart')
         }).validateVisitorIdentity(LoginUser)
 
-
         await ctx.service.temporaryUploadFileService.uploadResourceFile({fileStream, resourceType}).then(ctx.success)
     }
 
