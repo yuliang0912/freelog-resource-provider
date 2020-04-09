@@ -20,12 +20,13 @@ module.exports = class ResourcesController extends Controller {
     }
 
     _getAliOssConfig(config) {
-        let {accessKeyId, accessKeySecret, isCryptographic = false} = config
+        let newConfig = lodash.cloneDeep(config)
+        let {accessKeyId, accessKeySecret, isCryptographic = false} = newConfig
         if (isCryptographic) {
-            config.accessKeyId = new Buffer(accessKeyId, 'base64').toString()
-            config.accessKeySecret = new Buffer(accessKeySecret, 'base64').toString()
+            newConfig.accessKeyId = new Buffer(accessKeyId, 'base64').toString()
+            newConfig.accessKeySecret = new Buffer(accessKeySecret, 'base64').toString()
         }
-        return config
+        return newConfig
     }
 
     async file(ctx) {
