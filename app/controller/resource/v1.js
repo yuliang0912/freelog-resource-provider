@@ -16,17 +16,7 @@ module.exports = class ResourcesController extends Controller {
         this.releaseProvider = app.dal.releaseProvider
         this.resourceProvider = app.dal.resourceProvider
         this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
-        this.client = new aliOss(this._getAliOssConfig(app.config.uploadConfig.aliOss))
-    }
-
-    _getAliOssConfig(config) {
-        let newConfig = lodash.cloneDeep(config)
-        let {accessKeyId, accessKeySecret, isCryptographic = false} = newConfig
-        if (isCryptographic) {
-            newConfig.accessKeyId = new Buffer(accessKeyId, 'base64').toString()
-            newConfig.accessKeySecret = new Buffer(accessKeySecret, 'base64').toString()
-        }
-        return newConfig
+        this.client = new aliOss(app.config.uploadConfig.aliOss)
     }
 
     async file(ctx) {

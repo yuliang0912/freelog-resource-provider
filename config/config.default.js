@@ -45,8 +45,8 @@ module.exports = app => {
             aliOss: {
                 enable: true,
                 isCryptographic: true,
-                accessKeyId: "TFRBSXk4VE9zU25ORmZQYg==",
-                accessKeySecret: "QnQ1eU1iVzg5Tzd3TVRWUXNOVWZ2WWZvdTVHUHNM",
+                accessKeyId: "TFRBSTRGcGNBRWdCWm05UHlON3BhY0tU",
+                accessKeySecret: "M2NBYmRwQ1VESnpCa2ZDcnVzN1d2SXc1alhmNDNF",
                 bucket: "freelog-shenzhen",
                 internal: false,
                 region: "oss-cn-shenzhen",
