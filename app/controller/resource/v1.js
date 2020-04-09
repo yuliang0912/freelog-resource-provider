@@ -16,9 +16,17 @@ module.exports = class ResourcesController extends Controller {
         this.releaseProvider = app.dal.releaseProvider
         this.resourceProvider = app.dal.resourceProvider
         this.temporaryUploadFileProvider = app.dal.temporaryUploadFileProvider
-        this.client = new aliOss(app.config.uploadConfig.aliOss)
+        this.client = new aliOss(this._getAliOssConfig(app.config.uploadConfig.aliOss))
     }
 
+    _getAliOssConfig(config) {
+        let {accessKeyId, accessKeySecret, isCryptographic = false} = config
+        if (isCryptographic) {
+            config.accessKeyId = new Buffer(accessKeyId, 'base64').toString()
+            config.accessKeySecret = new Buffer(accessKeySecret, 'base64').toString()
+        }
+        return config
+    }
 
     async file(ctx) {
 
