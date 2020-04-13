@@ -275,6 +275,6 @@ module.exports = class ResourcesController extends Controller {
 
         const resourceFileUrl = this.client.signatureUrl(fileOss.objectKey, response)
 
-        ctx.success(Object.assign(lodash.pick(resourceInfo, ['resourceId', 'aliasName', 'previewImages', 'resourceType', 'systemMeta', 'meta']), {resourceFileUrl}))
+        ctx.success(Object.assign(lodash.pick(resourceInfo, ['resourceId', 'aliasName', 'previewImages', 'resourceType', 'systemMeta', 'meta', 'createDate']), {resourceFileUrl}))
     }
 }

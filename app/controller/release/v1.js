@@ -30,7 +30,7 @@ module.exports = class ReleaseController extends Controller {
         const keywords = ctx.checkQuery("keywords").optional().decodeURIComponent().trim().value
         const isSelf = ctx.checkQuery("isSelf").optional().default(0).toInt().in([0, 1]).value
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value
-        const status = ctx.checkQuery('status').optional().toInt().in([0, 1]).value
+        const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value
         ctx.validateParams()
 
         const condition = {}
@@ -41,7 +41,7 @@ module.exports = class ReleaseController extends Controller {
         if (resourceType) {
             condition.resourceType = resourceType
         }
-        if (lodash.isInteger(status)) {
+        if ([0, 1].includes(status)) {
             condition.status = status
         }
 
