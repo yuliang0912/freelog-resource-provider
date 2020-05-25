@@ -63,7 +63,6 @@ module.exports = class CollectionController extends Controller {
             }
         }
 
-
         var releaseMatchAggregates = [{
             $match: {
                 "releaseInfos.status": releaseStatus
@@ -130,73 +129,6 @@ module.exports = class CollectionController extends Controller {
         })
 
         ctx.success(result)
-    }
-
-    /**
-     * 聚合查询
-     * @param collectionCondition
-     * @param releaseStatus
-     * @param page
-     * @param pageSize
-     * @returns {Promise<{page: *, pageSize: *, totalItem: number, dataList: Array}>}
-     * @private
-     */
-    async _aggregateReleaseInfoSearch(collectionCondition, releaseStatus, page, pageSize) {
-
-        var releaseMatchAggregates = [{
-            $match: {
-                "releaseInfos.status": releaseStatus
-            }
-        }]
-        var collectionMatchAggregates = [{
-            $match: collectionCondition
-        }]
-        var joinReleaseAggregates = [
-            {
-                $addFields: {"release_id": {"$toObjectId": "$releaseId"}}
-            }, {
-                $lookup: {
-                    from: "release-infos",
-                    localField: "release_id",
-                    foreignField: "_id",
-                    as: "releaseInfos"
-                }
-            }]
-        var countAggregates = [{$count: "totalItem"}]
-        var pageAggregates = [{
-            $skip: (page - 1) * pageSize
-        }, {
-            $limit: pageSize
-        }]
-
-        var countAggregatePipelines = [], resultAggregatePipelines = []
-        if ([0, 1].includes(releaseStatus)) {
-            countAggregatePipelines = lodash.flatten([
-                collectionMatchAggregates, joinReleaseAggregates, releaseMatchAggregates, countAggregates
-            ])
-            resultAggregatePipelines = lodash.flatten([
-                collectionMatchAggregates, joinReleaseAggregates, releaseMatchAggregates, pageAggregates
-            ])
-        } else {
-            countAggregatePipelines = lodash.flatten([
-                collectionMatchAggregates, joinReleaseAggregates, countAggregates
-            ])
-            resultAggregatePipelines = lodash.flatten([
-                collectionMatchAggregates, pageAggregates, joinReleaseAggregates
-            ])
-        }
-
-        const [totalItemInfo] = await this.collectionProvider.aggregate(countAggregatePipelines).tap(console.log)
-
-        let {totalItem = 0} = totalItemInfo || {}
-        const result = {page, pageSize, totalItem, dataList: []}
-        if (totalItem <= (page - 1) * pageSize) {
-            return result
-        }
-
-        result.dataList = await this.collectionProvider.aggregate(resultAggregatePipelines).tap(console.log)
-
-        return result
     }
 
     /**

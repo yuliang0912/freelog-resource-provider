@@ -1,5 +1,6 @@
 'use strict'
 
+const moment = require('moment')
 const cryptoHelper = require('egg-freelog-base/app/extend/helper/crypto_helper')
 
 module.exports = class AppBootHook {
@@ -10,6 +11,7 @@ module.exports = class AppBootHook {
 
     async willReady() {
         this.decodeOssConfig()
+        //console.log(moment().format('YYYY-MM-DD'))
         await this.app.rabbitClient.connect()
     }
 

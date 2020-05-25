@@ -125,7 +125,6 @@ module.exports = class MockResourceController extends Controller {
         }).then(ctx.success)
     }
 
-
     /**
      * mock转资源
      * @returns {Promise<void>}

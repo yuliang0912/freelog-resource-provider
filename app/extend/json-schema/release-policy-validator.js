@@ -55,7 +55,7 @@ module.exports = class ReleasePolicyValidator extends FreelogCommonJsonSchema {
                                 required: true,
                                 type: "string",
                                 minLength: 1,
-                                maxLength: 20,
+                                maxLength: 30,
                                 format: "policyName"
                             },
                             status: {required: true, type: "integer", minimum: 0, maximum: 1}
