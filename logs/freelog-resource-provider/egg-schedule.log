@@ -1,0 +1,64 @@
+2020-04-13 10:27:12,201 ERROR 21416 [Job#158674483219516966911255551281] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute error. TypeError: Cannot read property 'deleteMany' of null
+    at NativeCollection.<computed> [as deleteMany] (D:\工作\freelog-resource-provider\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:171:24)
+    at NodeCollection.deleteMany (D:\工作\freelog-resource-provider\node_modules\mquery\lib\collection\node.js:106:19)
+    at model.Query.Query.deleteMany (D:\工作\freelog-resource-provider\node_modules\mquery\lib\mquery.js:2664:20)
+    at model.Query.<anonymous> (D:\工作\freelog-resource-provider\node_modules\mongoose\lib\query.js:2826:32)
+    at model.Query._wrappedThunk [as _deleteMany] (D:\工作\freelog-resource-provider\node_modules\mongoose\lib\helpers\query\wrapThunk.js:16:8)
+    at D:\工作\freelog-resource-provider\node_modules\kareem\index.js:369:33
+    at processTicksAndRejections (internal/process/task_queues.js:75:11)
+2020-04-13 10:27:12,201 ERROR 21416 [Job#158674483219516966911255551281] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute failed, used 3ms
+2020-04-20 14:56:02,035 ERROR 24792 [Job#15873657620324165336257601421] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute error. TypeError: Cannot read property 'deleteMany' of undefined
+    at ResourceTreeProvider.deleteMany (D:\工作\freelog-resource-provider\node_modules\egg-freelog-database\lib\database\mongo-base-operation.js:249:33)
+    at ClearExpiredUploadFile.subscribe (D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js:28:51)
+    at Object.task (D:\工作\freelog-resource-provider\node_modules\egg-schedule\lib\load_schedule.js:37:22)
+    at Messenger.<anonymous> (D:\工作\freelog-resource-provider\node_modules\egg-schedule\app.js:46:21)
+    at Messenger.emit (events.js:210:5)
+    at Messenger._onMessage (D:\工作\freelog-resource-provider\node_modules\egg\lib\core\messenger\ipc.js:116:12)
+    at process.emit (events.js:215:7)
+    at emit (internal/child_process.js:876:12)
+    at processTicksAndRejections (internal/process/task_queues.js:81:21)
+2020-04-20 14:56:02,035 ERROR 24792 [Job#15873657620324165336257601421] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute failed, used 2ms
+2020-04-20 14:58:23,600 ERROR 13496 [Job#15873659035984166751917684621] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute error. TypeError: Cannot read property 'deleteMany' of undefined
+    at ResourceTreeProvider.deleteMany (D:\工作\freelog-resource-provider\node_modules\egg-freelog-database\lib\database\mongo-base-operation.js:249:33)
+    at ClearExpiredUploadFile.subscribe (D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js:28:51)
+    at Object.task (D:\工作\freelog-resource-provider\node_modules\egg-schedule\lib\load_schedule.js:37:22)
+    at Messenger.<anonymous> (D:\工作\freelog-resource-provider\node_modules\egg-schedule\app.js:46:21)
+    at Messenger.emit (events.js:210:5)
+    at Messenger._onMessage (D:\工作\freelog-resource-provider\node_modules\egg\lib\core\messenger\ipc.js:116:12)
+    at process.emit (events.js:215:7)
+    at emit (internal/child_process.js:876:12)
+    at processTicksAndRejections (internal/process/task_queues.js:81:21)
+2020-04-20 14:58:23,600 ERROR 13496 [Job#15873659035984166751917684621] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute failed, used 1ms
+2020-04-20 15:00:19,624 ERROR 25108 [Job#15873660196214167912150456881] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute error. TypeError: Cannot read property 'deleteMany' of undefined
+    at ResourceTreeProvider.deleteMany (D:\工作\freelog-resource-provider\node_modules\egg-freelog-database\lib\database\mongo-base-operation.js:249:33)
+    at ClearExpiredUploadFile.subscribe (D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js:28:51)
+    at Object.task (D:\工作\freelog-resource-provider\node_modules\egg-schedule\lib\load_schedule.js:37:22)
+    at Messenger.<anonymous> (D:\工作\freelog-resource-provider\node_modules\egg-schedule\app.js:46:21)
+    at Messenger.emit (events.js:210:5)
+    at Messenger._onMessage (D:\工作\freelog-resource-provider\node_modules\egg\lib\core\messenger\ipc.js:116:12)
+    at process.emit (events.js:215:7)
+    at emit (internal/child_process.js:876:12)
+    at processTicksAndRejections (internal/process/task_queues.js:81:21)
+2020-04-20 15:00:19,624 ERROR 25108 [Job#15873660196214167912150456881] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute failed, used 1ms
+2020-04-20 15:01:55,948 ERROR 17468 [Job#15873661159454168875531246931] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute error. TypeError: Cannot read property 'deleteMany' of undefined
+    at ResourceTreeProvider.deleteMany (D:\工作\freelog-resource-provider\node_modules\egg-freelog-database\lib\database\mongo-base-operation.js:249:33)
+    at ClearExpiredUploadFile.subscribe (D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js:28:51)
+    at Object.task (D:\工作\freelog-resource-provider\node_modules\egg-schedule\lib\load_schedule.js:37:22)
+    at Messenger.<anonymous> (D:\工作\freelog-resource-provider\node_modules\egg-schedule\app.js:46:21)
+    at Messenger.emit (events.js:210:5)
+    at Messenger._onMessage (D:\工作\freelog-resource-provider\node_modules\egg\lib\core\messenger\ipc.js:116:12)
+    at process.emit (events.js:215:7)
+    at emit (internal/child_process.js:876:12)
+    at processTicksAndRejections (internal/process/task_queues.js:81:21)
+2020-04-20 15:01:55,948 ERROR 17468 [Job#15873661159454168875531246931] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute failed, used 2ms
+2020-04-20 15:02:34,453 ERROR 11116 [Job#1587366154450416926580161421] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute error. TypeError: Cannot read property 'deleteMany' of undefined
+    at ResourceTreeProvider.deleteMany (D:\工作\freelog-resource-provider\node_modules\egg-freelog-database\lib\database\mongo-base-operation.js:249:33)
+    at ClearExpiredUploadFile.subscribe (D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js:28:51)
+    at Object.task (D:\工作\freelog-resource-provider\node_modules\egg-schedule\lib\load_schedule.js:37:22)
+    at Messenger.<anonymous> (D:\工作\freelog-resource-provider\node_modules\egg-schedule\app.js:46:21)
+    at Messenger.emit (events.js:210:5)
+    at Messenger._onMessage (D:\工作\freelog-resource-provider\node_modules\egg\lib\core\messenger\ipc.js:116:12)
+    at process.emit (events.js:215:7)
+    at emit (internal/child_process.js:876:12)
+    at processTicksAndRejections (internal/process/task_queues.js:81:21)
+2020-04-20 15:02:34,453 ERROR 11116 [Job#1587366154450416926580161421] D:\工作\freelog-resource-provider\app\schedule\clear-expired-upload-file.js execute failed, used 2ms

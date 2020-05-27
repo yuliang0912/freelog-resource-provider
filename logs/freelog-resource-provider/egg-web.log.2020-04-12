@@ -1,0 +1,65 @@
+2019-12-12 14:28:42,354 ERROR 18808 [egg-freelog-mongoose] mongodb://119.23.45.143:27018/resource disconnected
+2019-12-12 14:28:42,355 ERROR 18808 nodejs.MongoNetworkError: failed to connect to server [119.23.45.143:27018] on first connect [Error: connect ECONNREFUSED 119.23.45.143:27018
+    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1129:14) {
+  name: 'MongoNetworkError',
+  [Symbol(mongoErrorContextSymbol)]: {}
+}]
+    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1129:14) {
+  name: 'MongoNetworkError',
+  [Symbol(mongoErrorContextSymbol)]: {}
+}]
+    at Pool.<anonymous> (D:\工作\freelog-resource-provider\node_modules\mongodb\lib\core\topologies\server.js:433:11)
+    at Pool.emit (events.js:210:5)
+    at D:\工作\freelog-resource-provider\node_modules\mongodb\lib\core\connection\pool.js:571:14
+    at D:\工作\freelog-resource-provider\node_modules\mongodb\lib\core\connection\pool.js:994:11
+    at D:\工作\freelog-resource-provider\node_modules\mongodb\lib\core\connection\connect.js:40:11
+    at callback (D:\工作\freelog-resource-provider\node_modules\mongodb\lib\core\connection\connect.js:262:5)
+    at Socket.<anonymous> (D:\工作\freelog-resource-provider\node_modules\mongodb\lib\core\connection\connect.js:287:7)
+    at Object.onceWrapper (events.js:300:26)
+    at Socket.emit (events.js:210:5)
+    at emitErrorNT (internal/streams/destroy.js:92:8)
+    at emitErrorAndCloseNT (internal/streams/destroy.js:60:3)
+    at processTicksAndRejections (internal/process/task_queues.js:80:21)
+name: "MongoNetworkError"
+pid: 18808
+hostname: yuliang
+
+2019-12-17 17:56:27,223 ERROR 7272 [egg-freelog-mongoose] mongodb://119.23.45.143:27018/resource disconnected
+2019-12-17 17:56:27,234 ERROR 7272 nodejs.MongoNetworkError: read ECONNRESET (uncaughtException throw 1 times on pid:7272)
+    at TCP.onStreamRead (internal/stream_base_commons.js:201:27)
+name: "MongoNetworkError"
+pid: 7272
+hostname: yuliang
+
+2019-12-17 17:56:27,247 ERROR 7272 nodejs.MongoNetworkError: read ECONNRESET (uncaughtException throw 2 times on pid:7272)
+    at TCP.onStreamRead (internal/stream_base_commons.js:201:27)
+name: "MongoNetworkError"
+pid: 7272
+hostname: yuliang
+
+2019-12-17 17:56:27,248 ERROR 7272 nodejs.MongoNetworkError: read ECONNRESET (uncaughtException throw 3 times on pid:7272)
+    at TCP.onStreamRead (internal/stream_base_commons.js:201:27)
+name: "MongoNetworkError"
+pid: 7272
+hostname: yuliang
+
+2019-12-18 17:46:09,297 ERROR 11016 [egg-freelog-mongoose] mongodb://119.23.45.143:27018/resource disconnected
+2019-12-18 17:46:09,295 ERROR 13344 [egg-freelog-mongoose] mongodb://119.23.45.143:27018/resource disconnected
+2019-12-18 17:46:09,300 ERROR 13344 nodejs.MongoNetworkError: read ECONNRESET (uncaughtException throw 1 times on pid:13344)
+    at TCP.onStreamRead (internal/stream_base_commons.js:201:27)
+name: "MongoNetworkError"
+pid: 13344
+hostname: yuliang
+
+2019-12-18 17:46:09,305 ERROR 13344 nodejs.MongoNetworkError: read ECONNRESET (uncaughtException throw 2 times on pid:13344)
+    at TCP.onStreamRead (internal/stream_base_commons.js:201:27)
+name: "MongoNetworkError"
+pid: 13344
+hostname: yuliang
+
+2019-12-18 17:46:09,306 ERROR 13344 nodejs.MongoNetworkError: read ECONNRESET (uncaughtException throw 3 times on pid:13344)
+    at TCP.onStreamRead (internal/stream_base_commons.js:201:27)
+name: "MongoNetworkError"
+pid: 13344
+hostname: yuliang
+

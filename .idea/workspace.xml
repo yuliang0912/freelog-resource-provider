@@ -1,0 +1,1006 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BookmarkManager">
+    <bookmark url="file://$PROJECT_DIR$/package.json" line="14" />
+    <bookmark url="file://$PROJECT_DIR$/app/controller/release-scheme/v1.js" line="27" />
+    <bookmark url="file://$PROJECT_DIR$/Dockerfile-aliyun" line="10" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d10c22ba-4051-4260-9194-0e66c10fedf0" name="默认的" comment="" />
+    <ignored path="$PROJECT_DIR$/.tmp/" />
+    <ignored path="$PROJECT_DIR$/temp/" />
+    <ignored path="$PROJECT_DIR$/tmp/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="freelog-resource-provider" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="temporary-upload-file-service.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/service/temporary-upload-file-service.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="357">
+              <caret line="34" column="22" selection-start-line="34" selection-start-column="12" selection-end-line="34" selection-end-column="22" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="resource-service.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/service/resource-service.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="538">
+              <caret line="47" column="9" lean-forward="true" selection-start-line="47" selection-start-column="9" selection-end-line="47" selection-end-column="9" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="v1.js" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/controller/resource/v1.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="650">
+              <caret line="277" column="107" selection-start-line="277" selection-start-column="107" selection-end-line="277" selection-end-column="107" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="release-info.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/release-info.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="324">
+              <caret line="42" column="57" lean-forward="true" selection-start-line="42" selection-start-column="57" selection-end-line="42" selection-end-column="57" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="temporary-upload-file-info.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/temporary-upload-file-info.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-155" />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="resource-info.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/resource-info.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="432">
+              <caret line="22" column="57" lean-forward="true" selection-start-line="22" selection-start-column="57" selection-end-line="22" selection-end-column="57" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="collection.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/collection.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="655">
+              <caret line="31" column="37" selection-start-line="31" selection-start-column="27" selection-end-line="31" selection-end-column="37" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="release-scheme.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/release-scheme.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="135">
+              <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="mock-resource.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/mock-resource.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="249">
+              <caret line="25" column="18" lean-forward="true" selection-start-line="25" selection-start-column="18" selection-end-line="25" selection-end-column="18" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="mock-resource-bucket.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/model/mock-resource-bucket.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="222">
+              <caret line="16" column="47" lean-forward="true" selection-start-line="16" selection-start-column="47" selection-end-line="16" selection-end-column="47" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CSS File" />
+        <option value="tsconfig.json" />
+        <option value="HTML File" />
+        <option value="TypeScript File" />
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>schemeId</find>
+      <find>_getReleaseSchemesFormDependencyTree</find>
+      <find>releaseSchemeMap</find>
+      <find>releaseSchemePro</find>
+      <find>de</find>
+      <find>list</find>
+      <find>.id</find>
+      <find>cycleDependCheck</find>
+      <find>5dd3a86fd69cf7002bdbd9d9</find>
+      <find>detail</find>
+      <find>rebu</find>
+      <find>rebuildSchemeId</find>
+      <find>isMock</find>
+      <find>staticCache</find>
+      <find>temporaryUploadFileProvider</find>
+      <find>custom</find>
+      <find>new aliOss</find>
+      <find>signedResourceInfo</find>
+      <find>agg</find>
+      <find>userId</find>
+      <find>isExis</find>
+      <find>upload</find>
+      <find>cs</find>
+      <find>$inc</find>
+      <find>findOneAndUpdate</find>
+      <find>cop</find>
+      <find>schema</find>
+      <find>ReleasePolicyValidator</find>
+      <find>aggregate</find>
+      <find>customMimeType</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>controller</replace>
+      <replace>ctx.dal</replace>
+      <replace>Statements</replace>
+      <replace>tatement</replace>
+      <replace>collection</replace>
+      <replace>authSchemeInfoMap</replace>
+      <replace>this.resourceProvider</replace>
+      <replace>this</replace>
+      <replace>:'',</replace>
+      <replace>-</replace>
+      <replace>not-found</replace>
+      <replace>mockResource</replace>
+      <replace>temporaryUploadFileProvider</replace>
+      <replace>module.exports.</replace>
+      <replace>ResolveReleaseSchema</replace>
+      <replace>true</replace>
+    </replaceStrings>
+    <dirStrings>
+      <dir>D:\工作\freelog-resource-provider\node_modules\knex</dir>
+      <dir>D:\工作\freelog-resource-provider</dir>
+    </dirStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="development" />
+      </map>
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/app/extend/json-schema/resource-info-validator.js" />
+        <option value="$PROJECT_DIR$/app/extend/resource-file-check/index.js" />
+        <option value="$PROJECT_DIR$/config/locale/zh-CN.js" />
+        <option value="$PROJECT_DIR$/app/model/mock-resource.js" />
+        <option value="$PROJECT_DIR$/app/event-handler/update-mock-file-event-handler.js" />
+        <option value="$PROJECT_DIR$/app/service/temporary-upload-file-service.js" />
+        <option value="$PROJECT_DIR$/app/data-provider/temporary-upload-file-provider.js" />
+        <option value="$PROJECT_DIR$/app/model/resource-info.js" />
+        <option value="$PROJECT_DIR$/app/service/resource-service.js" />
+        <option value="$PROJECT_DIR$/app/model/release-scheme-contract-relation.ts" />
+        <option value="$PROJECT_DIR$/app/model/release-scheme-contract-relation.js" />
+        <option value="$PROJECT_DIR$/app/model/release-scheme-depend-relation.js" />
+        <option value="$PROJECT_DIR$/../freelog-auth-provider/app/model/release-scheme-contract-relation.js" />
+        <option value="$PROJECT_DIR$/app/enum/rabbit-mq-event.js" />
+        <option value="$PROJECT_DIR$/app/mq-service/index.js" />
+        <option value="$PROJECT_DIR$/app/mq-service/startup.js" />
+        <option value="$PROJECT_DIR$/app/extend/application.js" />
+        <option value="$PROJECT_DIR$/app/schedule/release-auth-job.js" />
+        <option value="$PROJECT_DIR$/app/event-handler/sign-release-contract-event-handler.js" />
+        <option value="$PROJECT_DIR$/app/enum/resource-events.js" />
+        <option value="$PROJECT_DIR$/app/event-handler/app-events-listener.js" />
+        <option value="$PROJECT_DIR$/app/event-handler/create-scheme-event-handler.js" />
+        <option value="$PROJECT_DIR$/app/event-handler/release-scheme-bind-contract-event-handler.js" />
+        <option value="$PROJECT_DIR$/app/schedule/clear-expired-upload-file.js" />
+        <option value="$PROJECT_DIR$/app/controller/mock-resource-bucket/v1.js" />
+        <option value="$PROJECT_DIR$/Dockerfile-aliyun" />
+        <option value="$PROJECT_DIR$/package.json" />
+        <option value="$PROJECT_DIR$/app/service/mock-resource-service.js" />
+        <option value="$PROJECT_DIR$/app/service/release-service.js" />
+        <option value="$PROJECT_DIR$/app/controller/release-scheme/v1.js" />
+        <option value="$PROJECT_DIR$/app/model/release-scheme.js" />
+        <option value="$PROJECT_DIR$/app/service/release-scheme-service.js" />
+        <option value="$PROJECT_DIR$/index.js" />
+        <option value="$PROJECT_DIR$/app/model/collection.js" />
+        <option value="$PROJECT_DIR$/node_modules/egg-freelog-database/lib/database/mongoose.js" />
+        <option value="$PROJECT_DIR$/app/public/1.txt" />
+        <option value="$PROJECT_DIR$/app/router.js" />
+        <option value="$PROJECT_DIR$/config/config.prod.js" />
+        <option value="$PROJECT_DIR$/config/config.test.js" />
+        <option value="$PROJECT_DIR$/config/locale/en-US.js" />
+        <option value="$PROJECT_DIR$/app/controller/temporary-file/v1.js" />
+        <option value="$PROJECT_DIR$/node_modules/egg-freelog-base/app/extend/file-oss/aliyun-oss.js" />
+        <option value="$PROJECT_DIR$/config/config.default.js" />
+        <option value="$PROJECT_DIR$/app/controller/collection/v1.js" />
+        <option value="$PROJECT_DIR$/app/controller/mock-resource/v1.js" />
+        <option value="$PROJECT_DIR$/app/data-provider/release-provider.js" />
+        <option value="$PROJECT_DIR$/config/config.local.js" />
+        <option value="$PROJECT_DIR$/app/controller/release/v1.js" />
+        <option value="$PROJECT_DIR$/app/extend/json-schema/release-policy-validator.js" />
+        <option value="$PROJECT_DIR$/app.js" />
+        <option value="$PROJECT_DIR$/app/controller/resource/v1.js" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER">
+    <package-json value="$PROJECT_DIR$/package.json" />
+  </component>
+  <component name="JsFlowSettings">
+    <service-enabled>true</service-enabled>
+    <exe-path />
+    <other-services-enabled>true</other-services-enabled>
+    <auto-save>true</auto-save>
+  </component>
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="NodePackageJsonFileManager">
+    <packageJsonPaths>
+      <path value="$PROJECT_DIR$/package.json" />
+    </packageJsonPaths>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="freelog-resource-provider" type="b2602c69:ProjectViewProjectNode" />
+              <item name="freelog-resource-provider" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="freelog-resource-provider" type="b2602c69:ProjectViewProjectNode" />
+              <item name="freelog-resource-provider" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="freelog-resource-provider" type="b2602c69:ProjectViewProjectNode" />
+              <item name="freelog-resource-provider" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="controller" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="freelog-resource-provider" type="b2602c69:ProjectViewProjectNode" />
+              <item name="freelog-resource-provider" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="controller" type="462c0819:PsiDirectoryNode" />
+              <item name="collection" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="freelog-resource-provider" type="b2602c69:ProjectViewProjectNode" />
+              <item name="freelog-resource-provider" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="controller" type="462c0819:PsiDirectoryNode" />
+              <item name="resource" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="freelog-resource-provider" type="b2602c69:ProjectViewProjectNode" />
+              <item name="freelog-resource-provider" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="model" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
+    <property name="HbShouldOpenHtmlAsHb" value="" />
+    <property name="JavaScriptWeakerCompletionTypeGuess" value="true" />
+    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file://D:/工作/freelog-resource-provider/app/controller/resource/v1.js" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="editorconfig.notification" value="off" />
+    <property name="javascript.nodejs.core.library.configured.version" value="8.11.3" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="list.type.of.created.stylesheet" value="CSS" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.standard" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.standard" value="project" />
+    <property name="node.js.selected.package.eslint" value="" />
+    <property name="node.js.selected.package.standard" value="D:\工作\freelog-identity-provider\node_modules\eslint" />
+    <property name="nodejs_interpreter_path" value="node" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="JavaScript.Libraries" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\工作\freelog-resource-provider\app\extend\resource-file-check" />
+      <recent name="D:\工作\freelog-resource-provider\app\extend\resource-file-check\implement" />
+      <recent name="D:\工作\freelog-resource-provider\app\public" />
+      <recent name="D:\工作\freelog-resource-provider\app\controller" />
+      <recent name="D:\工作\freelog-resource-provider\app\extend" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\工作\freelog-resource-provider\app" />
+      <recent name="D:\工作\freelog-resource-provider\app\extend" />
+      <recent name="D:\工作\freelog-resource-provider\app\enum" />
+      <recent name="D:\工作\freelog-resource-provider\app\service" />
+      <recent name="D:\工作\freelog-resource-provider\app\extend\resource-attribute-check" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Node.js.index.js">
+    <configuration name="auth.js" type="NodeJSConfigurationType" factoryName="Node.js" temporary="true" nameIsGenerated="true" path-to-js-file="auth.js" working-dir="$PROJECT_DIR$/test" />
+    <configuration name="index.js" type="NodeJSConfigurationType" factoryName="Node.js" temporary="true" path-to-js-file="index.js" working-dir="$PROJECT_DIR$" />
+    <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
+    </configuration>
+    <list>
+      <item itemvalue="Node.js.index.js" />
+      <item itemvalue="Node.js.auth.js" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Node.js.index.js" />
+        <item itemvalue="Node.js.auth.js" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d10c22ba-4051-4260-9194-0e66c10fedf0" name="默认的" comment="" />
+      <created>1498791992665</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1498791992665</updated>
+      <workItem from="1498791993844" duration="20900000" />
+      <workItem from="1499047624132" duration="3088000" />
+      <workItem from="1499054214119" duration="19476000" />
+      <workItem from="1499133018963" duration="26840000" />
+      <workItem from="1499218614716" duration="27170000" />
+      <workItem from="1500514144576" duration="26516000" />
+      <workItem from="1500601670445" duration="19452000" />
+      <workItem from="1500861988637" duration="24669000" />
+      <workItem from="1500947526301" duration="19275000" />
+      <workItem from="1501033771645" duration="48920000" />
+      <workItem from="1501466224964" duration="11666000" />
+      <workItem from="1501662940240" duration="2132000" />
+      <workItem from="1502076043839" duration="40656000" />
+      <workItem from="1502330261806" duration="20323000" />
+      <workItem from="1502434167737" duration="9958000" />
+      <workItem from="1502675531220" duration="72477000" />
+      <workItem from="1503040027137" duration="7000" />
+      <workItem from="1503306898764" duration="39000" />
+      <workItem from="1503391794012" duration="1107000" />
+      <workItem from="1503540315750" duration="2719000" />
+      <workItem from="1503628071049" duration="40319000" />
+      <workItem from="1504490426000" duration="699000" />
+      <workItem from="1505456107215" duration="2755000" />
+      <workItem from="1505460965160" duration="36000" />
+      <workItem from="1505461043046" duration="752000" />
+      <workItem from="1505974838667" duration="614000" />
+      <workItem from="1506305119889" duration="20929000" />
+      <workItem from="1507529678230" duration="697000" />
+      <workItem from="1507688216935" duration="31423000" />
+      <workItem from="1508120880036" duration="8894000" />
+      <workItem from="1508205430674" duration="13026000" />
+      <workItem from="1508399515707" duration="8455000" />
+      <workItem from="1508724450221" duration="17918000" />
+      <workItem from="1508810465961" duration="14033000" />
+      <workItem from="1508898001591" duration="28000" />
+      <workItem from="1508910495701" duration="27633000" />
+      <workItem from="1509090077677" duration="38000" />
+      <workItem from="1509090143148" duration="22000" />
+      <workItem from="1509090190270" duration="101000" />
+      <workItem from="1509090316780" duration="114000" />
+      <workItem from="1509090455796" duration="356000" />
+      <workItem from="1509520593292" duration="2713000" />
+      <workItem from="1509675904856" duration="3664000" />
+      <workItem from="1509934102267" duration="196000" />
+      <workItem from="1509936809361" duration="6021000" />
+      <workItem from="1509952545172" duration="9444000" />
+      <workItem from="1510557811696" duration="1517000" />
+      <workItem from="1510646916739" duration="3233000" />
+      <workItem from="1510713725122" duration="1521000" />
+      <workItem from="1510801010051" duration="21669000" />
+      <workItem from="1511144441701" duration="5249000" />
+      <workItem from="1511235755420" duration="3082000" />
+      <workItem from="1511423559836" duration="97000" />
+      <workItem from="1511749401726" duration="3799000" />
+      <workItem from="1511765434846" duration="659000" />
+      <workItem from="1511834993768" duration="162000" />
+      <workItem from="1511922003079" duration="4340000" />
+      <workItem from="1513244352679" duration="142000" />
+      <workItem from="1513566361925" duration="116000" />
+      <workItem from="1513583825126" duration="3740000" />
+      <workItem from="1513754263374" duration="3434000" />
+      <workItem from="1514190599792" duration="910000" />
+      <workItem from="1514341256788" duration="67000" />
+      <workItem from="1515052397872" duration="2326000" />
+      <workItem from="1515478873166" duration="150000" />
+      <workItem from="1515479043497" duration="2252000" />
+      <workItem from="1515486524841" duration="2658000" />
+      <workItem from="1515747565739" duration="1305000" />
+      <workItem from="1516009141395" duration="289000" />
+      <workItem from="1516071920173" duration="4013000" />
+      <workItem from="1516243097282" duration="1306000" />
+      <workItem from="1516351637856" duration="6565000" />
+      <workItem from="1516760030109" duration="3348000" />
+      <workItem from="1516845135428" duration="72416000" />
+      <workItem from="1517813409897" duration="5578000" />
+      <workItem from="1517897192778" duration="2539000" />
+      <workItem from="1517908657863" duration="12751000" />
+      <workItem from="1519785394614" duration="4900000" />
+      <workItem from="1520301336463" duration="730000" />
+      <workItem from="1520392419333" duration="3328000" />
+      <workItem from="1520408228982" duration="753000" />
+      <workItem from="1520488509575" duration="2244000" />
+      <workItem from="1520564120212" duration="13314000" />
+      <workItem from="1521079545175" duration="1485000" />
+      <workItem from="1521081820679" duration="2083000" />
+      <workItem from="1521105478665" duration="4025000" />
+      <workItem from="1521424996211" duration="165950000" />
+      <workItem from="1523168028608" duration="52185000" />
+      <workItem from="1523497109390" duration="43947000" />
+      <workItem from="1524044678245" duration="223451000" />
+      <workItem from="1526003375634" duration="90051000" />
+      <workItem from="1526525365911" duration="504000" />
+      <workItem from="1526526080058" duration="202000" />
+      <workItem from="1527740855247" duration="3008000" />
+      <workItem from="1527818068675" duration="30603000" />
+      <workItem from="1528681843613" duration="15079000" />
+      <workItem from="1528859119325" duration="2414000" />
+      <workItem from="1528940539075" duration="1300000" />
+      <workItem from="1528956069275" duration="110972000" />
+      <workItem from="1530080073582" duration="41481000" />
+      <workItem from="1530686561684" duration="7884000" />
+      <workItem from="1530697162416" duration="8398000" />
+      <workItem from="1531102028098" duration="9203000" />
+      <workItem from="1531214914531" duration="4780000" />
+      <workItem from="1531302328560" duration="1068000" />
+      <workItem from="1531473557502" duration="8385000" />
+      <workItem from="1531734369310" duration="6342000" />
+      <workItem from="1532415155155" duration="2568000" />
+      <workItem from="1532484558865" duration="6344000" />
+      <workItem from="1533272491068" duration="710000" />
+      <workItem from="1533278459307" duration="3490000" />
+      <workItem from="1533621162204" duration="425000" />
+      <workItem from="1533692957906" duration="183000" />
+      <workItem from="1534217658307" duration="609000" />
+      <workItem from="1534227296139" duration="64000" />
+      <workItem from="1534411296143" duration="730000" />
+      <workItem from="1534995246180" duration="16071000" />
+      <workItem from="1535944791697" duration="216000" />
+      <workItem from="1536222253169" duration="1379000" />
+      <workItem from="1536289502621" duration="1159000" />
+      <workItem from="1536559695964" duration="7952000" />
+      <workItem from="1536803485129" duration="1348000" />
+      <workItem from="1537235621744" duration="1274000" />
+      <workItem from="1537321090808" duration="4363000" />
+      <workItem from="1538985717031" duration="17672000" />
+      <workItem from="1539222669516" duration="89342000" />
+      <workItem from="1542246523504" duration="12249000" />
+      <workItem from="1542696971274" duration="9623000" />
+      <workItem from="1542851787362" duration="40700000" />
+      <workItem from="1544148933850" duration="20152000" />
+      <workItem from="1544752808130" duration="14069000" />
+      <workItem from="1545357922911" duration="61930000" />
+      <workItem from="1547086437965" duration="66046000" />
+      <workItem from="1549937583231" duration="31676000" />
+      <workItem from="1550109828561" duration="44310000" />
+      <workItem from="1550628186511" duration="197770000" />
+      <workItem from="1552528549158" duration="357408000" />
+      <workItem from="1554947830196" duration="116353000" />
+      <workItem from="1555655209454" duration="1693000" />
+      <workItem from="1555657825336" duration="21748000" />
+      <workItem from="1555985396124" duration="205697000" />
+      <workItem from="1557971984980" duration="176011000" />
+      <workItem from="1560390656245" duration="46958000" />
+      <workItem from="1561099223013" duration="109191000" />
+      <workItem from="1563156359303" duration="19340000" />
+      <workItem from="1563328863503" duration="109007000" />
+      <workItem from="1565684305759" duration="29850000" />
+      <workItem from="1566180530717" duration="93245000" />
+      <workItem from="1568253774395" duration="10253000" />
+      <workItem from="1568625290889" duration="840000" />
+      <workItem from="1568690450440" duration="3393000" />
+      <workItem from="1568772260029" duration="20938000" />
+      <workItem from="1570501973962" duration="1203000" />
+      <workItem from="1570513308669" duration="1678000" />
+      <workItem from="1570601358635" duration="599000" />
+      <workItem from="1570673074322" duration="23336000" />
+      <workItem from="1573544927623" duration="3222000" />
+      <workItem from="1573696893727" duration="16298000" />
+      <workItem from="1574301518859" duration="5507000" />
+      <workItem from="1574388676380" duration="599000" />
+      <workItem from="1574647414187" duration="36625000" />
+      <workItem from="1575252204447" duration="53527000" />
+      <workItem from="1576115902003" duration="10931000" />
+      <workItem from="1576547266237" duration="56938000" />
+      <workItem from="1577434043028" duration="1226000" />
+      <workItem from="1577671360443" duration="4039000" />
+      <workItem from="1577950089196" duration="3561000" />
+      <workItem from="1578276209566" duration="4088000" />
+      <workItem from="1579333534076" duration="643000" />
+      <workItem from="1585028103692" duration="2322000" />
+      <workItem from="1585100756235" duration="106000000" />
+      <workItem from="1587002321135" duration="18779000" />
+      <workItem from="1587524421251" duration="17437000" />
+      <workItem from="1587867654117" duration="33676000" />
+      <workItem from="1588731390357" duration="12960000" />
+      <workItem from="1589509585862" duration="7016000" />
+      <workItem from="1589767991830" duration="4842000" />
+      <workItem from="1590030255848" duration="13712000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="4161448000" />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.6113903" visible="true" weight="0.19556025" />
+      <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4978903" weight="0.32741398" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.3668076" side_tool="true" weight="0.3407325" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4947146" weight="0.34406215" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.10099889" />
+      <window_info id="npm" order="2" side_tool="true" />
+      <window_info id="Structure" order="1" sideWeight="0.3886097" side_tool="true" weight="0.18604651" />
+      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.63319236" weight="0.2563818" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.19866815" />
+      <window_info id="Favorites" order="2" sideWeight="0.19950125" side_tool="true" weight="0.20749736" />
+      <window_info anchor="bottom" id="TypeScript" order="7" weight="0.32963374" />
+      <window_info active="true" anchor="bottom" id="Salesforce" order="8" visible="true" weight="0.32928178" />
+      <window_info anchor="bottom" id="找到" order="7" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="Tool Output" order="7" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info active="true" anchor="bottom" id="运行" order="7" sideWeight="0.4957806" visible="true" weight="0.40220994" />
+      <window_info anchor="bottom" id="Debug Logs" order="8" />
+      <window_info anchor="bottom" id="ANTLR Preview" order="7" />
+      <window_info anchor="right" id="层次结构" order="3" weight="0.32959402" />
+      <window_info anchor="bottom" id="Execute Anonymous" order="8" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="调试" order="7" weight="0.32969433" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.14539401" />
+      <window_info anchor="bottom" id="Messages" order="7" />
+    </layout>
+    <layout-to-restore>
+      <window_info active="true" anchor="bottom" id="Salesforce" order="18" visible="true" weight="0.32928178" />
+      <window_info anchor="bottom" id="找到" order="7" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Docker" order="8" show_stripe_button="false" />
+      <window_info id="npm" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Version Control" order="14" weight="0.19977802" />
+      <window_info anchor="bottom" id="Tool Output" order="9" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.8007472" visible="true" weight="0.16067654" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4978903" weight="0.32741398" />
+      <window_info anchor="bottom" id="TypeScript" order="10" weight="0.32963374" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49524313" visible="true" weight="0.13762486" />
+      <window_info active="true" anchor="bottom" id="运行" order="11" sideWeight="0.4957806" visible="true" weight="0.40220994" />
+      <window_info anchor="bottom" id="Debug Logs" order="19" />
+      <window_info anchor="bottom" id="ANTLR Preview" order="16" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.19866815" />
+      <window_info anchor="bottom" id="Execute Anonymous" order="20" />
+      <window_info anchor="bottom" id="Terminal" order="12" sideWeight="0.4978903" weight="0.27413985" />
+      <window_info anchor="bottom" id="Event Log" order="13" sideWeight="0.50475687" side_tool="true" weight="0.3673696" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.30077693" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="调试" order="15" weight="0.32969433" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Messages" order="17" />
+      <window_info anchor="right" id="层次结构" order="3" weight="0.32959402" />
+      <window_info id="Favorites" order="3" sideWeight="0.19950125" side_tool="true" weight="0.20749736" />
+    </layout-to-restore>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <option name="time" value="29" />
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/app/public/1.txt" />
+    <entry file="file://$PROJECT_DIR$/Dockerfile-test">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="405">
+          <caret line="15" selection-start-line="15" selection-end-line="16" selection-end-column="78" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/config.preview.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Temp/专业股票配资，1至10倍利息低至0.6%.url" />
+    <entry file="file://$PROJECT_DIR$/资源体系.md">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/授权方案.md">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="486">
+          <caret line="18" selection-start-line="18" selection-end-line="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/helper/rabbit_mq_client.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/egg-cluster/lib/master.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="192">
+          <caret line="355" column="40" lean-forward="true" selection-start-line="355" selection-start-column="40" selection-end-line="355" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/egg-freelog-base/app/extend/file-oss/aliyun-oss.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="351">
+          <caret line="19" column="30" selection-start-line="19" selection-start-column="30" selection-end-line="19" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/plugin.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="108">
+          <caret line="4" column="34" lean-forward="true" selection-start-line="4" selection-start-column="14" selection-end-line="4" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/data-provider/release-provider.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="6" column="22" selection-start-line="6" selection-start-column="22" selection-end-line="6" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/data-provider/collection-provider.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="621">
+          <caret line="23" column="10" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/locale/zh-CN.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/locale/en-US.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1458">
+          <caret line="18" column="43" lean-forward="true" selection-start-line="18" selection-start-column="43" selection-end-line="18" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/egg-freelog-base/app/extend/validate.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="358">
+          <caret line="216" column="42" selection-start-line="216" selection-start-column="42" selection-end-line="216" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/egg-freelog-base/app/extend/helper/common_regex.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="654">
+          <caret line="105" column="4" selection-start-line="105" selection-start-column="4" selection-end-line="105" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/egg-core/index.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="12" column="2" lean-forward="true" selection-start-line="12" selection-start-column="2" selection-end-line="12" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/router.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="268">
+          <caret line="25" column="102" selection-start-line="25" selection-start-column="102" selection-end-line="25" selection-end-column="102" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/mock-resource-bucket/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="25" column="5" lean-forward="true" selection-start-line="25" selection-start-column="5" selection-end-line="25" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/egg-freelog-base/app/extend/application.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="66" column="6" lean-forward="true" selection-start-line="66" selection-start-column="6" selection-end-line="66" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/temporary-file/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="520">
+          <caret line="20" column="45" lean-forward="true" selection-start-line="20" selection-start-column="45" selection-end-line="20" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/json-schema/release-policy-validator.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="48" column="28" lean-forward="true" selection-start-line="48" selection-start-column="28" selection-end-line="48" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/helper.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="304">
+          <caret line="21" column="26" lean-forward="true" selection-start-line="21" selection-start-column="26" selection-end-line="21" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/resource-file-check/implement/pb-file-check.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="223">
+          <caret line="37" column="45" selection-start-line="37" selection-start-column="45" selection-end-line="37" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/resource-file-check/fileCheckBase.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="14" column="7" lean-forward="true" selection-start-line="14" selection-start-column="7" selection-end-line="14" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/resource-file-check/index.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="49" column="13" lean-forward="true" selection-start-line="49" selection-start-column="13" selection-end-line="49" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/extend/resource-file-check/implement/image-file-check.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="675">
+          <caret line="25" column="54" selection-start-line="25" selection-start-column="54" selection-end-line="25" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="351">
+          <caret line="13" column="10" selection-start-line="13" selection-start-column="10" selection-end-line="13" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/mock-resource/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2160">
+          <caret line="80" selection-start-line="80" selection-end-line="80" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/config.local.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="459">
+          <caret line="17" selection-start-line="17" selection-end-line="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/config.test.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="12" column="6" selection-start-line="8" selection-start-column="4" selection-end-line="12" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/config.prod.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="12" column="19" selection-start-line="12" selection-start-column="19" selection-end-line="12" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/config.default.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1026">
+          <caret line="38" column="61" selection-start-line="38" selection-start-column="37" selection-end-line="38" selection-end-column="61" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="648">
+          <caret line="24" column="25" lean-forward="true" selection-start-line="24" selection-start-column="25" selection-end-line="24" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/collection/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3526">
+          <caret line="166" column="22" lean-forward="true" selection-start-line="166" selection-start-column="22" selection-end-line="166" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/release/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-5879">
+          <caret line="112" column="33" lean-forward="true" selection-start-line="112" selection-start-column="33" selection-end-line="112" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/release-scheme/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="66" column="29" selection-start-line="66" selection-start-column="14" selection-end-line="66" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/service/mock-resource-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="567">
+          <caret line="51" lean-forward="true" selection-start-line="51" selection-end-line="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/service/release-scheme-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="412">
+          <caret line="225" lean-forward="true" selection-start-line="225" selection-end-line="225" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/service/release-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="27">
+          <caret line="391" column="13" lean-forward="true" selection-start-line="391" selection-start-column="13" selection-end-line="391" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/schedule/clear-expired-upload-file.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="5" lean-forward="true" selection-start-line="5" selection-end-line="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/release-scheme.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/resource-info.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="22" column="57" lean-forward="true" selection-start-line="22" selection-start-column="57" selection-end-line="22" selection-end-column="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/mock-resource.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="249">
+          <caret line="25" column="18" lean-forward="true" selection-start-line="25" selection-start-column="18" selection-end-line="25" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/mock-resource-bucket.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="222">
+          <caret line="16" column="47" lean-forward="true" selection-start-line="16" selection-start-column="47" selection-end-line="16" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/collection.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="655">
+          <caret line="31" column="37" selection-start-line="31" selection-start-column="27" selection-end-line="31" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/release-info.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="42" column="57" lean-forward="true" selection-start-line="42" selection-start-column="57" selection-end-line="42" selection-end-column="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/model/temporary-upload-file-info.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-155" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/service/temporary-upload-file-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="34" column="22" selection-start-line="34" selection-start-column="12" selection-end-line="34" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/service/resource-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="538">
+          <caret line="47" column="9" lean-forward="true" selection-start-line="47" selection-start-column="9" selection-end-line="47" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/controller/resource/v1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="650">
+          <caret line="277" column="107" selection-start-line="277" selection-start-column="107" selection-end-line="277" selection-end-column="107" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

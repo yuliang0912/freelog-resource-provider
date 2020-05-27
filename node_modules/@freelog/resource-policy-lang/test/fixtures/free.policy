@@ -1,0 +1,4 @@
+for NODES:
+    initial:
+        active
+        terminate
