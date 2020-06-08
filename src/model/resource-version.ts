@@ -10,11 +10,11 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
 
         // 自定义属性描述器主要面向继承者,例如展品需要对资源中的自定义属性进行编辑
         const CustomPropertyDescriptorScheme = new this.mongoose.Schema({
-            name: {type: String, required: true}, // 对外显示的名称
             key: {type: String, required: true},
             defaultValue: {type: this.mongoose.Schema.Types.Mixed, required: true},
-            type: {type: String, required: true}, // 类型目前分为: 可编辑文本框,不可编辑文本框,单选框,多选框,下拉选择框
+            type: {type: String, required: true, enum: ['editableText', 'readonlyText', 'radio', 'checkbox', 'select']}, // 类型目前分为: 可编辑文本框,不可编辑文本框,单选框,多选框,下拉选择框
             candidateItems: {type: [String], required: false}, // 选项列表
+            remark: {type: String, required: false, default: ''}, // 对外显示的名称
         }, {_id: false});
 
         // 把依赖单独从systemMeta提取出来,是因为依赖作为一个通用的必备项,因为失去了就版本的资源实体.由版本作为主要的信息承载体
@@ -73,7 +73,7 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
         resourceVersionScheme.index({fileSha1: 1, userId: 1});
 
         resourceVersionScheme.virtual('customProperties').get(function (this: any) {
-            if (!Array.isArray(this.customPropertyDescriptors) || !this.customMetaDescriptor.length) {
+            if (!Array.isArray(this.customPropertyDescriptors) || !this.customPropertyDescriptors.length) {
                 return [];
             }
             return this.customPropertyDescriptors.map(({name, key, defaultValue}) => {
@@ -88,7 +88,7 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
         return {
             getters: true,
             transform(doc, ret) {
-                return omit(ret, ['_id']);
+                return omit(ret, ['_id', 'id']);
             }
         };
     }

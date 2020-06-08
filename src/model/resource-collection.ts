@@ -18,7 +18,7 @@ export class ResourceCollectionModel extends MongooseModelBase implements IMongo
             status: {type: Number, default: 0, required: true} // 0:正常
         }, {
             versionKey: false,
-            timestamps: {createdAt: 'createDate'},
+            timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
             toJSON: ResourceCollectionModel.toObjectOptions,
             toObject: ResourceCollectionModel.toObjectOptions
         });

@@ -8,30 +8,39 @@ export interface CreateResourceOptions {
     intro?: string;
     policies?: object[];
     coverImages?: string[];
+    tags?: string[];
 }
 
 export interface UpdateResourceOptions {
     resourceId: string;
     intro?: string;
     coverImages?: [string];
+    tags?: string[];
     policyChangeInfo?: object; //策略变动信息,包括add.remove,update等
 }
 
 export interface CreateResourceVersionOptions {
     version: string;
+    versionId: string;
     fileSha1: string;
+    fileSize: number;
+    fileUrl: string;
     description: string;
-    dependencies?: [object];
-    upcastResources?: [object];
-    resolveResources?: [object];
-    customPropertyDescriptors?: [object];
+    dependencies?: BaseResourceInfo[];
+    baseUpcastResources?: BaseResourceInfo[];
+    resolveResources?: object[];
+    customPropertyDescriptors?: object[];
+}
+
+export interface UpdateResourceVersionOptions {
+    resolveResources?: object[];
+    description?: string;
+    customPropertyDescriptors?: object[];
 }
 
 export interface GetResourceDependencyOrAuthTreeOptions {
-    resourceId: string;
     maxDeep?: number;
-    version?: string;
-    omitFields?: [string];
+    omitFields?: string[];
     isContainRootNode?: boolean;
 }
 
@@ -48,9 +57,17 @@ export interface ResourceInfo {
     policies?: object[];
     uniqueKey?: string;
     status: number;
+    latestVersion?: object;
+    tags?: string[];
 }
 
-export interface ResourceVersion {
+export interface BaseResourceInfo {
+    resourceId: string;
+    resourceName?: string;
+    versionRange?: string;
+}
+
+export interface ResourceVersionInfo {
     resourceId: string;
     resourceName: string;
     userId: number;
@@ -59,28 +76,40 @@ export interface ResourceVersion {
     resourceType: string;
     fileSha1: string;
     description?: string;
-    upcastResources?: [object];
-    resolveResources?: [object];
-    systemProperties?: [object];
-    customPropertyDescriptors?: [object];
+    dependencies: BaseResourceInfo[];
+    upcastResources?: BaseResourceInfo[];
+    resolveResources?: object[];
+    systemProperties?: object [];
+    customPropertyDescriptors?: object[];
     status: number;
+}
+
+export interface CollectionResourceInfo {
+    resourceId: string;
+    resourceName: string;
+    resourceType: string;
+    userId: number;
+    authorId: number;
+    authorName: string;
 }
 
 /**
  * 针对object做校验的基础接口
  */
 export interface IJsonSchemaValidate {
-    validate(instance: object[] | object): ValidatorResult;
+    validate(instance: object[] | object, ...args): ValidatorResult;
 }
 
 export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
 
-    createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersion>;
-
     updateResource(options: UpdateResourceOptions): Promise<ResourceInfo>;
 
-    getResourceDependencyTree(options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
+    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
+
+    getResourceAuthTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<object[]>;
+
+    findByResourceId(resourceId: string): Promise<ResourceInfo>;
 
     findOneByResourceName(resourceName: string, ...args): Promise<ResourceInfo>;
 
@@ -93,4 +122,30 @@ export interface IResourceService {
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ResourceInfo[]>;
 
     count(condition: object): Promise<number>;
+}
+
+export interface IResourceVersionService {
+
+    createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;
+
+    updateResourceVersion(versionInfo: ResourceVersionInfo, options: UpdateResourceVersionOptions): Promise<ResourceVersionInfo>;
+
+    find(condition: object, ...args): Promise<ResourceVersionInfo[]>;
+
+    findOne(condition: object, ...args): Promise<ResourceVersionInfo>;
+}
+
+export interface ICollectionService {
+
+    collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;
+
+    isCollected(resourceIds: String[]): Promise<{ resourceId: string, isCollected: boolean }[]>;
+
+    find(condition: object, ...args): Promise<CollectionResourceInfo[]>;
+
+    findOne(condition: object, ...args): Promise<CollectionResourceInfo>;
+
+    deleteOne(condition: object): Promise<boolean>;
+
+    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number);
 }

@@ -5,12 +5,13 @@
   "private": true,
   "dependencies": {
     "ali-oss": "^6.8.0",
-    "egg-freelog-base": "^1.2.38",
+    "egg-freelog-base": "^1.2.39",
     "egg-freelog-database": "^1.0.17",
     "egg-scripts": "^2.10.0",
     "jsonschema": "^1.2.6",
     "midway": "^1.0.0",
     "mongoose": "^5.9.14",
+    "probe-image-size": "^5.0.0",
     "semver": "^7.3.2"
   },
   "devDependencies": {
@@ -20,10 +21,10 @@
     "egg-ci": "^1.8.0",
     "midway-bin": "1",
     "midway-mock": "1",
+    "ts-node": "^8.10.2",
     "tslib": "^1.8.1",
-    "tslint-midway-contrib": "1",
-    "ts-node": "^8.3.0",
     "tslint": "^5.11.0",
+    "tslint-midway-contrib": "1",
     "typescript": "^3.5.0"
   },
   "engines": {

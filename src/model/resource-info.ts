@@ -10,6 +10,7 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
 
         const ResourceVersionSchema = new this.mongoose.Schema({
             version: {type: String, required: true},
+            versionId: {type: String, unique: true, required: true},
             createDate: {type: Date, required: true}
         }, {_id: false});
 
@@ -29,16 +30,16 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
         const resourceInfoScheme = new this.mongoose.Schema({
             resourceName: {type: String, required: true},
             resourceType: {type: String, required: true},
-            resourceVersions: {type: [ResourceVersionSchema], required: false},
+            resourceVersions: {type: [ResourceVersionSchema], default: [], required: false},
             userId: {type: Number, required: true},
             username: {type: String, required: true},
-            baseUpcastResources: {type: [UpcastResourceSchema], required: false},
+            baseUpcastResources: {type: [UpcastResourceSchema], default: [], required: false},
             intro: {type: String, required: false, default: ''},
-            coverImages: {type: [String], required: false},
-            policies: {type: [PolicySchema], required: false},
+            coverImages: {type: [String], default: [], required: false},
+            tags: {type: [String], required: false, default: []},
+            policies: {type: [PolicySchema], default: [], required: false},
             uniqueKey: {type: String, unique: true, required: true}, //资源名称排他性值,通过resourceName全部转成成小写.然后sha1计算
             status: {type: Number, default: 0, required: true}, // 0:下架 1:上架
-
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
@@ -53,7 +54,7 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
         });
         resourceInfoScheme.virtual('latestVersion').get(function (this: any) {
             const versionCount = Array.isArray(this.resourceVersions) ? this.resourceVersions.length : 0;
-            return versionCount ? this.resourceVersions.length[versionCount - 1] : null;
+            return versionCount ? this.resourceVersions[versionCount - 1] : null;
         });
 
         return this.mongoose.model('resource-infos', resourceInfoScheme);

@@ -1,19 +1,22 @@
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
 import {IJsonSchemaValidate} from '../../interface';
 import {validator} from 'egg-freelog-base/app/extend/application';
+import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
 
 @scope('Singleton')
-@provide('userNodeDataEditValidator')
-export class PolicyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+@provide('resourcePolicyValidator')
+export class ResourcePolicyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+
     /**
-     * 用户节点数据操作校验
-     * @param operations
+     * 策略格式校验
+     * @param {object[] | object} operations 策略信息
+     * @param {boolean} isUpdateMode 是否更新模式
      * @returns {ValidatorResult}
      */
-    validate(operations): ValidatorResult {
-        return super.validate(operations, super.getSchema('/keyValuePairArraySchema'));
+    validate(operations: object[] | object, isUpdateMode: boolean): ValidatorResult {
+        const schemeId = isUpdateMode ? '/updateResourcePolicySchema' : '/addResourcePolicySchema';
+        return super.validate(operations, super.getSchema(schemeId));
     }
 
     /**
@@ -21,33 +24,34 @@ export class PolicyValidator extends freelogCommonJsonSchema implements IJsonSch
      * @private
      */
     @init()
-    __registerValidators__() {
-
+    registerValidators() {
         /**
          * 策略名称格式
          * @param input
          * @returns {boolean}
          */
         super.registerCustomFormats('policyName', (input) => {
-            input = input.trim()
+            input = input.trim();
             return input.length >= 2 && input.length < 20
-        })
+        });
 
         /**
          * 是否base64
          */
         super.registerCustomFormats('base64', (input) => {
             return validator.isBase64(input)
-        })
+        });
 
-
+        /**
+         * 更新策略格式
+         */
         super.addSchema({
-            id: "/updateReleasePoliciesSchema",
+            id: "/updateResourcePolicySchema",
             type: "object",
             required: true,
             properties: {
                 additionalProperties: false,
-                addPolicies: {$ref: "/addPoliciesSchema"},
+                addPolicies: {$ref: "/addResourcePolicySchema"},
                 updatePolicies: {
                     type: "array",
                     uniqueItems: true,
@@ -69,10 +73,13 @@ export class PolicyValidator extends freelogCommonJsonSchema implements IJsonSch
                     }
                 }
             }
-        })
+        });
 
+        /**
+         * 新增策略格式
+         */
         super.addSchema({
-            id: "/addPoliciesSchema",
+            id: "/addResourcePolicySchema",
             type: "array",
             uniqueItems: true,
             maxItems: 20,
@@ -85,6 +92,6 @@ export class PolicyValidator extends freelogCommonJsonSchema implements IJsonSch
                     policyText: {required: true, type: "string", format: 'base64'}
                 }
             }
-        })
+        });
     }
 }
