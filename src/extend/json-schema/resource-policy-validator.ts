@@ -32,43 +32,43 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
          */
         super.registerCustomFormats('policyName', (input) => {
             input = input.trim();
-            return input.length >= 2 && input.length < 20
+            return input.length >= 2 && input.length < 20;
         });
 
         /**
          * 是否base64
          */
         super.registerCustomFormats('base64', (input) => {
-            return validator.isBase64(input)
+            return validator.isBase64(input);
         });
 
         /**
          * 更新策略格式
          */
         super.addSchema({
-            id: "/updateResourcePolicySchema",
-            type: "object",
+            id: '/updateResourcePolicySchema',
+            type: 'object',
             required: true,
             properties: {
                 additionalProperties: false,
-                addPolicies: {$ref: "/addResourcePolicySchema"},
+                addPolicies: {$ref: '/addResourcePolicySchema'},
                 updatePolicies: {
-                    type: "array",
+                    type: 'array',
                     uniqueItems: true,
                     maxItems: 20,
                     items: {
-                        type: "object",
+                        type: 'object',
                         additionalProperties: false,
                         properties: {
-                            policyId: {required: true, type: "string", format: 'md5'},
+                            policyId: {required: true, type: 'string', format: 'md5'},
                             policyName: {
                                 required: true,
-                                type: "string",
+                                type: 'string',
                                 minLength: 1,
                                 maxLength: 20,
-                                format: "policyName"
+                                format: 'policyName'
                             },
-                            status: {required: true, type: "integer", minimum: 0, maximum: 1}
+                            status: {required: true, type: 'integer', minimum: 0, maximum: 1}
                         }
                     }
                 }
@@ -79,17 +79,17 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
          * 新增策略格式
          */
         super.addSchema({
-            id: "/addResourcePolicySchema",
-            type: "array",
+            id: '/addResourcePolicySchema',
+            type: 'array',
             uniqueItems: true,
             maxItems: 20,
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    policyName: {required: true, minLength: 1, maxLength: 20, type: "string", format: "policyName"},
-                    policyText: {required: true, type: "string", format: 'base64'}
+                    policyName: {required: true, minLength: 1, maxLength: 20, type: 'string', format: 'policyName'},
+                    policyText: {required: true, type: 'string', format: 'base64'}
                 }
             }
         });

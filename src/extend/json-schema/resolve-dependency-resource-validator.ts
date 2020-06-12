@@ -24,27 +24,27 @@ export class ResolveDependencyResourceValidator extends freelogCommonJsonSchema 
     registerValidators() {
 
         super.addSchema({
-            id: "/resolveResourceSchema",
-            type: "array",
+            id: '/resolveResourceSchema',
+            type: 'array',
             uniqueItems: true,
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    resourceId: {type: "string", required: true, format: 'mongoObjectId'},
+                    resourceId: {type: 'string', required: true, format: 'mongoObjectId'},
                     contracts: {
-                        type: "array",
+                        type: 'array',
                         uniqueItems: true,
                         required: true,
                         maxItems: 10,
                         minItems: 1,
                         items: {
-                            type: "object",
+                            type: 'object',
                             required: true,
                             additionalProperties: false,
                             properties: {
-                                policyId: {type: "string", required: true, format: 'md5'}
+                                policyId: {type: 'string', required: true, format: 'md5'}
                             }
                         }
                     }
@@ -53,15 +53,15 @@ export class ResolveDependencyResourceValidator extends freelogCommonJsonSchema 
         });
 
         super.addSchema({
-            id: "/upcastResourceSchema",
-            type: "array",
+            id: '/upcastResourceSchema',
+            type: 'array',
             uniqueItems: true,
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    resourceId: {type: "string", required: true, format: 'mongoObjectId'}
+                    resourceId: {type: 'string', required: true, format: 'mongoObjectId'}
                 }
             }
         });

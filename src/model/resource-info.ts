@@ -3,7 +3,7 @@ import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
-@provide('model.ResourceInfoModel') // 此model可能考虑不要
+@provide('model.ResourceInfo') // 此model可能考虑不要
 export class ResourceInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {
@@ -30,6 +30,7 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
         const resourceInfoScheme = new this.mongoose.Schema({
             resourceName: {type: String, required: true},
             resourceType: {type: String, required: true},
+            latestVersion: {type: String, default: '', required: false}, // 实际取值最大的版本,并非最新加入的
             resourceVersions: {type: [ResourceVersionSchema], default: [], required: false},
             userId: {type: Number, required: true},
             username: {type: String, required: true},
@@ -38,7 +39,7 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
             coverImages: {type: [String], default: [], required: false},
             tags: {type: [String], required: false, default: []},
             policies: {type: [PolicySchema], default: [], required: false},
-            uniqueKey: {type: String, unique: true, required: true}, //资源名称排他性值,通过resourceName全部转成成小写.然后sha1计算
+            uniqueKey: {type: String, unique: true, required: true}, // 资源名称排他性值,通过resourceName全部转成成小写.然后sha1计算
             status: {type: Number, default: 0, required: true}, // 0:下架 1:上架
         }, {
             versionKey: false,
@@ -52,10 +53,10 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
         resourceInfoScheme.virtual('resourceId').get(function (this: any) {
             return this.id;
         });
-        resourceInfoScheme.virtual('latestVersion').get(function (this: any) {
-            const versionCount = Array.isArray(this.resourceVersions) ? this.resourceVersions.length : 0;
-            return versionCount ? this.resourceVersions[versionCount - 1] : null;
-        });
+        // resourceInfoScheme.virtual('latestVersion').get(function (this: any) {
+        //     const versionCount = Array.isArray(this.resourceVersions) ? this.resourceVersions.length : 0;
+        //     return versionCount ? this.resourceVersions[versionCount - 1] : null;
+        // });
 
         return this.mongoose.model('resource-infos', resourceInfoScheme);
     }

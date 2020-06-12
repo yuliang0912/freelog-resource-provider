@@ -3,7 +3,7 @@ import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
-@provide('model.ResourceCollectionModel') // 此model可能考虑不要
+@provide('model.ResourceCollection') // 此model可能考虑不要
 export class ResourceCollectionModel extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {

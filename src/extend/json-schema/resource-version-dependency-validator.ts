@@ -33,16 +33,16 @@ export class ResourceVersionDependencyValidator extends freelogCommonJsonSchema 
         });
 
         super.addSchema({
-            id: "/resourceDependencySchema",
-            type: "array",
+            id: '/resourceDependencySchema',
+            type: 'array',
             uniqueItems: true,
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    resourceId: {type: "string", required: true, format: 'mongoObjectId'},
-                    versionRange: {type: "string", required: true, format: 'versionRange'},
+                    resourceId: {type: 'string', required: true, format: 'mongoObjectId'},
+                    versionRange: {type: 'string', required: true, format: 'versionRange'},
                 }
             }
         });

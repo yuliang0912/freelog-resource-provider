@@ -4,7 +4,7 @@ export default (appInfo: EggAppInfo) => {
     const config: any = {};
 
     // use for cookie sign key, should change to your own and keep security
-    config.keys = appInfo.name
+    config.keys = appInfo.name;
 
     config.cluster = {
         listen: {
@@ -23,7 +23,7 @@ export default (appInfo: EggAppInfo) => {
 
     config.static = {
         enable: false
-    }
+    };
 
     config.onerror = {
         all(err, ctx) {

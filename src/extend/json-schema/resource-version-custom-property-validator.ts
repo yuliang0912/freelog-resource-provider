@@ -26,36 +26,36 @@ export class ResourceVersionCustomPropertyValidator extends freelogCommonJsonSch
     @init()
     registerValidators() {
         super.addSchema({
-            id: "/customPropertySchema",
-            type: "array",
+            id: '/customPropertySchema',
+            type: 'array',
             uniqueItems: true,
-            maxItems: 30, //最多允许填写30个自定义字段
+            maxItems: 30, // 最多允许填写30个自定义字段
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    remark: {type: "string", required: false, minLength: 1, maxLength: 15},
+                    remark: {type: 'string', required: false, minLength: 1, maxLength: 15},
                     key: {
-                        type: "string", required: true, minLength: 1, maxLength: 15,
-                        pattern: "^[a-zA-Z0-9_]{1,20}$"
+                        type: 'string', required: true, minLength: 1, maxLength: 15,
+                        pattern: '^[a-zA-Z0-9_]{1,20}$'
                     },
                     defaultValue: {
                         // 考虑到UI文本框输入,目前限定为字符串.后期可能修改为any
-                        type: "string", required: true, minLength: 1, maxLength: 30
+                        type: 'string', required: true, minLength: 1, maxLength: 30
                     },
                     type: {
-                        type: "string",
+                        type: 'string',
                         required: true,
                         enum: ['editableText', 'readonlyText', 'radio', 'checkbox', 'select']
                     },
                     candidateItems: {
-                        type: "array",
+                        type: 'array',
                         required: false,
                         uniqueItems: true,
                         maxItems: 30,
                         items: {
-                            type: "string", minLength: 1, maxLength: 15, required: true,
+                            type: 'string', minLength: 1, maxLength: 15, required: true,
                         }
                     }
                 }

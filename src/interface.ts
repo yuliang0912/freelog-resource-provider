@@ -16,7 +16,7 @@ export interface UpdateResourceOptions {
     intro?: string;
     coverImages?: [string];
     tags?: string[];
-    policyChangeInfo?: object; //策略变动信息,包括add.remove,update等
+    policyChangeInfo?: object; // 策略变动信息,包括add.remove,update等
 }
 
 export interface CreateResourceVersionOptions {
@@ -57,7 +57,7 @@ export interface ResourceInfo {
     policies?: object[];
     uniqueKey?: string;
     status: number;
-    latestVersion?: object;
+    latestVersion?: string;
     tags?: string[];
 }
 
@@ -122,6 +122,8 @@ export interface IResourceService {
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ResourceInfo[]>;
 
     count(condition: object): Promise<number>;
+
+    createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>
 }
 
 export interface IResourceVersionService {
@@ -139,7 +141,7 @@ export interface ICollectionService {
 
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;
 
-    isCollected(resourceIds: String[]): Promise<{ resourceId: string, isCollected: boolean }[]>;
+    isCollected(resourceIds: string[]): Promise<Array<{ resourceId: string, isCollected: boolean }>>;
 
     find(condition: object, ...args): Promise<CollectionResourceInfo[]>;
 

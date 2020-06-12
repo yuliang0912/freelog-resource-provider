@@ -1,7 +1,7 @@
 import {EggPlugin} from 'midway';
 
 export default {
-    static: true, // default is true
+    static: false, // default is true
 
     freelogDataBase: {
         enable: true,

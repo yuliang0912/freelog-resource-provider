@@ -24,15 +24,15 @@ export class ResourceUpcastValidator extends freelogCommonJsonSchema implements 
     registerValidators() {
 
         super.addSchema({
-            id: "/upcastResourceSchema",
-            type: "array",
+            id: '/upcastResourceSchema',
+            type: 'array',
             uniqueItems: true,
             items: {
-                type: "object",
+                type: 'object',
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    resourceId: {type: "string", required: true, format: 'mongoObjectId'}
+                    resourceId: {type: 'string', required: true, format: 'mongoObjectId'}
                 }
             }
         });

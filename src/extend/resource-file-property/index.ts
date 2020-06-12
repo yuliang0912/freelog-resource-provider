@@ -35,9 +35,9 @@ export class ResourceFilePropertyGenerator {
             throw new ApplicationError('file is unrecognized image format');
         });
 
-        for (let [key, value] of Object.entries(result)) {
+        for (const [key, value] of Object.entries(result)) {
             if (this.imagePropertyMap.has(key)) {
-                let name = this.imagePropertyMap.get(key);
+                const name = this.imagePropertyMap.get(key);
                 systemProperties.push({name, key, value});
             }
         }
