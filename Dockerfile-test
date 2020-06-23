@@ -1,0 +1,21 @@
+FROM node:10.5.0
+
+MAINTAINER yuliang <yuliang@ciwong.com>
+
+RUN mkdir -p /data/freelog-resource-provider
+
+WORKDIR /data/freelog-resource-provider
+
+COPY . /data/freelog-resource-provider
+
+RUN npm install
+
+ENV NODE_ENV test
+ENV EGG_SERVER_ENV test
+ENV PORT 5101
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+EXPOSE 5101
+
+CMD [ "npm", "start" ]
