@@ -107,8 +107,8 @@ export class ResourceVersionController {
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
-        const storageInfo = await ctx.curlIntranetApi(`${ctx.webApi.storageInfo}/files/${fileSha1}`);
-        if (!storageInfo) {
+        const fileSystemProperty = await ctx.curlIntranetApi(`${ctx.webApi.storageInfo}/files/${fileSha1}/property?resourceType=${resourceInfo.resourceType}`);
+        if (!fileSystemProperty) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'fileSha1'));
         }
 
@@ -125,14 +125,14 @@ export class ResourceVersionController {
         if (resourceVersions.some(x => x.version === semver.clean(version))) {
             throw new ArgumentError(ctx.gettext('resource-version-existing-error'));
         }
-        if (resourceVersions.every(x => semver.gt(x.version, version))) {
+        if (!isEmpty(resourceVersions) && resourceVersions.every(x => semver.gt(x.version, version))) {
             throw new ArgumentError(ctx.gettext('resource-version-must-be-greater-than-latest-version'));
         }
 
         const versionInfo = {
             version: semver.clean(version), fileSha1, description,
             resolveResources, dependencies, customPropertyDescriptors, baseUpcastResources,
-            fileSize: storageInfo.fileSize, fileUrl: storageInfo.fileUrl,
+            systemProperty: fileSystemProperty,
             versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, version),
         };
 
@@ -140,7 +140,7 @@ export class ResourceVersionController {
     }
 
     // 根据fileSha1查询所加入的资源以及具体版本信息,例如用户存储对象需要查询所加入的资源
-    @get('/versions/files/:fileSha1/list')
+    @get('/files/:fileSha1/versions')
     @visitorIdentity(LoginUser)
     async versionsBySha1(ctx) {
         const fileSha1 = ctx.checkParams('fileSha1').exist().isSha1().toLowercase().value;

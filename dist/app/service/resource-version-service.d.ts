@@ -4,7 +4,6 @@ export declare class ResourceVersionService implements IResourceVersionService {
     resourceService: any;
     resourceVersionProvider: any;
     resourcePropertyGenerator: any;
-    resourceFilePropertyGenerator: any;
     find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
     /**

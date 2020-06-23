@@ -41,7 +41,7 @@ export declare class ResourceService implements IResourceService {
      * @param {string} resourceId 资源ID
      * @returns {Promise<ResourceInfo>} 资源信息
      */
-    findByResourceId(resourceId: string): Promise<ResourceInfo>;
+    findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     /**
      * 根据资源名获取资源
      * @param {string} resourceName

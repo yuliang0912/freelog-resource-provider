@@ -35,11 +35,11 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
             contractId: {type: String, required: true},
         }, {_id: false});
 
-        const SystemPropertyInfoSchema = new this.mongoose.Schema({
-            name: {type: String, required: true}, // 对外显示的名称
-            key: {type: String, required: true},
-            value: {type: this.mongoose.Schema.Types.Mixed, required: true},
-        }, {_id: false});
+        // const SystemPropertyInfoSchema = new this.mongoose.Schema({
+        //     name: {type: String, required: true}, // 对外显示的名称
+        //     key: {type: String, required: true},
+        //     value: {type: this.mongoose.Schema.Types.Mixed, required: true},
+        // }, {_id: false});
 
         const ResolveResourceSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
@@ -59,10 +59,11 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
             description: {type: String, default: '', required: false},
             upcastResources: {type: [UpcastResourceSchema], required: false},
             resolveResources: {type: [ResolveResourceSchema], required: false}, // 只有匹配到具体合同ID才算完成解决的承诺
-            systemProperties: {type: [SystemPropertyInfoSchema], required: true},  // 需要包含fileSize,文件具体的存储信息通过sha1值去存储服务获取
+            systemProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true},  // 需要包含fileSize,文件具体的存储信息通过sha1值去存储服务获取
             customPropertyDescriptors: {type: [CustomPropertyDescriptorScheme], default: [], required: false},
             status: {type: Number, default: 0, required: true}, // 状态: 0:未就绪 1:已就绪 此状态不可逆,只有主动就绪的版本才正式加入资源的版本库
         }, {
+            minimize: false,
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
             toJSON: ResourceVersionModel.toObjectOptions,
@@ -72,13 +73,17 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
         resourceVersionScheme.index({resourceId: 1, version: 1}, {unique: true});
         resourceVersionScheme.index({fileSha1: 1, userId: 1});
 
-        resourceVersionScheme.virtual('customProperties').get(function (this: any) {
-            if (!Array.isArray(this.customPropertyDescriptors) || !this.customPropertyDescriptors.length) {
-                return [];
+        resourceVersionScheme.virtual('customProperty').get(function (this: any) {
+            if (this.customPropertyDescriptors === undefined) {
+                return undefined; // 不查询customPropertyDescriptors时,不自动生成customProperty
             }
-            return this.customPropertyDescriptors.map(({name, key, defaultValue}) => {
-                return {name, key, value: defaultValue};
-            });
+            let customProperty = {} as any;
+            if (Array.isArray(this.customPropertyDescriptors) && this.customPropertyDescriptors.length) {
+                this.customPropertyDescriptors.forEach(({key, defaultValue}) => {
+                    customProperty[key] = defaultValue;
+                });
+            }
+            return customProperty;
         });
 
         return this.mongoose.model('resource-versions', resourceVersionScheme);

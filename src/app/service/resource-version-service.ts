@@ -18,8 +18,6 @@ export class ResourceVersionService implements IResourceVersionService {
     resourceVersionProvider;
     @inject()
     resourcePropertyGenerator;
-    @inject()
-    resourceFilePropertyGenerator;
 
     async find(condition: object, ...args): Promise<ResourceVersionInfo[]> {
         return this.resourceVersionProvider.find(condition, ...args);
@@ -53,15 +51,10 @@ export class ResourceVersionService implements IResourceVersionService {
             description: options.description,
             resolveResources,
             upcastResources: upcastResources as BaseResourceInfo[],
-            systemProperties: [],
+            systemProperty: options.systemProperty,
             customPropertyDescriptors: options.customPropertyDescriptors,
             status: 1
         };
-
-        await await this.resourceFilePropertyGenerator.getResourceFileProperty({
-            fileUrl: options.fileUrl,
-            fileSize: options.fileSize
-        }, resourceInfo.resourceType).then(results => model.systemProperties = results);
 
         const resourceVersion = await this.resourceVersionProvider.create(model);
 

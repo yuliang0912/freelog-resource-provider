@@ -4,6 +4,7 @@ import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
 import {isString, includes, isEmpty} from 'lodash';
 import * as semver from 'semver';
+import {mongoObjectId, fullReleaseName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
 @controller('/v1/resources')
@@ -38,7 +39,7 @@ export class ResourceController {
             condition.userId = ctx.request.userId;
         }
         if (resourceType) {
-            condition.resourceType = resourceType;
+            condition.resourceType = new RegExp(`^${resourceType}$`, 'i');
         }
         if (includes([0, 1], status)) {
             condition.status = status;
@@ -55,11 +56,11 @@ export class ResourceController {
         }
 
         dataList = await this.resourceService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        if (!isLoadLatestVersionInfo) {
+        if (!isLoadLatestVersionInfo || !isEmpty(projection) && (!projection.includes('resourceId') || !projection.includes('latestVersion'))) {
             return ctx.success({page, pageSize, totalItem, dataList});
         }
 
-        const versionIds = dataList.filter(x => !isEmpty(x.resourceVersions)).map(resourceInfo => {
+        const versionIds = dataList.filter(x => !isEmpty(x.latestVersion)).map(resourceInfo => {
             const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
             resourceInfo.latestVersionId = versionId;
             return versionId;
@@ -91,8 +92,8 @@ export class ResourceController {
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 1000).value;
-        const coverImages = ctx.checkBody('coverImages').optional().isArray().len(1, 10).default([]).value;
-        const tags = ctx.checkBody('tags').optional().isArray().len(1, 20).default([]).value;
+        const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).default([]).value;
+        const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).default([]).value;
         ctx.validateParams();
 
         if (coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
@@ -136,31 +137,13 @@ export class ResourceController {
         }
     }
 
-    @get('/detail')
-    async detail(ctx) {
-        const resourceName = ctx.checkQuery('resourceName').exist().isFullReleaseName().value;
-        const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
-        ctx.validateParams();
-
-        let resourceInfo: any = await this.resourceService.findOneByResourceName(resourceName);
-        if (!resourceInfo) {
-            return ctx.success(null);
-        }
-        resourceInfo = resourceInfo.toObject();
-        if (isLoadLatestVersionInfo && resourceInfo.latestVersion) {
-            const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
-            resourceInfo.latestVersionInfo = await this.resourceVersionService.findOne({versionId});
-        }
-        ctx.success(resourceInfo);
-    }
-
     @put('/:resourceId')
     @visitorIdentity(LoginUser)
     async update(ctx) {
         const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
         const policyChangeInfo = ctx.checkBody('policyChangeInfo').optional().isObject().value;
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 1000).value;
-        const coverImages = ctx.checkBody('coverImages').optional().isArray().len(1, 10).value;
+        const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).value;
         const tags = ctx.checkBody('tags').optional().isArray().len(1, 20).value;
         ctx.validateParams();
 
@@ -230,19 +213,28 @@ export class ResourceController {
         await this.resourceService.getResourceAuthTree(resourceInfo, versionInfo).then(ctx.success);
     }
 
-    @get('/:resourceId')
+    @get('/:resourceIdOrName')
     async show(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        let resourceInfo: any = await this.resourceService.findByResourceId(resourceId);
+        let resourceInfo = null;
+        if (mongoObjectId.test(resourceIdOrName)) {
+            resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName, projection.join(' '));
+        } else if (fullReleaseName.test(resourceIdOrName)) {
+            resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName, projection.join(' '));
+        } else {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
+        }
+
         if (!resourceInfo) {
             return ctx.success(null);
         }
         resourceInfo = resourceInfo.toObject();
         if (isLoadLatestVersionInfo && resourceInfo.latestVersion) {
-            const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, resourceInfo.latestVersion);
+            const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
             resourceInfo.latestVersionInfo = await this.resourceVersionService.findOne({versionId});
         }
         ctx.success(resourceInfo);

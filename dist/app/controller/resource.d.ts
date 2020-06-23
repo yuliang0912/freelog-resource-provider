@@ -14,7 +14,6 @@ export declare class ResourceController {
      */
     create(ctx: any): Promise<void>;
     list(ctx: any): Promise<void>;
-    detail(ctx: any): Promise<any>;
     update(ctx: any): Promise<void>;
     dependencyTree(ctx: any): Promise<any>;
     authTree(ctx: any): Promise<any>;

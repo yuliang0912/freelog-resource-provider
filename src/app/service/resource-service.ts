@@ -141,8 +141,8 @@ export class ResourceService implements IResourceService {
      * @param {string} resourceId 资源ID
      * @returns {Promise<ResourceInfo>} 资源信息
      */
-    async findByResourceId(resourceId: string): Promise<ResourceInfo> {
-        return this.resourceProvider.findById(resourceId);
+    async findByResourceId(resourceId: string, ...args): Promise<ResourceInfo> {
+        return this.resourceProvider.findById(resourceId, ...args);
     }
 
     /**

@@ -3,7 +3,6 @@ import {plugin} from 'midway';
 export class MongooseModelBase implements IMongooseModelBase {
 
     protected mongoose;
-    protected uploadConfig;
 
     constructor(@plugin('mongoose') mongoose) {
         this.mongoose = mongoose;

@@ -23,9 +23,8 @@ export interface CreateResourceVersionOptions {
     version: string;
     versionId: string;
     fileSha1: string;
-    fileSize: number;
-    fileUrl: string;
     description: string;
+    systemProperty: object;
     dependencies?: BaseResourceInfo[];
     baseUpcastResources?: BaseResourceInfo[];
     resolveResources?: object[];
@@ -79,7 +78,7 @@ export interface ResourceVersionInfo {
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];
     resolveResources?: object[];
-    systemProperties?: object [];
+    systemProperty?: object;
     customPropertyDescriptors?: object[];
     status: number;
 }
@@ -109,7 +108,7 @@ export interface IResourceService {
 
     getResourceAuthTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<object[]>;
 
-    findByResourceId(resourceId: string): Promise<ResourceInfo>;
+    findByResourceId(resourceId: string, ...args): Promise<ResourceInfo>;
 
     findOneByResourceName(resourceName: string, ...args): Promise<ResourceInfo>;
 

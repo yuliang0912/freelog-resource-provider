@@ -53,10 +53,6 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
         resourceInfoScheme.virtual('resourceId').get(function (this: any) {
             return this.id;
         });
-        // resourceInfoScheme.virtual('latestVersion').get(function (this: any) {
-        //     const versionCount = Array.isArray(this.resourceVersions) ? this.resourceVersions.length : 0;
-        //     return versionCount ? this.resourceVersions[versionCount - 1] : null;
-        // });
 
         return this.mongoose.model('resource-infos', resourceInfoScheme);
     }
