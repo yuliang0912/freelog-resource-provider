@@ -19,7 +19,7 @@
     "image-size": "^0.7.5",
     "is-type-of": "^1.2.1",
     "jsonschema": "^1.2.6",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mime": "^2.4.4",
     "moment": "^2.24.0",
     "mongoose": "^5.9.7",
