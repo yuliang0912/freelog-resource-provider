@@ -24,7 +24,6 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
             policyName: {type: String, required: true},
             policyText: {type: String, required: true},
             status: {type: Number, required: true}, // 0:不启用  1:启用
-            authorizedObjects: [] // 授权对象
         }, {_id: false});
 
         const resourceInfoScheme = new this.mongoose.Schema({

@@ -24,7 +24,7 @@ export interface CreateResourceVersionOptions {
     versionId: string;
     fileSha1: string;
     description: string;
-    systemProperty: object;
+    systemProperty?: object;
     dependencies?: BaseResourceInfo[];
     baseUpcastResources?: BaseResourceInfo[];
     resolveResources?: object[];
@@ -134,6 +134,10 @@ export interface IResourceVersionService {
     find(condition: object, ...args): Promise<ResourceVersionInfo[]>;
 
     findOne(condition: object, ...args): Promise<ResourceVersionInfo>;
+
+    saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions);
+
+    getResourceVersionDraft(resourceId: string);
 }
 
 export interface ICollectionService {

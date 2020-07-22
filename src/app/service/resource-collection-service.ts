@@ -107,9 +107,9 @@ export class ResourceCollectionService implements ICollectionService {
         result.dataList = await this.resourceCollectionProvider.aggregate(resultAggregatePipelines).map(model => {
             const {resourceId, createDate, resourceInfos = []} = model;
             const resourceInfo: any = resourceInfos.length ? resourceInfos[0] : {};
-            const {resourceName, resourceType, policies, userId, username, coverImages, resourceVersions, updateDate, status} = resourceInfo;
+            const {resourceName, resourceType, userId, username, coverImages, latestVersion, resourceVersions, updateDate, status} = resourceInfo;
             return {
-                resourceId, resourceName, resourceType, policies, coverImages, resourceVersions,
+                resourceId, resourceName, resourceType, coverImages, resourceVersions, latestVersion,
                 authorId: userId,
                 authorName: username,
                 collectionDate: createDate,

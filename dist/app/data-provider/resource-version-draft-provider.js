@@ -14,16 +14,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
 const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
-let ResourceVersionProvider = class ResourceVersionProvider extends MongoBaseOperation {
+let ResourceVersionDraftProvider = class ResourceVersionDraftProvider extends MongoBaseOperation {
     constructor(model) {
         super(model);
     }
 };
-ResourceVersionProvider = __decorate([
+ResourceVersionDraftProvider = __decorate([
     midway_1.provide(),
     midway_1.scope('Singleton'),
-    __param(0, midway_1.inject('model.ResourceVersion')),
+    __param(0, midway_1.inject('model.ResourceVersionDraft')),
     __metadata("design:paramtypes", [Object])
-], ResourceVersionProvider);
-exports.default = ResourceVersionProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtdmVyc2lvbi1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9hcHAvZGF0YS1wcm92aWRlci9yZXNvdXJjZS12ZXJzaW9uLXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLHlGQUF5RjtBQUl6RixJQUFxQix1QkFBdUIsR0FBNUMsTUFBcUIsdUJBQXdCLFNBQVEsa0JBQWtCO0lBQ25FLFlBQTZDLEtBQUs7UUFDOUMsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2pCLENBQUM7Q0FDSixDQUFBO0FBSm9CLHVCQUF1QjtJQUYzQyxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsZUFBTSxDQUFDLHVCQUF1QixDQUFDLENBQUE7O0dBRDNCLHVCQUF1QixDQUkzQztrQkFKb0IsdUJBQXVCIn0=
+], ResourceVersionDraftProvider);
+exports.default = ResourceVersionDraftProvider;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtdmVyc2lvbi1kcmFmdC1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9hcHAvZGF0YS1wcm92aWRlci9yZXNvdXJjZS12ZXJzaW9uLWRyYWZ0LXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLHlGQUF5RjtBQUl6RixJQUFxQiw0QkFBNEIsR0FBakQsTUFBcUIsNEJBQTZCLFNBQVEsa0JBQWtCO0lBQ3hFLFlBQWtELEtBQUs7UUFDbkQsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2pCLENBQUM7Q0FDSixDQUFBO0FBSm9CLDRCQUE0QjtJQUZoRCxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsZUFBTSxDQUFDLDRCQUE0QixDQUFDLENBQUE7O0dBRGhDLDRCQUE0QixDQUloRDtrQkFKb0IsNEJBQTRCIn0=

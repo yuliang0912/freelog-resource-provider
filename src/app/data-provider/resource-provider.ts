@@ -1,5 +1,5 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-database/lib/database/mongo-base-operation';
+import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
 
 @provide()
 @scope('Singleton')

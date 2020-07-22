@@ -100,7 +100,7 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
-        const policyValidateResult = await this.resourcePolicyValidator.validate(policies);
+        const policyValidateResult = this.resourcePolicyValidator.validate(policies);
         if (!isEmpty(policyValidateResult.errors)) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'policies'), {
                 errors: policyValidateResult.errors

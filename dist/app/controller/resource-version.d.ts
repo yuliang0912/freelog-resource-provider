@@ -14,4 +14,16 @@ export declare class ResourceVersionController {
     create(ctx: any): Promise<void>;
     versionsBySha1(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
+    /**
+     * 保存草稿.一个资源只能保存一次草稿
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    createResourceVersionDraft(ctx: any): Promise<void>;
+    /**
+     * 保存草稿.一个资源只能保存一次草稿
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    resourceVersionDraft(ctx: any): Promise<void>;
 }

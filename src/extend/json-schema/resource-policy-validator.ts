@@ -64,7 +64,7 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
                             policyName: {
                                 required: true,
                                 type: 'string',
-                                minLength: 1,
+                                minLength: 2,
                                 maxLength: 20,
                                 format: 'policyName'
                             },

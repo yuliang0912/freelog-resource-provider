@@ -18,6 +18,8 @@ export class ResourceVersionService implements IResourceVersionService {
     resourceVersionProvider;
     @inject()
     resourcePropertyGenerator;
+    @inject()
+    resourceVersionDraftProvider;
 
     async find(condition: object, ...args): Promise<ResourceVersionInfo[]> {
         return this.resourceVersionProvider.find(condition, ...args);
@@ -133,6 +135,45 @@ export class ResourceVersionService implements IResourceVersionService {
             }
         });
         return contracts;
+    }
+
+    /**
+     * 保存资源草稿
+     * @param {ResourceInfo} resourceInfo
+     * @param {CreateResourceVersionOptions} options
+     * @returns {Promise<any>}
+     */
+    async saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions) {
+
+        await this._validateDependencies(resourceInfo.resourceId, options.dependencies);
+        const isFirstVersion = isEmpty(resourceInfo.resourceVersions);
+        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
+
+        const model = {
+            version: options.version,
+            resourceId: resourceInfo.resourceId,
+            userId: resourceInfo.userId,
+            resourceType: resourceInfo.resourceType,
+            fileSha1: options.fileSha1,
+            dependencies: options.dependencies,
+            description: options.description,
+            resolveResources,
+            upcastResources: upcastResources as BaseResourceInfo[],
+            customPropertyDescriptors: options.customPropertyDescriptors
+        };
+
+        return this.resourceVersionDraftProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, model, {new: true}).then(data => {
+            return data || this.resourceVersionDraftProvider.create(model);
+        });
+    }
+
+    /**
+     * 获取资源版本草稿
+     * @param {string} resourceId
+     * @returns {Promise<any>}
+     */
+    async getResourceVersionDraft(resourceId: string) {
+        return this.resourceVersionDraftProvider.findOne({resourceId});
     }
 
     /**

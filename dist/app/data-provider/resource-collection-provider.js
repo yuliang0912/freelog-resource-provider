@@ -13,20 +13,17 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
-const MongoBaseOperation = require("egg-freelog-database/lib/database/mongo-base-operation");
-let ResourceCollectionProvider = /** @class */ (() => {
-    let ResourceCollectionProvider = class ResourceCollectionProvider extends MongoBaseOperation {
-        constructor(model) {
-            super(model);
-        }
-    };
-    ResourceCollectionProvider = __decorate([
-        midway_1.provide(),
-        midway_1.scope('Singleton'),
-        __param(0, midway_1.inject('model.ResourceCollection')),
-        __metadata("design:paramtypes", [Object])
-    ], ResourceCollectionProvider);
-    return ResourceCollectionProvider;
-})();
+const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
+let ResourceCollectionProvider = class ResourceCollectionProvider extends MongoBaseOperation {
+    constructor(model) {
+        super(model);
+    }
+};
+ResourceCollectionProvider = __decorate([
+    midway_1.provide(),
+    midway_1.scope('Singleton'),
+    __param(0, midway_1.inject('model.ResourceCollection')),
+    __metadata("design:paramtypes", [Object])
+], ResourceCollectionProvider);
 exports.default = ResourceCollectionProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtY29sbGVjdGlvbi1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9hcHAvZGF0YS1wcm92aWRlci9yZXNvdXJjZS1jb2xsZWN0aW9uLXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLDZGQUE2RjtBQUk3RjtJQUFBLElBQXFCLDBCQUEwQixHQUEvQyxNQUFxQiwwQkFBMkIsU0FBUSxrQkFBa0I7UUFDdEUsWUFBZ0QsS0FBSztZQUNqRCxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7UUFDakIsQ0FBQztLQUNKLENBQUE7SUFKb0IsMEJBQTBCO1FBRjlDLGdCQUFPLEVBQUU7UUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO1FBRUYsV0FBQSxlQUFNLENBQUMsMEJBQTBCLENBQUMsQ0FBQTs7T0FEOUIsMEJBQTBCLENBSTlDO0lBQUQsaUNBQUM7S0FBQTtrQkFKb0IsMEJBQTBCIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtY29sbGVjdGlvbi1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9hcHAvZGF0YS1wcm92aWRlci9yZXNvdXJjZS1jb2xsZWN0aW9uLXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLHlGQUF5RjtBQUl6RixJQUFxQiwwQkFBMEIsR0FBL0MsTUFBcUIsMEJBQTJCLFNBQVEsa0JBQWtCO0lBQ3RFLFlBQWdELEtBQUs7UUFDakQsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2pCLENBQUM7Q0FDSixDQUFBO0FBSm9CLDBCQUEwQjtJQUY5QyxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsZUFBTSxDQUFDLDBCQUEwQixDQUFDLENBQUE7O0dBRDlCLDBCQUEwQixDQUk5QztrQkFKb0IsMEJBQTBCIn0=

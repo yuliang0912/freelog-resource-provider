@@ -12,124 +12,121 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResourceCollectionService = void 0;
 const midway_1 = require("midway");
 const lodash_1 = require("lodash");
-let ResourceCollectionService = /** @class */ (() => {
-    let ResourceCollectionService = class ResourceCollectionService {
-        async collectionResource(model) {
-            return this.resourceCollectionProvider.findOneAndUpdate({
-                resourceId: model.resourceId, userId: model.userId
-            }, model, { new: true }).then(collectionInfo => {
-                return collectionInfo || this.resourceCollectionProvider.create(model);
-            });
+let ResourceCollectionService = class ResourceCollectionService {
+    async collectionResource(model) {
+        return this.resourceCollectionProvider.findOneAndUpdate({
+            resourceId: model.resourceId, userId: model.userId
+        }, model, { new: true }).then(collectionInfo => {
+            return collectionInfo || this.resourceCollectionProvider.create(model);
+        });
+    }
+    async isCollected(resourceIds) {
+        const condition = {
+            userId: this.ctx.request.userId, resourceId: { $in: resourceIds }
+        };
+        const collectedResourceSet = await this.resourceCollectionProvider.find(condition, 'resourceId')
+            .then(list => new Set(list.map(x => x.resourceId)));
+        return resourceIds.map(resourceId => Object({ resourceId, isCollected: collectedResourceSet.has(resourceId) }));
+    }
+    async find(condition, ...args) {
+        return this.resourceCollectionProvider.find(condition, ...args);
+    }
+    async findOne(condition, ...args) {
+        return this.resourceCollectionProvider.findOne(condition, ...args);
+    }
+    async deleteOne(condition) {
+        return this.resourceCollectionProvider.deleteOne(condition).then(ret => ret.ok > 0);
+    }
+    async findPageList(resourceType, keywords, resourceStatus, page, pageSize) {
+        const condition = { userId: this.ctx.request.userId };
+        if (resourceType) {
+            condition.resourceType = resourceType;
         }
-        async isCollected(resourceIds) {
-            const condition = {
-                userId: this.ctx.request.userId, resourceId: { $in: resourceIds }
-            };
-            const collectedResourceSet = await this.resourceCollectionProvider.find(condition, 'resourceId')
-                .then(list => new Set(list.map(x => x.resourceId)));
-            return resourceIds.map(resourceId => Object({ resourceId, isCollected: collectedResourceSet.has(resourceId) }));
-        }
-        async find(condition, ...args) {
-            return this.resourceCollectionProvider.find(condition, ...args);
-        }
-        async findOne(condition, ...args) {
-            return this.resourceCollectionProvider.findOne(condition, ...args);
-        }
-        async deleteOne(condition) {
-            return this.resourceCollectionProvider.deleteOne(condition).then(ret => ret.ok > 0);
-        }
-        async findPageList(resourceType, keywords, resourceStatus, page, pageSize) {
-            const condition = { userId: this.ctx.request.userId };
-            if (resourceType) {
-                condition.resourceType = resourceType;
-            }
-            if (lodash_1.isString(keywords) && keywords.length > 0) {
-                const searchRegExp = new RegExp(keywords, 'i');
-                if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) {
-                    condition.$or = [{ resourceName: searchRegExp }, { resourceId: keywords.toLowerCase() }];
-                }
-                else {
-                    condition.resourceName = searchRegExp;
-                }
-            }
-            const resourceMatchAggregates = [{
-                    $match: {
-                        'resourceInfos.status': resourceStatus
-                    }
-                }];
-            const collectionMatchAggregates = [{
-                    $match: condition
-                }];
-            const joinResourceAggregates = [
-                {
-                    $addFields: { resource_id: { $toObjectId: '$resourceId' } }
-                }, {
-                    $lookup: {
-                        from: 'resource-infos',
-                        localField: 'resource_id',
-                        foreignField: '_id',
-                        as: 'resourceInfos'
-                    }
-                }
-            ];
-            const countAggregates = [{ $count: 'totalItem' }];
-            const pageAggregates = [{
-                    $skip: (page - 1) * pageSize
-                }, {
-                    $limit: pageSize
-                }];
-            let countAggregatePipelines = [];
-            let resultAggregatePipelines = [];
-            if ([0, 1].includes(resourceStatus)) {
-                countAggregatePipelines = lodash_1.flatten([
-                    collectionMatchAggregates, joinResourceAggregates, resourceMatchAggregates, countAggregates
-                ]);
-                resultAggregatePipelines = lodash_1.flatten([
-                    collectionMatchAggregates, joinResourceAggregates, resourceMatchAggregates, pageAggregates
-                ]);
+        if (lodash_1.isString(keywords) && keywords.length > 0) {
+            const searchRegExp = new RegExp(keywords, 'i');
+            if (/^[0-9a-fA-F]{4,24}$/.test(keywords)) {
+                condition.$or = [{ resourceName: searchRegExp }, { resourceId: keywords.toLowerCase() }];
             }
             else {
-                countAggregatePipelines = lodash_1.flatten([
-                    collectionMatchAggregates, joinResourceAggregates, countAggregates
-                ]);
-                resultAggregatePipelines = lodash_1.flatten([
-                    collectionMatchAggregates, pageAggregates, joinResourceAggregates
-                ]);
+                condition.resourceName = searchRegExp;
             }
-            const [totalItemInfo] = await this.resourceCollectionProvider.aggregate(countAggregatePipelines);
-            const { totalItem = 0 } = totalItemInfo || {};
-            const result = { page, pageSize, totalItem, dataList: [] };
-            if (totalItem <= (page - 1) * pageSize) {
-                return result;
+        }
+        const resourceMatchAggregates = [{
+                $match: {
+                    'resourceInfos.status': resourceStatus
+                }
+            }];
+        const collectionMatchAggregates = [{
+                $match: condition
+            }];
+        const joinResourceAggregates = [
+            {
+                $addFields: { resource_id: { $toObjectId: '$resourceId' } }
+            }, {
+                $lookup: {
+                    from: 'resource-infos',
+                    localField: 'resource_id',
+                    foreignField: '_id',
+                    as: 'resourceInfos'
+                }
             }
-            result.dataList = await this.resourceCollectionProvider.aggregate(resultAggregatePipelines).map(model => {
-                const { resourceId, createDate, resourceInfos = [] } = model;
-                const resourceInfo = resourceInfos.length ? resourceInfos[0] : {};
-                const { resourceName, resourceType, policies, userId, username, coverImages, resourceVersions, updateDate, status } = resourceInfo;
-                return {
-                    resourceId, resourceName, resourceType, policies, coverImages, resourceVersions,
-                    authorId: userId,
-                    authorName: username,
-                    collectionDate: createDate,
-                    resourceStatus: status,
-                    resourceUpdateDate: updateDate,
-                };
-            });
+        ];
+        const countAggregates = [{ $count: 'totalItem' }];
+        const pageAggregates = [{
+                $skip: (page - 1) * pageSize
+            }, {
+                $limit: pageSize
+            }];
+        let countAggregatePipelines = [];
+        let resultAggregatePipelines = [];
+        if ([0, 1].includes(resourceStatus)) {
+            countAggregatePipelines = lodash_1.flatten([
+                collectionMatchAggregates, joinResourceAggregates, resourceMatchAggregates, countAggregates
+            ]);
+            resultAggregatePipelines = lodash_1.flatten([
+                collectionMatchAggregates, joinResourceAggregates, resourceMatchAggregates, pageAggregates
+            ]);
+        }
+        else {
+            countAggregatePipelines = lodash_1.flatten([
+                collectionMatchAggregates, joinResourceAggregates, countAggregates
+            ]);
+            resultAggregatePipelines = lodash_1.flatten([
+                collectionMatchAggregates, pageAggregates, joinResourceAggregates
+            ]);
+        }
+        const [totalItemInfo] = await this.resourceCollectionProvider.aggregate(countAggregatePipelines);
+        const { totalItem = 0 } = totalItemInfo || {};
+        const result = { page, pageSize, totalItem, dataList: [] };
+        if (totalItem <= (page - 1) * pageSize) {
             return result;
         }
-    };
-    __decorate([
-        midway_1.inject(),
-        __metadata("design:type", Object)
-    ], ResourceCollectionService.prototype, "ctx", void 0);
-    __decorate([
-        midway_1.inject(),
-        __metadata("design:type", Object)
-    ], ResourceCollectionService.prototype, "resourceCollectionProvider", void 0);
-    ResourceCollectionService = __decorate([
-        midway_1.provide('resourceCollectionService')
-    ], ResourceCollectionService);
-    return ResourceCollectionService;
-})();
+        result.dataList = await this.resourceCollectionProvider.aggregate(resultAggregatePipelines).map(model => {
+            const { resourceId, createDate, resourceInfos = [] } = model;
+            const resourceInfo = resourceInfos.length ? resourceInfos[0] : {};
+            const { resourceName, resourceType, userId, username, coverImages, latestVersion, resourceVersions, updateDate, status } = resourceInfo;
+            return {
+                resourceId, resourceName, resourceType, coverImages, resourceVersions, latestVersion,
+                authorId: userId,
+                authorName: username,
+                collectionDate: createDate,
+                resourceStatus: status,
+                resourceUpdateDate: updateDate,
+            };
+        });
+        return result;
+    }
+};
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], ResourceCollectionService.prototype, "ctx", void 0);
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], ResourceCollectionService.prototype, "resourceCollectionProvider", void 0);
+ResourceCollectionService = __decorate([
+    midway_1.provide('resourceCollectionService')
+], ResourceCollectionService);
 exports.ResourceCollectionService = ResourceCollectionService;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtY29sbGVjdGlvbi1zZXJ2aWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9zZXJ2aWNlL3Jlc291cmNlLWNvbGxlY3Rpb24tc2VydmljZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBdUM7QUFDdkMsbUNBQXlDO0FBSXpDO0lBQUEsSUFBYSx5QkFBeUIsR0FBdEMsTUFBYSx5QkFBeUI7UUFPbEMsS0FBSyxDQUFDLGtCQUFrQixDQUFDLEtBQTZCO1lBQ2xELE9BQU8sSUFBSSxDQUFDLDBCQUEwQixDQUFDLGdCQUFnQixDQUFDO2dCQUNwRCxVQUFVLEVBQUUsS0FBSyxDQUFDLFVBQVUsRUFBRSxNQUFNLEVBQUUsS0FBSyxDQUFDLE1BQU07YUFDckQsRUFBRSxLQUFLLEVBQUUsRUFBQyxHQUFHLEVBQUUsSUFBSSxFQUFDLENBQUMsQ0FBQyxJQUFJLENBQUMsY0FBYyxDQUFDLEVBQUU7Z0JBQ3pDLE9BQU8sY0FBYyxJQUFJLElBQUksQ0FBQywwQkFBMEIsQ0FBQyxNQUFNLENBQUMsS0FBSyxDQUFDLENBQUM7WUFDM0UsQ0FBQyxDQUFDLENBQUM7UUFDUCxDQUFDO1FBRUQsS0FBSyxDQUFDLFdBQVcsQ0FBQyxXQUFxQjtZQUNuQyxNQUFNLFNBQVMsR0FBRztnQkFDZCxNQUFNLEVBQUUsSUFBSSxDQUFDLEdBQUcsQ0FBQyxPQUFPLENBQUMsTUFBTSxFQUFFLFVBQVUsRUFBRSxFQUFDLEdBQUcsRUFBRSxXQUFXLEVBQUM7YUFDbEUsQ0FBQztZQUNGLE1BQU0sb0JBQW9CLEdBQUcsTUFBTSxJQUFJLENBQUMsMEJBQTBCLENBQUMsSUFBSSxDQUFDLFNBQVMsRUFBRSxZQUFZLENBQUM7aUJBQzNGLElBQUksQ0FBQyxJQUFJLENBQUMsRUFBRSxDQUFDLElBQUksR0FBRyxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUMsVUFB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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtY29sbGVjdGlvbi1zZXJ2aWNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9zZXJ2aWNlL3Jlc291cmNlLWNvbGxlY3Rpb24tc2VydmljZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBdUM7QUFDdkMsbUNBQXlDO0FBSXpDLElBQWEseUJBQXlCLEdBQXRDLE1BQWEseUJBQXlCO0lBT2xDLEtBQUssQ0FBQyxrQkFBa0IsQ0FBQyxLQUE2QjtRQUNsRCxPQUFPLElBQUksQ0FBQywwQkFBMEIsQ0FBQyxnQkFBZ0IsQ0FBQztZQUNwRCxVQUFVLEVBQUUsS0FBSyxDQUFDLFVBQVUsRUFBRSxNQUFNLEVBQUUsS0FBSyxDQUFDLE1BQU07U0FDckQsRUFBRSxLQUFLLEVBQUUsRUFBQyxHQUFHLEVBQUUsSUFBSSxFQUFDLENBQUMsQ0FBQyxJQUFJLENBQUMsY0FBYyxDQUFDLEVBQUU7WUFDekMsT0FBTyxjQUFjLElBQUksSUFBSSxDQUFDLDBCQUEwQixDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQUMsQ0FBQztRQUMzRSxDQUFDLENBQUMsQ0FBQztJQUNQLENBQUM7SUFFRCxLQUFLLENBQUMsV0FBVyxDQUFDLFdBQXFCO1FBQ25DLE1BQU0sU0FBUyxHQUFHO1lBQ2QsTUFBTSxFQUFFLElBQUksQ0FBQyxHQUFHLENBQUMsT0FBTyxDQUFDLE1BQU0sRUFBRSxVQUFVLEVBQUUsRUFBQyxHQUFHLEVBQUUsV0FBVyxFQUFDO1NBQ2xFLENBQUM7UUFDRixNQUFNLG9CQUFvQixHQUFHLE1BQU0sSUFBSSxDQUFDLDBCQUEwQixDQUFDLElBQUksQ0FBQyxTQUFTLEVBQUUsWUFBWSxDQUFDO2FBQzNGLElBQUksQ0FBQyxJQUFJLENBQUMsRUFBRSxDQUFDLElBQUksR0FBRyxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUMsVUFBVSxDQUFDLENB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

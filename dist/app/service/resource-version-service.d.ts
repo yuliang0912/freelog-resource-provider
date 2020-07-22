@@ -4,6 +4,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
     resourceService: any;
     resourceVersionProvider: any;
     resourcePropertyGenerator: any;
+    resourceVersionDraftProvider: any;
     find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
     /**
@@ -26,6 +27,19 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<any>}
      */
     resourceBatchSignContract(versionInfo: ResourceVersionInfo, changedResolveResources?: any[]): Promise<any>;
+    /**
+     * 保存资源草稿
+     * @param {ResourceInfo} resourceInfo
+     * @param {CreateResourceVersionOptions} options
+     * @returns {Promise<any>}
+     */
+    saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<any>;
+    /**
+     * 获取资源版本草稿
+     * @param {string} resourceId
+     * @returns {Promise<any>}
+     */
+    getResourceVersionDraft(resourceId: string): Promise<any>;
     /**
      * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态

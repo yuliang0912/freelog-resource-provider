@@ -13,20 +13,17 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
-const MongoBaseOperation = require("egg-freelog-database/lib/database/mongo-base-operation");
-let ResourceProvider = /** @class */ (() => {
-    let ResourceProvider = class ResourceProvider extends MongoBaseOperation {
-        constructor(model) {
-            super(model);
-        }
-    };
-    ResourceProvider = __decorate([
-        midway_1.provide(),
-        midway_1.scope('Singleton'),
-        __param(0, midway_1.inject('model.ResourceInfo')),
-        __metadata("design:paramtypes", [Object])
-    ], ResourceProvider);
-    return ResourceProvider;
-})();
+const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
+let ResourceProvider = class ResourceProvider extends MongoBaseOperation {
+    constructor(model) {
+        super(model);
+    }
+};
+ResourceProvider = __decorate([
+    midway_1.provide(),
+    midway_1.scope('Singleton'),
+    __param(0, midway_1.inject('model.ResourceInfo')),
+    __metadata("design:paramtypes", [Object])
+], ResourceProvider);
 exports.default = ResourceProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvcmVzb3VyY2UtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMsNkZBQTZGO0FBSTdGO0lBQUEsSUFBcUIsZ0JBQWdCLEdBQXJDLE1BQXFCLGdCQUFpQixTQUFRLGtCQUFrQjtRQUM1RCxZQUEwQyxLQUFLO1lBQzNDLEtBQUssQ0FBQyxLQUFLLENBQUMsQ0FBQztRQUNqQixDQUFDO0tBQ0osQ0FBQTtJQUpvQixnQkFBZ0I7UUFGcEMsZ0JBQU8sRUFBRTtRQUNULGNBQUssQ0FBQyxXQUFXLENBQUM7UUFFRixXQUFBLGVBQU0sQ0FBQyxvQkFBb0IsQ0FBQyxDQUFBOztPQUR4QixnQkFBZ0IsQ0FJcEM7SUFBRCx1QkFBQztLQUFBO2tCQUpvQixnQkFBZ0IifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvcmVzb3VyY2UtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMseUZBQXlGO0FBSXpGLElBQXFCLGdCQUFnQixHQUFyQyxNQUFxQixnQkFBaUIsU0FBUSxrQkFBa0I7SUFDNUQsWUFBMEMsS0FBSztRQUMzQyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0IsZ0JBQWdCO0lBRnBDLGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMsb0JBQW9CLENBQUMsQ0FBQTs7R0FEeEIsZ0JBQWdCLENBSXBDO2tCQUpvQixnQkFBZ0IifQ==

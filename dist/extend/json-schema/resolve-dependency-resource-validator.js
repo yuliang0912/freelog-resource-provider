@@ -12,75 +12,72 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResolveDependencyResourceValidator = void 0;
 const midway_1 = require("midway");
 const freelogCommonJsonSchema = require("egg-freelog-base/app/extend/json-schema/common-json-schema");
-let ResolveDependencyResourceValidator = /** @class */ (() => {
-    let ResolveDependencyResourceValidator = class ResolveDependencyResourceValidator extends freelogCommonJsonSchema {
-        /**
-         * 解决依赖资源格式校验
-         * @param {object[]} operations 解决依赖资源数据
-         * @returns {ValidatorResult}
-         */
-        validate(operations) {
-            return super.validate(operations, super.getSchema('/resolveResourceSchema'));
-        }
-        /**
-         * 注册所有的校验
-         * @private
-         */
-        registerValidators() {
-            super.addSchema({
-                id: '/resolveResourceSchema',
-                type: 'array',
-                uniqueItems: true,
-                items: {
-                    type: 'object',
-                    required: true,
-                    additionalProperties: false,
-                    properties: {
-                        resourceId: { type: 'string', required: true, format: 'mongoObjectId' },
-                        contracts: {
-                            type: 'array',
-                            uniqueItems: true,
+let ResolveDependencyResourceValidator = class ResolveDependencyResourceValidator extends freelogCommonJsonSchema {
+    /**
+     * 解决依赖资源格式校验
+     * @param {object[]} operations 解决依赖资源数据
+     * @returns {ValidatorResult}
+     */
+    validate(operations) {
+        return super.validate(operations, super.getSchema('/resolveResourceSchema'));
+    }
+    /**
+     * 注册所有的校验
+     * @private
+     */
+    registerValidators() {
+        super.addSchema({
+            id: '/resolveResourceSchema',
+            type: 'array',
+            uniqueItems: true,
+            items: {
+                type: 'object',
+                required: true,
+                additionalProperties: false,
+                properties: {
+                    resourceId: { type: 'string', required: true, format: 'mongoObjectId' },
+                    contracts: {
+                        type: 'array',
+                        uniqueItems: true,
+                        required: true,
+                        maxItems: 10,
+                        minItems: 1,
+                        items: {
+                            type: 'object',
                             required: true,
-                            maxItems: 10,
-                            minItems: 1,
-                            items: {
-                                type: 'object',
-                                required: true,
-                                additionalProperties: false,
-                                properties: {
-                                    policyId: { type: 'string', required: true, format: 'md5' }
-                                }
+                            additionalProperties: false,
+                            properties: {
+                                policyId: { type: 'string', required: true, format: 'md5' }
                             }
                         }
                     }
                 }
-            });
-            super.addSchema({
-                id: '/upcastResourceSchema',
-                type: 'array',
-                uniqueItems: true,
-                items: {
-                    type: 'object',
-                    required: true,
-                    additionalProperties: false,
-                    properties: {
-                        resourceId: { type: 'string', required: true, format: 'mongoObjectId' }
-                    }
+            }
+        });
+        super.addSchema({
+            id: '/upcastResourceSchema',
+            type: 'array',
+            uniqueItems: true,
+            items: {
+                type: 'object',
+                required: true,
+                additionalProperties: false,
+                properties: {
+                    resourceId: { type: 'string', required: true, format: 'mongoObjectId' }
                 }
-            });
-        }
-    };
-    __decorate([
-        midway_1.init(),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], ResolveDependencyResourceValidator.prototype, "registerValidators", null);
-    ResolveDependencyResourceValidator = __decorate([
-        midway_1.scope('Singleton'),
-        midway_1.provide('resolveDependencyOrUpcastValidator')
-    ], ResolveDependencyResourceValidator);
-    return ResolveDependencyResourceValidator;
-})();
+            }
+        });
+    }
+};
+__decorate([
+    midway_1.init(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ResolveDependencyResourceValidator.prototype, "registerValidators", null);
+ResolveDependencyResourceValidator = __decorate([
+    midway_1.scope('Singleton'),
+    midway_1.provide('resolveDependencyOrUpcastValidator')
+], ResolveDependencyResourceValidator);
 exports.ResolveDependencyResourceValidator = ResolveDependencyResourceValidator;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb2x2ZS1kZXBlbmRlbmN5LXJlc291cmNlLXZhbGlkYXRvci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9leHRlbmQvanNvbi1zY2hlbWEvcmVzb2x2ZS1kZXBlbmRlbmN5LXJlc291cmNlLXZhbGlkYXRvci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBNEM7QUFHNUMsc0dBQXNHO0FBSXRHO0lBQUEsSUFBYSxrQ0FBa0MsR0FBL0MsTUFBYSxrQ0FBbUMsU0FBUSx1QkFBdUI7UUFFM0U7Ozs7V0FJRztRQUNILFFBQVEsQ0FBQyxVQUFvQjtZQUN6QixPQUFPLEtBQUssQ0FBQyxRQUFRLENBQUMsVUFBVSxFQUFFLEtBQUssQ0FBQyxTQUFTLENBQUMsd0JBQXdCLENBQUMsQ0FBQyxDQUFDO1FBQ2pGLENBQUM7UUFFRDs7O1dBR0c7UUFFSCxrQkFBa0I7WUFFZCxLQUFLLENBQUMsU0FBUyxDQUFDO2dCQUNaLEVBQUUsRUFBRSx3QkFBd0I7Z0JBQzVCLElBQUksRUFBRSxPQUFPO2dCQUNiLFdBQVcsRUFBRSxJQUFJO2dCQUNqQixLQUFLLEVBQUU7b0JBQ0gsSUFBSSxFQUFFLFFBQVE7b0JBQ2QsUUFBUSxFQUFFLElBQUk7b0JBQ2Qsb0JBQW9CLEVBQUUsS0FBSztvQkFDM0IsVUFBVSxFQUFFO3dCQUNSLFVBQVUsRUFBRSxFQUFDLElBQUksRUFBRSxRQUFRLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxNQUFNLEVBQUUsZUFBZSxFQUFDO3dCQUNyRSxTQUFTLEVBQUU7NEJBQ1AsSUFBSSxFQUFFLE9BQU87NEJBQ2IsV0FBVyxFQUFFLElBQUk7NEJBQ2pCLFFBQVEsRUFBRSxJQUFJOzRCQUNkLFFBQVEsRUFBRSxFQUFFOzRCQUNaLFFBQVEsRUFBRSxDQUFDOzRCQUNYLEtBQUssRUFBRTtnQ0FDSCxJQUFJLEVBQUUsUUFBUTtnQ0FDZCxRQUFRLEVBQUUsSUFBSTtnQ0FDZCxvQkFBb0IsRUFBRSxLQUFLO2dDQUMzQixVQUFVLEVBQUU7b0NBQ1IsUUFBUSxFQUFFLEVBQUMsSUFBSSxFQUFFLFFBQVEsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE1BQU0sRUFBRSxLQUFLLEVBQUM7aUNBQzVEOzZCQUNKO3lCQUNKO3FCQUNKO2lCQUNKO2FBQ0osQ0FBQyxDQUFDO1lBRUgsS0FBSyxDQUFDLFNBQVMsQ0FBQztnQkFDWixFQUFFLEVBQUUsdUJBQXVCO2dCQUMzQixJQUFJLEVBQUUsT0FBTztnQkFDYixXQUFXLEVBQUUsSUFBSTtnQkFDakIsS0FBSyxFQUFFO29CQUNILElBQUksRUFBRSxRQUFRO29CQUNkLFFBQVEsRUFBRSxJQUFJO29CQUNkLG9CQUFvQixFQUFFLEtBQUs7b0JBQzNCLFVBQVUsRUFBRTt3QkFDUixVQUFVLEVBQUUsRUFBQyxJQUFJLEVBQUUsUUFBUSxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsTUFBTSxFQUFFLGVBQWUsRUFBQztxQkFDeEU7aUJBQ0o7YUFDSixDQUFDLENBQUM7UUFDUCxDQUFDO0tBQ0osQ0FBQTtJQTdDRztRQURDLGFBQUksRUFBRTs7OztnRkE2Q047SUE1RFEsa0NBQWtDO1FBRjlDLGNBQUssQ0FBQyxXQUFXLENBQUM7UUFDbEIsZ0JBQU8sQ0FBQyxvQ0FBb0MsQ0FBQztPQUNqQyxrQ0FBa0MsQ0E2RDlDO0lBQUQseUNBQUM7S0FBQTtBQTdEWSxnRkFBa0MifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb2x2ZS1kZXBlbmRlbmN5LXJlc291cmNlLXZhbGlkYXRvci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9leHRlbmQvanNvbi1zY2hlbWEvcmVzb2x2ZS1kZXBlbmRlbmN5LXJlc291cmNlLXZhbGlkYXRvci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBNEM7QUFHNUMsc0dBQXNHO0FBSXRHLElBQWEsa0NBQWtDLEdBQS9DLE1BQWEsa0NBQW1DLFNBQVEsdUJBQXVCO0lBRTNFOzs7O09BSUc7SUFDSCxRQUFRLENBQUMsVUFBb0I7UUFDekIsT0FBTyxLQUFLLENBQUMsUUFBUSxDQUFDLFVBQVUsRUFBRSxLQUFLLENBQUMsU0FBUyxDQUFDLHdCQUF3QixDQUFDLENBQUMsQ0FBQztJQUNqRixDQUFDO0lBRUQ7OztPQUdHO0lBRUgsa0JBQWtCO1FBRWQsS0FBSyxDQUFDLFNBQVMsQ0FBQztZQUNaLEVBQUUsRUFBRSx3QkFBd0I7WUFDNUIsSUFBSSxFQUFFLE9BQU87WUFDYixXQUFXLEVBQUUsSUFBSTtZQUNqQixLQUFLLEVBQUU7Z0JBQ0gsSUFBSSxFQUFFLFFBQVE7Z0JBQ2QsUUFBUSxFQUFFLElBQUk7Z0JBQ2Qsb0JBQW9CLEVBQUUsS0FBSztnQkFDM0IsVUFBVSxFQUFFO29CQUNSLFVBQVUsRUFBRSxFQUFDLElBQUksRUFBRSxRQUFRLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxNQUFNLEVBQUUsZUFBZSxFQUFDO29CQUNyRSxTQUFTLEVBQUU7d0JBQ1AsSUFBSSxFQUFFLE9BQU87d0JBQ2IsV0FBVyxFQUFFLElBQUk7d0JBQ2pCLFFBQVEsRUFBRSxJQUFJO3dCQUNkLFFBQVEsRUFBRSxFQUFFO3dCQUNaLFFBQVEsRUFBRSxDQUFDO3dCQUNYLEtBQUssRUFBRTs0QkFDSCxJQUFJLEVBQUUsUUFBUTs0QkFDZCxRQUFRLEVBQUUsSUFBSTs0QkFDZCxvQkFBb0IsRUFBRSxLQUFLOzRCQUMzQixVQUFVLEVBQUU7Z0NBQ1IsUUFBUSxFQUFFLEVBQUMsSUFBSSxFQUFFLFFBQVEsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE1BQU0sRUFBRSxLQUFLLEVBQUM7NkJBQzVEO3lCQUNKO3FCQUNKO2lCQUNKO2FBQ0o7U0FDSixDQUFDLENBQUM7UUFFSCxLQUFLLENBQUMsU0FBUyxDQUFDO1lBQ1osRUFBRSxFQUFFLHVCQUF1QjtZQUMzQixJQUFJLEVBQUUsT0FBTztZQUNiLFdBQVcsRUFBRSxJQUFJO1lBQ2pCLEtBQUssRUFBRTtnQkFDSCxJQUFJLEVBQUUsUUFBUTtnQkFDZCxRQUFRLEVBQUUsSUFBSTtnQkFDZCxvQkFBb0IsRUFBRSxLQUFLO2dCQUMzQixVQUFVLEVBQUU7b0JBQ1IsVUFBVSxFQUFFLEVBQUMsSUFBSSxFQUFFLFFBQVEsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLE1BQU0sRUFBRSxlQUFlLEVBQUM7aUJBQ3hFO2FBQ0o7U0FDSixDQUFDLENBQUM7SUFDUCxDQUFDO0NBQ0osQ0FBQTtBQTdDRztJQURDLGFBQUksRUFBRTs7Ozs0RUE2Q047QUE1RFEsa0NBQWtDO0lBRjlDLGNBQUssQ0FBQyxXQUFXLENBQUM7SUFDbEIsZ0JBQU8sQ0FBQyxvQ0FBb0MsQ0FBQztHQUNqQyxrQ0FBa0MsQ0E2RDlDO0FBN0RZLGdGQUFrQyJ9

@@ -3,8 +3,8 @@ import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-op
 
 @provide()
 @scope('Singleton')
-export default class ResourceCollectionProvider extends MongoBaseOperation {
-    constructor(@inject('model.ResourceCollection') model) {
+export default class ResourceVersionDraftProvider extends MongoBaseOperation {
+    constructor(@inject('model.ResourceVersionDraft') model) {
         super(model);
     }
 }
