@@ -34,18 +34,6 @@ export class ResourceVersionController {
         await this.resourceVersionService.find({resourceId}, projection.join(' ')).then(ctx.success);
     }
 
-    @get('/:resourceId/versions/:version')
-    @visitorIdentity(LoginUser | InternalClient)
-    async show(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
-        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
-        ctx.validateParams();
-
-        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
-        await this.resourceVersionService.findOne({versionId}, projection.join(' ')).then(ctx.success);
-    }
-
     @get('/versions/detail')
     async detail(ctx) {
         const versionId = ctx.checkQuery('versionId').isMd5().value;
@@ -60,6 +48,24 @@ export class ResourceVersionController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
         await this.resourceVersionService.find({versionId: {$in: versionIds}}, projection.join(' ')).then(ctx.success);
+    }
+
+    /**
+     * 保存草稿.一个资源只能保存一次草稿
+     * @param ctx
+     * @returns {Promise<void>}
+     */
+    @get('/:resourceId/versions/drafts')
+    @visitorIdentity(LoginUser)
+    async resourceVersionDraft(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        ctx.validateParams();
+
+        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
+        ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
+
+        await this.resourceVersionService.getResourceVersionDraft(resourceId).then(ctx.success);
     }
 
     @post('/:resourceId/versions')
@@ -262,21 +268,15 @@ export class ResourceVersionController {
         await this.resourceVersionService.saveOrUpdateResourceVersionDraft(resourceInfo, versionInfo).then(ctx.success);
     }
 
-    /**
-     * 保存草稿.一个资源只能保存一次草稿
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    @get('/:resourceId/versions/drafts')
-    @visitorIdentity(LoginUser)
-    async resourceVersionDraft(ctx) {
-
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+    @get('/:resourceId/versions/:version')
+    @visitorIdentity(LoginUser | InternalClient)
+    async show(ctx) {
+        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
-
-        await this.resourceVersionService.getResourceVersionDraft(resourceId).then(ctx.success);
+        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
+        await this.resourceVersionService.findOne({versionId}, projection.join(' ')).then(ctx.success);
     }
 }
