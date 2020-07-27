@@ -4,7 +4,7 @@ import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {ICollectionService, IResourceService} from '../../interface';
 
 @provide()
-@controller('/v1/collections/resources')
+@controller('/v2/collections/resources')
 export class ResourceCollectionController {
 
     @inject()

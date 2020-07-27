@@ -4,10 +4,10 @@ import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
 import {isString, includes, isEmpty} from 'lodash';
 import * as semver from 'semver';
-import {mongoObjectId, fullReleaseName} from 'egg-freelog-base/app/extend/helper/common_regex';
+import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
-@controller('/v1/resources')
+@controller('/v2/resources')
 export class ResourceController {
 
     @inject()
@@ -46,7 +46,7 @@ export class ResourceController {
         }
         if (isString(keywords) && keywords.length > 0) {
             const searchRegExp = new RegExp(keywords, 'i');
-            condition.$or = [{releaseName: searchRegExp}, {resourceType: searchRegExp}];
+            condition.$or = [{resourceName: searchRegExp}, {resourceType: searchRegExp}];
         }
 
         let dataList = [];
@@ -88,7 +88,7 @@ export class ResourceController {
     @visitorIdentity(LoginUser)
     async create(ctx) {
 
-        const name = ctx.checkBody('name').exist().isReleaseName().value;
+        const name = ctx.checkBody('name').exist().isResourceName().value;
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
         const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 1000).value;
@@ -223,7 +223,7 @@ export class ResourceController {
         let resourceInfo = null;
         if (mongoObjectId.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName, projection.join(' '));
-        } else if (fullReleaseName.test(resourceIdOrName)) {
+        } else if (fullResourceName.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName, projection.join(' '));
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));

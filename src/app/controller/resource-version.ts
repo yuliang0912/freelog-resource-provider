@@ -7,7 +7,7 @@ import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '..
 
 @provide()
 @priority(1)
-@controller('/v1/resources')
+@controller('/v2/resources')
 export class ResourceVersionController {
 
     @inject()
@@ -98,7 +98,7 @@ export class ResourceVersionController {
 
         const upcastResourceValidateResult = await this.resourceUpcastValidator.validate(baseUpcastResources);
         if (!isEmpty(upcastResourceValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'baseUpcastReleases'), {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'baseUpcastResources'), {
                 errors: upcastResourceValidateResult.errors
             });
         }

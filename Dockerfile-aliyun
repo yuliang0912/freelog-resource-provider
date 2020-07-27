@@ -1,6 +1,6 @@
 FROM node:10.5.0
 
-MAINTAINER yuliang <yuliang@ciwong.com>
+MAINTAINER yuliang <yu.liang@freelog.com>
 
 RUN mkdir -p /data/freelog-resource-provider
 
