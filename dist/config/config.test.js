@@ -4,7 +4,7 @@ exports.default = () => {
     const config = {};
     config.cluster = {
         listen: {
-            port: 5002
+            port: 5101
         }
     };
     config.mongoose = {

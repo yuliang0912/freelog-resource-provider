@@ -3,7 +3,7 @@ export default () => {
 
     config.cluster = {
         listen: {
-            port: 5002
+            port: 5101
         }
     }
 
