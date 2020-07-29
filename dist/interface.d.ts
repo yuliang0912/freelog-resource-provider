@@ -109,6 +109,7 @@ export interface IResourceVersionService {
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
     saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): any;
     getResourceVersionDraft(resourceId: string): any;
+    checkFileIsCanBeCreate(fileSha1: string): Promise<boolean>;
 }
 export interface ICollectionService {
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;

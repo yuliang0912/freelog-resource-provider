@@ -26,4 +26,8 @@ export declare class ResourceVersionController {
      */
     createResourceVersionDraft(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
+    /**
+     * 验证文件是否可以被创建成资源版本
+     */
+    fileIsCanBeCreate(ctx: any): Promise<void>;
 }

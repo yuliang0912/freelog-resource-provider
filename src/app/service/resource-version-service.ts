@@ -177,6 +177,16 @@ export class ResourceVersionService implements IResourceVersionService {
     }
 
     /**
+     * 检查文件是否可以被创建成资源的版本
+     * @param fileSha1
+     */
+    async checkFileIsCanBeCreate(fileSha1: string): Promise<boolean> {
+        return this.resourceVersionProvider.findOne({
+            fileSha1, userId: {$ne: this.ctx.userId}
+        }, '_id').then(x => !Boolean(x));
+    }
+
+    /**
      * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态
      * 2.依赖的资源与主资源之间不能存在循环引用.

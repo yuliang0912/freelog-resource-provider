@@ -138,6 +138,8 @@ export interface IResourceVersionService {
     saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions);
 
     getResourceVersionDraft(resourceId: string);
+
+    checkFileIsCanBeCreate(fileSha1: string): Promise<boolean>;
 }
 
 export interface ICollectionService {

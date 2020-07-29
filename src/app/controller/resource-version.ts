@@ -119,10 +119,8 @@ export class ResourceVersionController {
         }
 
         // 目前允许同一个文件被当做资源的多个版本.也允许同一个文件加入多个资源.但是不可以跨越用户.
-        const existResourceVersion = await this.resourceVersionService.findOne({
-            fileSha1, userId: {$ne: ctx.request.userId}
-        });
-        if (existResourceVersion) {
+        const isCanBeCreate = await this.resourceVersionService.checkFileIsCanBeCreate(fileSha1);
+        if (!isCanBeCreate) {
             throw new ApplicationError(ctx.gettext('resource-create-duplicate-error'));
         }
 
@@ -278,5 +276,17 @@ export class ResourceVersionController {
 
         const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
         await this.resourceVersionService.findOne({versionId}, projection.join(' ')).then(ctx.success);
+    }
+
+    /**
+     * 验证文件是否可以被创建成资源版本
+     */
+    @get('/versions/isCanBeCreate')
+    @visitorIdentity(LoginUser)
+    async fileIsCanBeCreate(ctx) {
+        const fileSha1 = ctx.checkQuery('fileSha1').exist().isSha1().toLowercase().value;
+        ctx.validateParams();
+
+        await this.resourceVersionService.checkFileIsCanBeCreate(fileSha1).then(ctx.success);
     }
 }
