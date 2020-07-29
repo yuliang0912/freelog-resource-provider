@@ -2,7 +2,7 @@ import {controller, inject, get, post, put, provide} from 'midway';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
-import {isString, includes, isEmpty} from 'lodash';
+import {isString, isUndefined, includes, isEmpty} from 'lodash';
 import * as semver from 'semver';
 import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
@@ -147,7 +147,7 @@ export class ResourceController {
         const tags = ctx.checkBody('tags').optional().isArray().len(1, 20).value;
         ctx.validateParams();
 
-        if ([policyChangeInfo, intro, coverImages].every(x => x === undefined)) {
+        if ([policyChangeInfo, intro, coverImages, tags].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
         if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {

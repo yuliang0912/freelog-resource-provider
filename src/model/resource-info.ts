@@ -10,7 +10,7 @@ export class ResourceInfoModel extends MongooseModelBase implements IMongooseMod
 
         const ResourceVersionSchema = new this.mongoose.Schema({
             version: {type: String, required: true},
-            versionId: {type: String, unique: true, required: true},
+            versionId: {type: String, required: true},
             createDate: {type: Date, required: true}
         }, {_id: false});
 

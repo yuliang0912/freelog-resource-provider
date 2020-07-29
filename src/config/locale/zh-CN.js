@@ -80,7 +80,9 @@ module.exports = {
 
     'release-scheme-upcast-validate-failed': '发行的基础上抛范围与依赖的发行不匹配',
 
-    'resource-version-must-be-greater-than-latest-version': '资源版本号必须大于最新版本号%s',
+    'resource-version-must-be-greater-than-latest-version': '资源版本号不能递减',
+
+    'resource-version-existing-error': '资源的版本已经存在,不能重复',
 
     'release-available-policy-not-found': '方案的策略不存在或已下架',
 
@@ -110,7 +112,3 @@ module.exports = {
 
     'release-circular-dependency-error': '资源的依赖发行与目标发行之间存在循环依赖,无法加入当前发行',
 }
-
-
-
-

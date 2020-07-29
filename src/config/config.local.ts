@@ -16,12 +16,6 @@ export const development = {
 export default () => {
     const config: any = {};
 
-    config.cluster = {
-        listen: {
-            port: 7001
-        }
-    };
-
     config.middleware = [
         'errorHandler', 'localUserIdentity'
     ];

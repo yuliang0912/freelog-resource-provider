@@ -6,7 +6,7 @@ exports.default = (appInfo) => {
     config.keys = appInfo.name;
     config.cluster = {
         listen: {
-            port: 7101
+            port: 7001
         }
     };
     config.i18n = {
