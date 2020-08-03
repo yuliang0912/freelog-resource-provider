@@ -143,23 +143,13 @@ export class ResourceVersionService implements IResourceVersionService {
      * @param {CreateResourceVersionOptions} options
      * @returns {Promise<any>}
      */
-    async saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions) {
-
-        await this._validateDependencies(resourceInfo.resourceId, options.dependencies);
-        const isFirstVersion = isEmpty(resourceInfo.resourceVersions);
-        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
+    async saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object) {
 
         const model = {
-            version: options.version,
             resourceId: resourceInfo.resourceId,
             userId: resourceInfo.userId,
             resourceType: resourceInfo.resourceType,
-            fileSha1: options.fileSha1,
-            dependencies: options.dependencies,
-            description: options.description,
-            resolveResources,
-            upcastResources: upcastResources as BaseResourceInfo[],
-            customPropertyDescriptors: options.customPropertyDescriptors
+            draftData: draftData ?? {}
         };
 
         return this.resourceVersionDraftProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, model, {new: true}).then(data => {

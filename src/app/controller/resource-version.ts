@@ -198,72 +198,15 @@ export class ResourceVersionController {
      */
     @post('/:resourceId/versions/drafts')
     @visitorIdentity(LoginUser)
-    async createResourceVersionDraft(ctx) {
+    async createOrUpdateResourceVersionDraft(ctx) {
         const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
-        const fileSha1 = ctx.checkBody('fileSha1').optional().isSha1().toLowercase().default('').value;
-        const resolveResources = ctx.checkBody('resolveResources').optional().isArray().default([]).value; // 单一资源传递空数组.
-        const version = ctx.checkBody('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
-        const description = ctx.checkBody('description').optional().type('string').default('').value;
-        const dependencies = ctx.checkBody('dependencies').optional().isArray().default([]).value;
-        const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().default([]).value;
-        const baseUpcastResources = ctx.checkBody('baseUpcastResources').optional().isArray().default([]).value;
+        const draftData = ctx.checkBody('draftData').exist().isObject().value;
         ctx.validateParams();
-
-        const resolveResourceValidateResult = await this.resolveDependencyOrUpcastValidator.validate(resolveResources);
-        if (!isEmpty(resolveResourceValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resolveResources'), {
-                errors: resolveResourceValidateResult.errors
-            });
-        }
-
-        const dependencyValidateResult = await this.resourceVersionDependencyValidator.validate(dependencies);
-        if (!isEmpty(dependencyValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {
-                errors: dependencyValidateResult.errors
-            });
-        }
-
-        const upcastResourceValidateResult = await this.resourceUpcastValidator.validate(baseUpcastResources);
-        if (!isEmpty(upcastResourceValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'baseUpcastReleases'), {
-                errors: upcastResourceValidateResult.errors
-            });
-        }
-
-        const customPropertyDescriptorValidateResult = await this.customPropertyValidator.validate(customPropertyDescriptors);
-        if (!isEmpty(customPropertyDescriptorValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'customPropertyDescriptors'), {
-                errors: customPropertyDescriptorValidateResult.errors
-            });
-        }
 
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
-        // 目前允许同一个文件被当做资源的多个版本.也允许同一个文件加入多个资源.但是不可以跨越用户.
-        const existResourceVersion = await this.resourceVersionService.findOne({
-            fileSha1, userId: {$ne: ctx.request.userId}
-        });
-        if (existResourceVersion) {
-            throw new ApplicationError(ctx.gettext('resource-create-duplicate-error'));
-        }
-
-        // 通过version库对比而非resourceInfo.resourceVersions.是因为后期可能版本并非直接进入资源版本属性中,需要等状态就绪,才会进入版本集
-        const resourceVersions = await this.resourceVersionService.find({resourceId}, 'version', {createDate: -1});
-        if (resourceVersions.some(x => x.version === semver.clean(version))) {
-            throw new ArgumentError(ctx.gettext('resource-version-existing-error'));
-        }
-        if (!isEmpty(resourceVersions) && resourceVersions.every(x => semver.gt(x.version, version))) {
-            throw new ArgumentError(ctx.gettext('resource-version-must-be-greater-than-latest-version'));
-        }
-
-        const versionInfo = {
-            version: semver.clean(version), fileSha1, description,
-            resolveResources, dependencies, customPropertyDescriptors, baseUpcastResources,
-            versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, version),
-        };
-
-        await this.resourceVersionService.saveOrUpdateResourceVersionDraft(resourceInfo, versionInfo).then(ctx.success);
+        await this.resourceVersionService.saveOrUpdateResourceVersionDraft(resourceInfo, draftData).then(ctx.success);
     }
 
     @get('/:resourceId/versions/:version')

@@ -1,9 +1,10 @@
-import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IResourceService, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions } from '../../interface';
+import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: any;
     resourceProvider: any;
     resourceVersionProvider: any;
     resourcePropertyGenerator: any;
+    resourcePolicyCompiler: any;
     /**
      * 创建资源
      * @param {CreateResourceOptions} options 资源选项
@@ -15,7 +16,7 @@ export declare class ResourceService implements IResourceService {
      * @param {UpdateResourceOptions} options
      * @returns {Promise<ResourceInfo>}
      */
-    updateResource(options: UpdateResourceOptions): Promise<ResourceInfo>;
+    updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
     /**
      * 获取资源依赖树
      * @param {GetResourceDependencyOrAuthTreeOptions} options
@@ -133,4 +134,11 @@ export declare class ResourceService implements IResourceService {
      * @private
      */
     static _getResourceStatus(resourceInfo: ResourceInfo): number;
+    /**
+     * 处理合约变动
+     * @param resourceInfo
+     * @param policyInfo
+     * @private
+     */
+    _policiesHandler(resourceInfo: ResourceInfo, policyInfo: any): PolicyInfo[];
 }

@@ -1,9 +1,10 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
+import {ApplicationError} from 'egg-freelog-base';
 import {isArray, isUndefined, omit, isEmpty, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions,
-    IResourceService, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions
+    IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions
 } from '../../interface';
 import * as semver from 'semver';
 
@@ -18,6 +19,8 @@ export class ResourceService implements IResourceService {
     resourceVersionProvider;
     @inject()
     resourcePropertyGenerator;
+    @inject()
+    resourcePolicyCompiler;
 
     /**
      * 创建资源
@@ -51,7 +54,7 @@ export class ResourceService implements IResourceService {
      * @param {UpdateResourceOptions} options
      * @returns {Promise<ResourceInfo>}
      */
-    async updateResource(options: UpdateResourceOptions): Promise<ResourceInfo> {
+    async updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo> {
 
         const updateInfo: any = {};
         if (isArray(options.coverImages)) {
@@ -62,6 +65,10 @@ export class ResourceService implements IResourceService {
         }
         if (isArray(options.tags)) {
             updateInfo.tags = options.tags;
+        }
+        if (options.policyChangeInfo) {
+            resourceInfo.policies = updateInfo.policies = this._policiesHandler(resourceInfo, options.policyChangeInfo);
+            updateInfo.status = ResourceService._getResourceStatus(resourceInfo);
         }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }
@@ -338,5 +345,43 @@ export class ResourceService implements IResourceService {
      */
     static _getResourceStatus(resourceInfo: ResourceInfo): number {
         return resourceInfo.policies.some(x => x['status'] === 1) && !isEmpty(resourceInfo.resourceVersions) ? 1 : 0;
+    }
+
+
+    /**
+     * 处理合约变动
+     * @param resourceInfo
+     * @param policyInfo
+     * @private
+     */
+    _policiesHandler(resourceInfo: ResourceInfo, policyInfo) {
+
+        const {addPolicies, updatePolicies} = policyInfo
+        const oldPolicyMap: Map<string, PolicyInfo> = new Map(resourceInfo.policies.map(x => [x.policyId, x]))
+
+        if (!isEmpty(updatePolicies)) {
+            for (let i = 0, j = updatePolicies.length; i < j; i++) {
+                const item = updatePolicies[i];
+                const targetPolicy = oldPolicyMap.get(item.policyId);
+                if (!targetPolicy) {
+                    throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'policyId'), item);
+                }
+                targetPolicy.status = item.status;
+                targetPolicy.policyName = item.policyName;
+            }
+        }
+
+        if (!isEmpty(addPolicies)) {
+            for (let i = 0, j = addPolicies.length; i < j; i++) {
+                const item = addPolicies[i];
+                const newPolicy = this.resourcePolicyCompiler.compilePolicyText(item.policyText, item.policyName);
+                if (oldPolicyMap.has(newPolicy.policyId)) {
+                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), item)
+                }
+                oldPolicyMap.set(newPolicy.policyId, newPolicy);
+            }
+        }
+
+        return Array.from(oldPolicyMap.values());
     }
 }

@@ -5,7 +5,7 @@ export interface CreateResourceOptions {
     resourceType: string;
     name: string;
     intro?: string;
-    policies?: object[];
+    policies?: PolicyInfo[];
     coverImages?: string[];
     tags?: string[];
 }
@@ -37,6 +37,13 @@ export interface GetResourceDependencyOrAuthTreeOptions {
     omitFields?: string[];
     isContainRootNode?: boolean;
 }
+export interface PolicyInfo {
+    policyId: string;
+    policyName?: string;
+    policyText: string;
+    status?: number;
+    fsmDescriptionInfo?: object;
+}
 export interface ResourceInfo {
     resourceId?: string;
     resourceName: string;
@@ -47,7 +54,7 @@ export interface ResourceInfo {
     baseUpcastResources: object[];
     intro?: string;
     coverImages?: string[];
-    policies?: object[];
+    policies?: PolicyInfo[];
     uniqueKey?: string;
     status: number;
     latestVersion?: string;
@@ -90,7 +97,7 @@ export interface IJsonSchemaValidate {
 }
 export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
-    updateResource(options: UpdateResourceOptions): Promise<ResourceInfo>;
+    updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
     getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
     getResourceAuthTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<object[]>;
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
@@ -107,7 +114,7 @@ export interface IResourceVersionService {
     updateResourceVersion(versionInfo: ResourceVersionInfo, options: UpdateResourceVersionOptions): Promise<ResourceVersionInfo>;
     find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
-    saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): any;
+    saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object): any;
     getResourceVersionDraft(resourceId: string): any;
     checkFileIsCanBeCreate(fileSha1: string): Promise<boolean>;
 }

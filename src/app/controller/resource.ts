@@ -161,7 +161,7 @@ export class ResourceController {
             resourceId, intro, coverImages, policyChangeInfo, tags
         };
 
-        await this.resourceService.updateResource(updateResourceOptions).then(ctx.success);
+        await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
     }
 
     @get('/:resourceId/dependencyTree')

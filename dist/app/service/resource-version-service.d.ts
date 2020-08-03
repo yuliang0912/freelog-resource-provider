@@ -33,7 +33,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * @param {CreateResourceVersionOptions} options
      * @returns {Promise<any>}
      */
-    saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<any>;
+    saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object): Promise<any>;
     /**
      * 获取资源版本草稿
      * @param {string} resourceId
