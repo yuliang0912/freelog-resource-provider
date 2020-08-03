@@ -30,6 +30,7 @@ export class ResourceController {
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
+        const startResourceId = ctx.checkQuery('startResourceId').optional().isResourceId().value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
 
@@ -47,6 +48,9 @@ export class ResourceController {
         if (isString(keywords) && keywords.length > 0) {
             const searchRegExp = new RegExp(keywords, 'i');
             condition.$or = [{resourceName: searchRegExp}, {resourceType: searchRegExp}];
+        }
+        if (!isUndefined(startResourceId)) {
+            condition._id = {$lt: startResourceId};
         }
 
         let dataList = [];
