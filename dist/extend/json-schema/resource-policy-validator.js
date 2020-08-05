@@ -16,13 +16,12 @@ const freelogCommonJsonSchema = require("egg-freelog-base/app/extend/json-schema
 let ResourcePolicyValidator = class ResourcePolicyValidator extends freelogCommonJsonSchema {
     /**
      * 策略格式校验
-     * @param {object[] | object} operations 策略信息
+     * @param {object[]} operations 策略信息
      * @param {boolean} isUpdateMode 是否更新模式
      * @returns {ValidatorResult}
      */
-    validate(operations, isUpdateMode) {
-        const schemeId = isUpdateMode ? '/updateResourcePolicySchema' : '/addResourcePolicySchema';
-        return super.validate(operations, super.getSchema(schemeId));
+    validate(operations) {
+        return super.validate(operations, super.getSchema('/policySchema'));
     }
     /**
      * 注册所有的校验
@@ -45,42 +44,10 @@ let ResourcePolicyValidator = class ResourcePolicyValidator extends freelogCommo
             return application_1.validator.isBase64(input);
         });
         /**
-         * 更新策略格式
-         */
-        super.addSchema({
-            id: '/updateResourcePolicySchema',
-            type: 'object',
-            required: true,
-            properties: {
-                additionalProperties: false,
-                addPolicies: { $ref: '/addResourcePolicySchema' },
-                updatePolicies: {
-                    type: 'array',
-                    uniqueItems: true,
-                    maxItems: 20,
-                    items: {
-                        type: 'object',
-                        additionalProperties: false,
-                        properties: {
-                            policyId: { required: true, type: 'string', format: 'md5' },
-                            policyName: {
-                                required: true,
-                                type: 'string',
-                                minLength: 2,
-                                maxLength: 20,
-                                format: 'policyName'
-                            },
-                            status: { required: true, type: 'integer', minimum: 0, maximum: 1 }
-                        }
-                    }
-                }
-            }
-        });
-        /**
          * 新增策略格式
          */
         super.addSchema({
-            id: '/addResourcePolicySchema',
+            id: '/policySchema',
             type: 'array',
             uniqueItems: true,
             maxItems: 20,
@@ -89,8 +56,9 @@ let ResourcePolicyValidator = class ResourcePolicyValidator extends freelogCommo
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    policyName: { required: true, minLength: 1, maxLength: 20, type: 'string', format: 'policyName' },
-                    policyText: { required: true, type: 'string', format: 'base64' }
+                    policyId: { required: true, type: 'string', format: 'md5' },
+                    policyName: { required: false, minLength: 1, maxLength: 20, type: 'string', format: 'policyName' },
+                    status: { required: false, type: 'integer', minimum: 0, maximum: 1 }
                 }
             }
         });
@@ -107,4 +75,4 @@ ResourcePolicyValidator = __decorate([
     midway_1.provide('resourcePolicyValidator')
 ], ResourcePolicyValidator);
 exports.ResourcePolicyValidator = ResourcePolicyValidator;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtcG9saWN5LXZhbGlkYXRvci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9leHRlbmQvanNvbi1zY2hlbWEvcmVzb3VyY2UtcG9saWN5LXZhbGlkYXRvci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBNEM7QUFHNUMseUVBQWtFO0FBQ2xFLHNHQUFzRztBQUl0RyxJQUFhLHVCQUF1QixHQUFwQyxNQUFhLHVCQUF3QixTQUFRLHVCQUF1QjtJQUVoRTs7Ozs7T0FLRztJQUNILFFBQVEsQ0FBQyxVQUE2QixFQUFFLFlBQXFCO1FBQ3pELE1BQU0sUUFBUSxHQUFHLFlBQVksQ0FBQyxDQUFDLENBQUMsNkJBQTZCLENBQUMsQ0FBQyxDQUFDLDBCQUEwQixDQUFDO1FBQzNGLE9BQU8sS0FBSyxDQUFDLFFBQVEsQ0FBQyxVQUFVLEVBQUUsS0FBSyxDQUFDLFNBQVMsQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFDO0lBQ2pFLENBQUM7SUFFRDs7O09BR0c7SUFFSCxrQkFBa0I7UUFDZDs7OztXQUlHO1FBQ0gsS0FBSyxDQUFDLHFCQUFxQixDQUFDLFlBQVksRUFBRSxDQUFDLEtBQUssRUFBRSxFQUFFO1lBQ2hELEtBQUssR0FBRyxLQUFLLENBQUMsSUFBSSxFQUFFLENBQUM7WUFDckIsT0FBTyxLQUFLLENBQUMsTUFBTSxJQUFJLENBQUMsSUFBSSxLQUFLLENBQUMsTUFBTSxHQUFHLEVBQUUsQ0FBQztRQUNsRCxDQUFDLENBQUMsQ0FBQztRQUVIOztXQUVHO1FBQ0gsS0FBSyxDQUFDLHFCQUFxQixDQUFDLFFBQVEsRUFBRSxDQUFDLEtBQUssRUFBRSxFQUFFO1lBQzVDLE9BQU8sdUJBQVMsQ0FBQyxRQUFRLENBQUMsS0FBSyxDQUFDLENBQUM7UUFDckMsQ0FBQyxDQUFDLENBQUM7UUFFSDs7V0FFRztRQUNILEtBQUssQ0FBQyxTQUFTLENBQUM7WUFDWixFQUFFLEVBQUUsNkJBQTZCO1lBQ2pDLElBQUksRUFBRSxRQUFRO1lBQ2QsUUFBUSxFQUFFLElBQUk7WUFDZCxVQUFVLEVBQUU7Z0JBQ1Isb0JBQW9CLEVBQUUsS0FBSztnQkFDM0IsV0FBVyxFQUFFLEVBQUMsSUFBSSxFQUFFLDBCQUEwQixFQUFDO2dCQUMvQyxjQUFjLEVBQUU7b0JBQ1osSUFBSSxFQUFFLE9BQU87b0JBQ2IsV0FBVyxFQUFFLElBQUk7b0JBQ2pCLFFBQVEsRUFBRSxFQUFFO29CQUNaLEtBQUssRUFBRTt3QkFDSCxJQUFJLEVBQUUsUUFBUTt3QkFDZCxvQkFBb0IsRUFBRSxLQUFLO3dCQUMzQixVQUFVLEVBQUU7NEJBQ1IsUUFBUSxFQUFFLEVBQUMsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsUUFBUSxFQUFFLE1BQU0sRUFBRSxLQUFLLEVBQUM7NEJBQ3pELFVBQVUsRUFBRTtnQ0FDUixRQUFRLEVBQUUsSUFBSTtnQ0FDZCxJQUFJLEVBQUUsUUFBUTtnQ0FDZCxTQUFTLEVBQUUsQ0FBQztnQ0FDWixTQUFTLEVBQUUsRUFBRTtnQ0FDYixNQUFNLEVBQUUsWUFBWTs2QkFDdkI7NEJBQ0QsTUFBTSxFQUFFLEVBQUMsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsU0FBUyxFQUFFLE9BQU8sRUFBRSxDQUFDLEVBQUUsT0FBTyxFQUFFLENBQUMsRUFBQzt5QkFDcEU7cUJBQ0o7aUJBQ0o7YUFDSjtTQUNKLENBQUMsQ0FBQztRQUVIOztXQUVHO1FBQ0gsS0FBSyxDQUFDLFNBQVMsQ0FBQztZQUNaLEVBQUUsRUFBRSwwQkFBMEI7WUFDOUIsSUFBSSxFQUFFLE9BQU87WUFDYixXQUFXLEVBQUUsSUFBSTtZQUNqQixRQUFRLEVBQUUsRUFBRTtZQUNaLEtBQUssRUFBRTtnQkFDSCxJQUFJLEVBQUUsUUFBUTtnQkFDZCxRQUFRLEVBQUUsSUFBSTtnQkFDZCxvQkFBb0IsRUFBRSxLQUFLO2dCQUMzQixVQUFVLEVBQUU7b0JBQ1IsVUFBVSxFQUFFLEVBQUMsUUFBUSxFQUFFLElBQUksRUFBRSxTQUFTLEVBQUUsQ0FBQyxFQUFFLFNBQVMsRUFBRSxFQUFFLEVBQUUsSUFBSSxFQUFFLFFBQVEsRUFBRSxNQUFNLEVBQUUsWUFBWSxFQUFDO29CQUMvRixVQUFVLEVBQUUsRUFBQyxRQUFRLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBRSxRQUFRLEVBQUUsTUFBTSxFQUFFLFFBQVEsRUFBQztpQkFDakU7YUFDSjtTQUNKLENBQUMsQ0FBQztJQUNQLENBQUM7Q0FDSixDQUFBO0FBdEVHO0lBREMsYUFBSSxFQUFFOzs7O2lFQXNFTjtBQXZGUSx1QkFBdUI7SUFGbkMsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUNsQixnQkFBTyxDQUFDLHlCQUF5QixDQUFDO0dBQ3RCLHVCQUF1QixDQXdGbkM7QUF4RlksMERBQXVCIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtcG9saWN5LXZhbGlkYXRvci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9leHRlbmQvanNvbi1zY2hlbWEvcmVzb3VyY2UtcG9saWN5LXZhbGlkYXRvci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBNEM7QUFHNUMseUVBQWtFO0FBQ2xFLHNHQUFzRztBQUl0RyxJQUFhLHVCQUF1QixHQUFwQyxNQUFhLHVCQUF3QixTQUFRLHVCQUF1QjtJQUVoRTs7Ozs7T0FLRztJQUNILFFBQVEsQ0FBQyxVQUFvQjtRQUN6QixPQUFPLEtBQUssQ0FBQyxRQUFRLENBQUMsVUFBVSxFQUFFLEtBQUssQ0FBQyxTQUFTLENBQUMsZUFBZSxDQUFDLENBQUMsQ0FBQztJQUN4RSxDQUFDO0lBRUQ7OztPQUdHO0lBRUgsa0JBQWtCO1FBQ2Q7Ozs7V0FJRztRQUNILEtBQUssQ0FBQyxxQkFBcUIsQ0FBQyxZQUFZLEVBQUUsQ0FBQyxLQUFLLEVBQUUsRUFBRTtZQUNoRCxLQUFLLEdBQUcsS0FBSyxDQUFDLElBQUksRUFBRSxDQUFDO1lBQ3JCLE9BQU8sS0FBSyxDQUFDLE1BQU0sSUFBSSxDQUFDLElBQUksS0FBSyxDQUFDLE1BQU0sR0FBRyxFQUFFLENBQUM7UUFDbEQsQ0FBQyxDQUFDLENBQUM7UUFFSDs7V0FFRztRQUNILEtBQUssQ0FBQyxxQkFBcUIsQ0FBQyxRQUFRLEVBQUUsQ0FBQyxLQUFLLEVBQUUsRUFBRTtZQUM1QyxPQUFPLHVCQUFTLENBQUMsUUFBUSxDQUFDLEtBQUssQ0FBQyxDQUFDO1FBQ3JDLENBQUMsQ0FBQyxDQUFDO1FBRUg7O1dBRUc7UUFDSCxLQUFLLENBQUMsU0FBUyxDQUFDO1lBQ1osRUFBRSxFQUFFLGVBQWU7WUFDbkIsSUFBSSxFQUFFLE9BQU87WUFDYixXQUFXLEVBQUUsSUFBSTtZQUNqQixRQUFRLEVBQUUsRUFBRTtZQUNaLEtBQUssRUFBRTtnQkFDSCxJQUFJLEVBQUUsUUFBUTtnQkFDZCxRQUFRLEVBQUUsSUFBSTtnQkFDZCxvQkFBb0IsRUFBRSxLQUFLO2dCQUMzQixVQUFVLEVBQUU7b0JBQ1IsUUFBUSxFQUFFLEVBQUMsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsUUFBUSxFQUFFLE1BQU0sRUFBRSxLQUFLLEVBQUM7b0JBQ3pELFVBQVUsRUFBRSxFQUFDLFFBQVEsRUFBRSxLQUFLLEVBQUUsU0FBUyxFQUFFLENBQUMsRUFBRSxTQUFTLEVBQUUsRUFBRSxFQUFFLElBQUksRUFBRSxRQUFRLEVBQUUsTUFBTSxFQUFFLFlBQVksRUFBQztvQkFDaEcsTUFBTSxFQUFFLEVBQUMsUUFBUSxFQUFFLEtBQUssRUFBRSxJQUFJLEVBQUUsU0FBUyxFQUFFLE9BQU8sRUFBRSxDQUFDLEVBQUUsT0FBTyxFQUFFLENBQUMsRUFBQztpQkFDckU7YUFDSjtTQUNKLENBQUMsQ0FBQztJQUNQLENBQUM7Q0FDSixDQUFBO0FBdENHO0lBREMsYUFBSSxFQUFFOzs7O2lFQXNDTjtBQXREUSx1QkFBdUI7SUFGbkMsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUNsQixnQkFBTyxDQUFDLHlCQUF5QixDQUFDO0dBQ3RCLHVCQUF1QixDQXVEbkM7QUF2RFksMERBQXVCIn0=

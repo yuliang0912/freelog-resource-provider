@@ -5,7 +5,7 @@ export default () => {
         listen: {
             port: 5101
         }
-    }
+    };
 
     config.mongoose = {
         url: 'mongodb://mongo-test.common:27017/resource-beta'

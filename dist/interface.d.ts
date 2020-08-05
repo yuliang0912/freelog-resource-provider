@@ -1,4 +1,5 @@
 import { ValidatorResult } from 'jsonschema';
+import { IdentityType, SubjectTypeEnum, ContractStatusEnum } from './enum';
 export interface CreateResourceOptions {
     userId: number;
     username: string;
@@ -14,7 +15,8 @@ export interface UpdateResourceOptions {
     intro?: string;
     coverImages?: [string];
     tags?: string[];
-    policyChangeInfo?: object;
+    addPolicies?: PolicyInfo[];
+    updatePolicies?: PolicyInfo[];
 }
 export interface CreateResourceVersionOptions {
     version: string;
@@ -37,10 +39,37 @@ export interface GetResourceDependencyOrAuthTreeOptions {
     omitFields?: string[];
     isContainRootNode?: boolean;
 }
+export interface SubjectInfo {
+    subjectId: string;
+    policyId: string;
+}
+export interface ContractInfo {
+    contractId: string;
+    contractName: string;
+    licensorId: string | number;
+    licensorName: string;
+    licensorOwnerId: number;
+    licensorOwnerName: string;
+    licenseeId: string | number;
+    licenseeName: string;
+    licenseeOwnerId: number;
+    licenseeOwnerName: string;
+    licenseeIdentityType: IdentityType;
+    subjectId: string;
+    subjectName: string;
+    subjectType: SubjectTypeEnum;
+    fsmCurrentState?: string | null;
+    fsmRunningStatus?: number;
+    fsmDeclarations?: object;
+    policyId: string;
+    status?: ContractStatusEnum;
+    authStatus: number;
+    createDate?: Date;
+}
 export interface PolicyInfo {
     policyId: string;
     policyName?: string;
-    policyText: string;
+    policyText?: string;
     status?: number;
     fsmDescriptionInfo?: object;
 }
@@ -94,6 +123,11 @@ export interface CollectionResourceInfo {
  */
 export interface IJsonSchemaValidate {
     validate(instance: object[] | object, ...args: any[]): ValidatorResult;
+}
+export interface IOutsideApiService {
+    getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
+    getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
+    batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 }
 export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;

@@ -5,17 +5,17 @@
   "private": true,
   "dependencies": {
     "ali-oss": "^6.10.0",
-    "egg-freelog-base": "^2.0.5",
+    "egg-freelog-base": "^2.0.12",
     "egg-scripts": "^2.10.0",
     "jsonschema": "^1.2.6",
     "midway": "^1.20.2",
-    "mongoose": "^5.9.24",
+    "mongoose": "^5.9.27",
     "probe-image-size": "^5.0.0",
     "semver": "^7.3.2"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.17.27",
+    "@types/node": "^10.17.28",
     "cross-env": "^6.0.0",
     "egg-ci": "^1.8.0",
     "midway-bin": "^1.20.1",
@@ -24,7 +24,7 @@
     "tslib": "^1.8.1",
     "tslint": "^5.11.0",
     "tslint-midway-contrib": "^1.20.1",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.7"
   },
   "engines": {
     "node": ">=10.16.0"
@@ -34,7 +34,7 @@
     "stop": "egg-scripts stop --title=freelog-resource-provider",
     "start_build": "npm run build && cross-env NODE_ENV=development midway-bin dev",
     "clean": "midway-bin clean",
-    "dev": "cross-env NODE_ENV=local midway-bin dev --ts",
+    "dev": "cross-env NODE_ENV=local port=7101 midway-bin dev --ts",
     "debug": "cross-env NODE_ENV=local midway-bin debug --ts",
     "test": "npm run lint && midway-bin test --ts",
     "cov": "midway-bin cov --ts",

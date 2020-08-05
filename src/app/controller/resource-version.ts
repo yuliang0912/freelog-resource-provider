@@ -3,7 +3,7 @@ import {isEmpty} from 'lodash';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
 import {LoginUser, InternalClient, ArgumentError, ApplicationError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
+import {IJsonSchemaValidate, IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
 
 @provide()
 @priority(1)
@@ -24,6 +24,8 @@ export class ResourceVersionController {
     resourceVersionDependencyValidator: IJsonSchemaValidate;
     @inject()
     customPropertyValidator: IJsonSchemaValidate;
+    @inject()
+    outsideApiService: IOutsideApiService;
 
     @get('/:resourceId/versions')
     @visitorIdentity(LoginUser | InternalClient)
@@ -113,7 +115,7 @@ export class ResourceVersionController {
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
-        const fileSystemProperty = await ctx.curlIntranetApi(`${ctx.webApi.storageInfo}/files/${fileSha1}/property?resourceType=${resourceInfo.resourceType}`);
+        const fileSystemProperty = await this.outsideApiService.getFileObjectProperty(fileSha1, resourceInfo.resourceType);
         if (!fileSystemProperty) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'fileSha1'));
         }

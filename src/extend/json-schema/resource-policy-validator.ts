@@ -10,13 +10,12 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
 
     /**
      * 策略格式校验
-     * @param {object[] | object} operations 策略信息
+     * @param {object[]} operations 策略信息
      * @param {boolean} isUpdateMode 是否更新模式
      * @returns {ValidatorResult}
      */
-    validate(operations: object[] | object, isUpdateMode: boolean): ValidatorResult {
-        const schemeId = isUpdateMode ? '/updateResourcePolicySchema' : '/addResourcePolicySchema';
-        return super.validate(operations, super.getSchema(schemeId));
+    validate(operations: object[]): ValidatorResult {
+        return super.validate(operations, super.getSchema('/policySchema'));
     }
 
     /**
@@ -43,43 +42,10 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
         });
 
         /**
-         * 更新策略格式
-         */
-        super.addSchema({
-            id: '/updateResourcePolicySchema',
-            type: 'object',
-            required: true,
-            properties: {
-                additionalProperties: false,
-                addPolicies: {$ref: '/addResourcePolicySchema'},
-                updatePolicies: {
-                    type: 'array',
-                    uniqueItems: true,
-                    maxItems: 20,
-                    items: {
-                        type: 'object',
-                        additionalProperties: false,
-                        properties: {
-                            policyId: {required: true, type: 'string', format: 'md5'},
-                            policyName: {
-                                required: true,
-                                type: 'string',
-                                minLength: 2,
-                                maxLength: 20,
-                                format: 'policyName'
-                            },
-                            status: {required: true, type: 'integer', minimum: 0, maximum: 1}
-                        }
-                    }
-                }
-            }
-        });
-
-        /**
          * 新增策略格式
          */
         super.addSchema({
-            id: '/addResourcePolicySchema',
+            id: '/policySchema',
             type: 'array',
             uniqueItems: true,
             maxItems: 20,
@@ -88,8 +54,9 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    policyName: {required: true, minLength: 1, maxLength: 20, type: 'string', format: 'policyName'},
-                    policyText: {required: true, type: 'string', format: 'base64'}
+                    policyId: {required: true, type: 'string', format: 'md5'},
+                    policyName: {required: false, minLength: 1, maxLength: 20, type: 'string', format: 'policyName'},
+                    status: {required: false, type: 'integer', minimum: 0, maximum: 1}
                 }
             }
         });

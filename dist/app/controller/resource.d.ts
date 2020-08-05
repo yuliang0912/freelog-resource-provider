@@ -26,4 +26,10 @@ export declare class ResourceController {
      * @private
      */
     _getResourceVersionInfo(resourceInfo: any, version: any): any;
+    /**
+     * 策略格式校验
+     * @param policies
+     * @private
+     */
+    _policySchemaValidate(policies: any): void;
 }

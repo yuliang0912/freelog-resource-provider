@@ -1,4 +1,5 @@
 import {ValidatorResult} from 'jsonschema';
+import {IdentityType, SubjectTypeEnum, ContractStatusEnum} from './enum';
 
 export interface CreateResourceOptions {
     userId: number;
@@ -16,7 +17,8 @@ export interface UpdateResourceOptions {
     intro?: string;
     coverImages?: [string];
     tags?: string[];
-    policyChangeInfo?: object; // 策略变动信息,包括add.remove,update等
+    addPolicies?: PolicyInfo[];
+    updatePolicies?: PolicyInfo[];
 }
 
 export interface CreateResourceVersionOptions {
@@ -43,10 +45,49 @@ export interface GetResourceDependencyOrAuthTreeOptions {
     isContainRootNode?: boolean;
 }
 
+export interface SubjectInfo {
+    subjectId: string;
+    policyId: string;
+}
+
+export interface ContractInfo {
+    contractId: string;
+    contractName: string;
+
+    // 甲方相关信息
+    licensorId: string | number;
+    licensorName: string;
+    licensorOwnerId: number;
+    licensorOwnerName: string;
+
+    // 乙方相关信息
+    licenseeId: string | number;
+    licenseeName: string;
+    licenseeOwnerId: number;
+    licenseeOwnerName: string;
+    licenseeIdentityType: IdentityType;
+
+    // 标的物相关信息
+    subjectId: string;
+    subjectName: string;
+    subjectType: SubjectTypeEnum;
+
+    // 合同状态机部分
+    fsmCurrentState?: string | null;
+    fsmRunningStatus?: number;
+    fsmDeclarations?: object;
+
+    // 其他信息
+    policyId: string;
+    status?: ContractStatusEnum;
+    authStatus: number;
+    createDate?: Date;
+}
+
 export interface PolicyInfo {
     policyId: string;
     policyName?: string;
-    policyText: string;
+    policyText?: string;
     status?: number;
     fsmDescriptionInfo?: object;
 }
@@ -105,6 +146,15 @@ export interface CollectionResourceInfo {
  */
 export interface IJsonSchemaValidate {
     validate(instance: object[] | object, ...args): ValidatorResult;
+}
+
+export interface IOutsideApiService {
+
+    getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
+
+    getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
+
+    batchSignResourceContracts(licenseeResourceId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 }
 
 export interface IResourceService {

@@ -1,10 +1,11 @@
-import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions } from '../../interface';
+import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: any;
     resourceProvider: any;
     resourceVersionProvider: any;
     resourcePropertyGenerator: any;
     resourcePolicyCompiler: any;
+    outsideApiService: IOutsideApiService;
     /**
      * 创建资源
      * @param {CreateResourceOptions} options 资源选项
@@ -13,14 +14,15 @@ export declare class ResourceService implements IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
     /**
      * 更新资源
-     * @param {UpdateResourceOptions} options
-     * @returns {Promise<ResourceInfo>}
+     * @param resourceInfo
+     * @param options
      */
     updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
     /**
      * 获取资源依赖树
-     * @param {GetResourceDependencyOrAuthTreeOptions} options
-     * @returns {Promise<object[]>}
+     * @param resourceInfo
+     * @param versionInfo
+     * @param options
      */
     getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
     /**
@@ -39,8 +41,8 @@ export declare class ResourceService implements IResourceService {
     findByResourceNames(resourceNames: string[], ...args: any[]): Promise<ResourceInfo[]>;
     /**
      * 根据资源ID获取资源信息
-     * @param {string} resourceId 资源ID
-     * @returns {Promise<ResourceInfo>} 资源信息
+     * @param resourceId
+     * @param args
      */
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     /**
@@ -88,6 +90,12 @@ export declare class ResourceService implements IResourceService {
      */
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
     /**
+     * 策略校验
+     * @param policyIds
+     * @private
+     */
+    _validateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]>;
+    /**
      * 构建依赖树
      * @param dependencies
      * @param {number} maxDeep
@@ -110,7 +118,7 @@ export declare class ResourceService implements IResourceService {
      * 然后由深度为1的节点解决了A.授权树需要找到1.0和1.1,然后分别计算所有分支
      * @param dependencies
      * @param resource
-     * @returns {Array}
+     * @param _list
      * @private
      */
     _findResourceVersionFromDependencyTree(dependencies: any, resource: any, _list?: any[]): object[];
@@ -134,11 +142,4 @@ export declare class ResourceService implements IResourceService {
      * @private
      */
     static _getResourceStatus(resourceInfo: ResourceInfo): number;
-    /**
-     * 处理合约变动
-     * @param resourceInfo
-     * @param policyInfo
-     * @private
-     */
-    _policiesHandler(resourceInfo: ResourceInfo, policyInfo: any): PolicyInfo[];
 }

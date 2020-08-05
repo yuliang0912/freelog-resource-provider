@@ -1,9 +1,9 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
-import {isArray, isUndefined, omit, isEmpty, uniqBy, chain} from 'lodash';
+import {isArray, isUndefined, differenceBy, omit, isEmpty, uniqBy, first, chain} from 'lodash';
 import {
-    CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions,
+    CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService,
     IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions
 } from '../../interface';
 import * as semver from 'semver';
@@ -21,6 +21,8 @@ export class ResourceService implements IResourceService {
     resourcePropertyGenerator;
     @inject()
     resourcePolicyCompiler;
+    @inject()
+    outsideApiService: IOutsideApiService;
 
     /**
      * 创建资源
@@ -36,12 +38,21 @@ export class ResourceService implements IResourceService {
             username: options.username,
             intro: options.intro,
             coverImages: options.coverImages,
-            policies: options.policies,
             resourceVersions: [],
             baseUpcastResources: [],
             tags: options.tags,
+            policies: [],
             status: 0
         };
+
+        if (isArray(options.policies)) {
+            const policyIdNameMap: Map<string, string> = await this._validateSubjectPolicies(options.policies).then(list => new Map(list.map(x => [x.policyId, x.policyName])));
+            options.policies.forEach(addPolicy => resourceInfo.policies.push({
+                policyId: addPolicy.policyId,
+                policyName: addPolicy.policyName ?? policyIdNameMap.get(addPolicy.policyId),
+                status: addPolicy.status ?? 1
+            }));
+        }
 
         resourceInfo.status = ResourceService._getResourceStatus(resourceInfo);
         resourceInfo.uniqueKey = this.resourcePropertyGenerator.generateResourceUniqueKey(resourceInfo.resourceName);
@@ -51,8 +62,8 @@ export class ResourceService implements IResourceService {
 
     /**
      * 更新资源
-     * @param {UpdateResourceOptions} options
-     * @returns {Promise<ResourceInfo>}
+     * @param resourceInfo
+     * @param options
      */
     async updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo> {
 
@@ -66,17 +77,39 @@ export class ResourceService implements IResourceService {
         if (isArray(options.tags)) {
             updateInfo.tags = options.tags;
         }
-        if (options.policyChangeInfo) {
-            resourceInfo.policies = updateInfo.policies = this._policiesHandler(resourceInfo, options.policyChangeInfo);
-            updateInfo.status = ResourceService._getResourceStatus(resourceInfo);
+        const existingPolicyMap = new Map<string, PolicyInfo>(resourceInfo.policies.map(x => [x.policyId, x]));
+        if (isArray(options.updatePolicies)) {
+            options.updatePolicies.forEach(modifyPolicy => {
+                const existingPolicy = existingPolicyMap.get(modifyPolicy.policyId);
+                if (existingPolicy) {
+                    existingPolicy.policyName = modifyPolicy.policyName ?? existingPolicy.policyName;
+                    existingPolicy.status = modifyPolicy.status ?? existingPolicy.status;
+                }
+                // 如果选的策略无效,直接忽略.不做过多干扰
+                // throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'policyId'), modifyPolicy);
+            });
         }
+        if (isArray(options.addPolicies)) {
+            const policyIdNameMap: Map<string, string> = await this._validateSubjectPolicies(options.addPolicies).then(list => new Map(list.map(x => [x.policyId, x.policyName])));
+            options.addPolicies.forEach(addPolicy => {
+                if (existingPolicyMap.has(addPolicy.policyId)) {
+                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), addPolicy);
+                }
+                addPolicy.policyName = addPolicy.policyName ?? policyIdNameMap.get(addPolicy.policyId);
+                addPolicy.status = addPolicy.status ?? 1;
+                existingPolicyMap.set(addPolicy.policyId, addPolicy);
+            });
+        }
+        resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
+        updateInfo.status = ResourceService._getResourceStatus(resourceInfo);
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }
 
     /**
      * 获取资源依赖树
-     * @param {GetResourceDependencyOrAuthTreeOptions} options
-     * @returns {Promise<object[]>}
+     * @param resourceInfo
+     * @param versionInfo
+     * @param options
      */
     async getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]> {
         if (!options.isContainRootNode) {
@@ -129,7 +162,7 @@ export class ResourceService implements IResourceService {
             });
         };
 
-        return recursionAuthTree(dependencyTree[0]);
+        return recursionAuthTree(first(dependencyTree));
     }
 
     /**
@@ -145,8 +178,8 @@ export class ResourceService implements IResourceService {
 
     /**
      * 根据资源ID获取资源信息
-     * @param {string} resourceId 资源ID
-     * @returns {Promise<ResourceInfo>} 资源信息
+     * @param resourceId
+     * @param args
      */
     async findByResourceId(resourceId: string, ...args): Promise<ResourceInfo> {
         return this.resourceProvider.findById(resourceId, ...args);
@@ -223,6 +256,26 @@ export class ResourceService implements IResourceService {
     }
 
     /**
+     * 策略校验
+     * @param policyIds
+     * @private
+     */
+    async _validateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]> {
+        if (isEmpty(policies)) {
+            return [];
+        }
+        if (uniqBy(policies, 'policyId').length !== policies.length) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-repeatability-validate-failed'));
+        }
+        const policyInfos = await this.outsideApiService.getResourcePolicies(policies.map(x => x.policyId), ['policyId', 'policyName', 'userId']);
+        const invalidPolicies = differenceBy(policies, policyInfos, 'policyId');
+        if (!isEmpty(invalidPolicies)) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-validate-failed'), invalidPolicies);
+        }
+        return policyInfos;
+    }
+
+    /**
      * 构建依赖树
      * @param dependencies
      * @param {number} maxDeep
@@ -284,12 +337,10 @@ export class ResourceService implements IResourceService {
     async _getAllVersionInfoFormDependencyTree(dependencyTree: any[]): Promise<ResourceVersionInfo[]> {
 
         const resourceVersionIdSet = new Set();
-
         const recursion = (dependencies) => dependencies.forEach((item) => {
             resourceVersionIdSet.add(item.versionId);
             recursion(item.dependencies);
         });
-
         recursion(dependencyTree);
 
         if (!resourceVersionIdSet.size) {
@@ -304,11 +355,10 @@ export class ResourceService implements IResourceService {
      * 然后由深度为1的节点解决了A.授权树需要找到1.0和1.1,然后分别计算所有分支
      * @param dependencies
      * @param resource
-     * @returns {Array}
+     * @param _list
      * @private
      */
     _findResourceVersionFromDependencyTree(dependencies, resource, _list = []): object[] {
-
         return dependencies.reduce((acc, dependencyTreeNode) => {
             if (dependencyTreeNode.resourceId === resource.resourceId) {
                 acc.push(dependencyTreeNode);
@@ -344,44 +394,6 @@ export class ResourceService implements IResourceService {
      * @private
      */
     static _getResourceStatus(resourceInfo: ResourceInfo): number {
-        return resourceInfo.policies.some(x => x['status'] === 1) && !isEmpty(resourceInfo.resourceVersions) ? 1 : 0;
-    }
-
-
-    /**
-     * 处理合约变动
-     * @param resourceInfo
-     * @param policyInfo
-     * @private
-     */
-    _policiesHandler(resourceInfo: ResourceInfo, policyInfo) {
-
-        const {addPolicies, updatePolicies} = policyInfo
-        const oldPolicyMap: Map<string, PolicyInfo> = new Map(resourceInfo.policies.map(x => [x.policyId, x]))
-
-        if (!isEmpty(updatePolicies)) {
-            for (let i = 0, j = updatePolicies.length; i < j; i++) {
-                const item = updatePolicies[i];
-                const targetPolicy = oldPolicyMap.get(item.policyId);
-                if (!targetPolicy) {
-                    throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'policyId'), item);
-                }
-                targetPolicy.status = item.status;
-                targetPolicy.policyName = item.policyName;
-            }
-        }
-
-        if (!isEmpty(addPolicies)) {
-            for (let i = 0, j = addPolicies.length; i < j; i++) {
-                const item = addPolicies[i];
-                const newPolicy = this.resourcePolicyCompiler.compilePolicyText(item.policyText, item.policyName);
-                if (oldPolicyMap.has(newPolicy.policyId)) {
-                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), item)
-                }
-                oldPolicyMap.set(newPolicy.policyId, newPolicy);
-            }
-        }
-
-        return Array.from(oldPolicyMap.values());
+        return resourceInfo.policies.some(x => x.status === 1) && !isEmpty(resourceInfo.resourceVersions) ? 1 : 0;
     }
 }

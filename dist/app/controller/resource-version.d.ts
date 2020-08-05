@@ -1,4 +1,4 @@
-import { IJsonSchemaValidate, IResourceService, IResourceVersionService } from '../../interface';
+import { IJsonSchemaValidate, IResourceService, IResourceVersionService, IOutsideApiService } from '../../interface';
 export declare class ResourceVersionController {
     resourcePropertyGenerator: any;
     resourceService: IResourceService;
@@ -7,6 +7,7 @@ export declare class ResourceVersionController {
     resolveDependencyOrUpcastValidator: IJsonSchemaValidate;
     resourceVersionDependencyValidator: IJsonSchemaValidate;
     customPropertyValidator: IJsonSchemaValidate;
+    outsideApiService: IOutsideApiService;
     index(ctx: any): Promise<void>;
     detail(ctx: any): Promise<void>;
     list(ctx: any): Promise<void>;

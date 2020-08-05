@@ -1,8 +1,14 @@
 import {provide, inject} from 'midway';
 import * as semver from 'semver';
 import {
-    BaseResourceInfo, CreateResourceVersionOptions,
-    IResourceVersionService, ResourceInfo, ResourceVersionInfo, UpdateResourceVersionOptions
+    BaseResourceInfo,
+    CreateResourceVersionOptions,
+    IResourceVersionService,
+    ResourceInfo,
+    ResourceVersionInfo,
+    UpdateResourceVersionOptions,
+    IOutsideApiService,
+    ContractInfo
 } from '../../interface';
 import {ArgumentError, ApplicationError} from 'egg-freelog-base';
 import {isEmpty, isUndefined, uniqBy, chain, differenceBy, pick} from 'lodash';
@@ -20,6 +26,8 @@ export class ResourceVersionService implements IResourceVersionService {
     resourcePropertyGenerator;
     @inject()
     resourceVersionDraftProvider;
+    @inject()
+    outsideApiService: IOutsideApiService;
 
     async find(condition: object, ...args): Promise<ResourceVersionInfo[]> {
         return this.resourceVersionProvider.find(condition, ...args);
@@ -97,15 +105,11 @@ export class ResourceVersionService implements IResourceVersionService {
             const intrinsicResolve = updatedResolveResources.find(x => x.resourceId === resourceId);
             intrinsicResolve.contracts = contracts;
         }
-        const contractMap = await this.resourceBatchSignContract(versionInfo, updatedResolveResources)
-            .then(contracts => new Map(contracts.map(x => [`${x.partyOne}_${x.policyId}`, x])));
+        const contractIdMap = await this.resourceBatchSignContract(versionInfo, updatedResolveResources)
+            .then(contracts => new Map(contracts.map(x => [x.licensorId + x.policyId, x.contractId])));
 
         updatedResolveResources.forEach(resolveResource => resolveResource.contracts.forEach(item => {
-            const key = `${resolveResource.resourceId}_${item.policyId}`;
-            const signedContractInfo = contractMap.get(key);
-            if (signedContractInfo) {
-                item.contractId = signedContractInfo['contractId'];
-            }
+            item.contractId = contractIdMap.get(resolveResource.resourceId + item.policyId) ?? '';
         }));
         model.resolveResources = updatedResolveResources;
         return this.resourceVersionProvider.findOneAndUpdate({versionId: versionInfo.versionId}, model, {new: true});
@@ -117,24 +121,17 @@ export class ResourceVersionService implements IResourceVersionService {
      * @param {any[]} changedResolveResources
      * @returns {Promise<any>}
      */
-    async resourceBatchSignContract(versionInfo: ResourceVersionInfo, changedResolveResources = []) {
+    async resourceBatchSignContract(versionInfo: ResourceVersionInfo, changedResolveResources = []): Promise<ContractInfo[]> {
+        const beSignSubjects = [];
         const {resourceId, resolveResources} = versionInfo;
         const beSignResources = changedResolveResources.length ? changedResolveResources : resolveResources;
         if (!beSignResources.length) {
-            return;
+            return [];
         }
-        const contracts = await this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfo}/batchCreateReleaseContracts`, {
-            method: 'post', contentType: 'json', data: {
-                targetId: resourceId,
-                partyTwoId: resourceId,
-                contractType: 1,
-                signResources: beSignResources.map(item => Object({
-                    resourceId: item.resourceId,
-                    policyIds: item.contracts.map(x => x.policyId)
-                }))
-            }
-        });
-        return contracts;
+        beSignResources.forEach(resolveResource => resolveResource.contracts.forEach(x => {
+            beSignSubjects.push({subjectId: resolveResource.resourceId, policyId: x.policyId});
+        }));
+        return this.outsideApiService.batchSignResourceContracts(resourceId, beSignSubjects);
     }
 
     /**

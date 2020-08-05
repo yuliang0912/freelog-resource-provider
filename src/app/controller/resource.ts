@@ -104,12 +104,7 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
-        const policyValidateResult = this.resourcePolicyValidator.validate(policies);
-        if (!isEmpty(policyValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'policies'), {
-                errors: policyValidateResult.errors
-            });
-        }
+        this._policySchemaValidate(policies);
 
         const {userId, username} = ctx.request.identityInfo.userInfo;
         const model = {
@@ -145,24 +140,28 @@ export class ResourceController {
     @visitorIdentity(LoginUser)
     async update(ctx) {
         const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
-        const policyChangeInfo = ctx.checkBody('policyChangeInfo').optional().isObject().value;
+        const updatePolicies = ctx.checkBody('updatePolicies').optional().isArray().value;
+        const addPolicies = ctx.checkBody('addPolicies').optional().isArray().value;
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 1000).value;
         const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).value;
         const tags = ctx.checkBody('tags').optional().isArray().len(1, 20).value;
         ctx.validateParams();
 
-        if ([policyChangeInfo, intro, coverImages, tags].every(isUndefined)) {
+        if ([updatePolicies, addPolicies, intro, coverImages, tags].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
         if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'));
         }
 
+        this._policySchemaValidate(addPolicies);
+        this._policySchemaValidate(updatePolicies);
+
         const resourceInfo = await this.resourceService.findOne({_id: resourceId});
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
         const updateResourceOptions = {
-            resourceId, intro, coverImages, policyChangeInfo, tags
+            resourceId, intro, coverImages, tags, addPolicies, updatePolicies
         };
 
         await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
@@ -259,5 +258,19 @@ export class ResourceController {
             version = resourceInfo.latestVersion;
         }
         return resourceInfo.resourceVersions.find(x => x.version === semver.clean(version));
+    }
+
+    /**
+     * 策略格式校验
+     * @param policies
+     * @private
+     */
+    _policySchemaValidate(policies) {
+        const policyValidateResult = this.resourcePolicyValidator.validate(policies || []);
+        if (!isEmpty(policyValidateResult.errors)) {
+            throw new ArgumentError(this.ctx.gettext('params-format-validate-failed', 'policies'), {
+                errors: policyValidateResult.errors
+            });
+        }
     }
 }

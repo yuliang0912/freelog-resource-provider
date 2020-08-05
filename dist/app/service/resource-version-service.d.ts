@@ -1,10 +1,11 @@
-import { CreateResourceVersionOptions, IResourceVersionService, ResourceInfo, ResourceVersionInfo, UpdateResourceVersionOptions } from '../../interface';
+import { CreateResourceVersionOptions, IResourceVersionService, ResourceInfo, ResourceVersionInfo, UpdateResourceVersionOptions, IOutsideApiService, ContractInfo } from '../../interface';
 export declare class ResourceVersionService implements IResourceVersionService {
     ctx: any;
     resourceService: any;
     resourceVersionProvider: any;
     resourcePropertyGenerator: any;
     resourceVersionDraftProvider: any;
+    outsideApiService: IOutsideApiService;
     find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
     /**
@@ -26,7 +27,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * @param {any[]} changedResolveResources
      * @returns {Promise<any>}
      */
-    resourceBatchSignContract(versionInfo: ResourceVersionInfo, changedResolveResources?: any[]): Promise<any>;
+    resourceBatchSignContract(versionInfo: ResourceVersionInfo, changedResolveResources?: any[]): Promise<ContractInfo[]>;
     /**
      * 保存资源草稿
      * @param {ResourceInfo} resourceInfo
