@@ -7,11 +7,10 @@ import {
     ResourceInfo,
     ResourceVersionInfo,
     UpdateResourceVersionOptions,
-    IOutsideApiService,
-    ContractInfo
+    IOutsideApiService
 } from '../../interface';
 import {ArgumentError, ApplicationError} from 'egg-freelog-base';
-import {isEmpty, isUndefined, uniqBy, chain, differenceBy, pick} from 'lodash';
+import {isEmpty, isUndefined, uniqBy, chain, differenceBy, assign, pick} from 'lodash';
 
 @provide('resourceVersionService')
 export class ResourceVersionService implements IResourceVersionService {
@@ -66,6 +65,18 @@ export class ResourceVersionService implements IResourceVersionService {
             status: 1
         };
 
+        if (!isEmpty(resolveResources)) {
+            const beSignSubjects = chain(resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+                subjectId: resourceId, policyId
+            }))).flattenDeep().value();
+            await this.outsideApiService.batchSignResourceContracts(resourceInfo.resourceId, beSignSubjects).then(contracts => {
+                const contractMap = new Map<string, string>(contracts.map(x => [x.subjectId + x.policyId, x.contractId]));
+                model.resolveResources.forEach(resolveResource => resolveResource.contracts.forEach(resolveContractInfo => {
+                    resolveContractInfo.contractId = contractMap.get(resolveResource.resourceId + resolveContractInfo.policyId) ?? '';
+                }));
+            });
+        }
+
         const resourceVersion = await this.resourceVersionProvider.create(model);
         this.resourceVersionDraftProvider.deleteOne({resourceId: resourceInfo.resourceId}).then();
         if (resourceVersion.status === 1) {
@@ -91,47 +102,33 @@ export class ResourceVersionService implements IResourceVersionService {
         if (!isUndefined(options.customPropertyDescriptors)) {
             model.customPropertyDescriptors = options.customPropertyDescriptors;
         }
-        if (isEmpty(options.resolveResources) || isUndefined(options.resolveResources)) {
+        // 更新合约代码较复杂,如果本次更新不牵扯到合约内容,则提前返回
+        if (isUndefined(options.resolveResources) || isEmpty(options.resolveResources)) {
             return this.resourceVersionProvider.findOneAndUpdate({versionId: versionInfo.versionId}, model, {new: true});
         }
 
-        const invalidResolveResources = differenceBy(options.resolveResources, versionInfo.resolveResources, x => x['resourceId']);
-        if (invalidResolveResources.length) {
+        const invalidResolveResources = differenceBy(options.resolveResources, versionInfo.resolveResources, 'resourceId');
+        if (!isEmpty(invalidResolveResources)) {
             throw new ApplicationError(this.ctx.gettext('release-scheme-update-resolve-release-invalid-error'), {invalidResolveResources});
         }
-        const updatedResolveResources = versionInfo['toObject']().resolveResources;
-        for (let i = 0, j = options.resolveResources.length; i < j; i++) {
-            const {resourceId, contracts} = options.resolveResources[i] as any;
-            const intrinsicResolve = updatedResolveResources.find(x => x.resourceId === resourceId);
-            intrinsicResolve.contracts = contracts;
-        }
-        const contractIdMap = await this.resourceBatchSignContract(versionInfo, updatedResolveResources)
-            .then(contracts => new Map(contracts.map(x => [x.licensorId + x.policyId, x.contractId])));
 
-        updatedResolveResources.forEach(resolveResource => resolveResource.contracts.forEach(item => {
-            item.contractId = contractIdMap.get(resolveResource.resourceId + item.policyId) ?? '';
+        const beSignSubjects = chain(options.resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+            subjectId: resourceId, policyId
+        }))).flattenDeep().value();
+
+        const contractMap = await this.outsideApiService.batchSignResourceContracts(versionInfo.resourceId, beSignSubjects).then(contracts => {
+            return new Map<string, string>(contracts.map(x => [x.subjectId + x.policyId, x.contractId]));
+        });
+
+        options.resolveResources.forEach(resolveResource => resolveResource.contracts.forEach(item => {
+            item.contractId = contractMap.get(resolveResource.resourceId + item.policyId) ?? '';
         }));
-        model.resolveResources = updatedResolveResources;
+
+        model.resolveResources = versionInfo.resolveResources.map(resolveResource => {
+            const modifyResolveResource = options.resolveResources.find(x => x.resourceId === resolveResource.resourceId);
+            return modifyResolveResource ? assign(resolveResource, modifyResolveResource) : resolveResource;
+        });
         return this.resourceVersionProvider.findOneAndUpdate({versionId: versionInfo.versionId}, model, {new: true});
-    }
-
-    /**
-     * 资源批量签约
-     * @param {ResourceVersionInfo} versionInfo
-     * @param {any[]} changedResolveResources
-     * @returns {Promise<any>}
-     */
-    async resourceBatchSignContract(versionInfo: ResourceVersionInfo, changedResolveResources = []): Promise<ContractInfo[]> {
-        const beSignSubjects = [];
-        const {resourceId, resolveResources} = versionInfo;
-        const beSignResources = changedResolveResources.length ? changedResolveResources : resolveResources;
-        if (!beSignResources.length) {
-            return [];
-        }
-        beSignResources.forEach(resolveResource => resolveResource.contracts.forEach(x => {
-            beSignSubjects.push({subjectId: resolveResource.resourceId, policyId: x.policyId});
-        }));
-        return this.outsideApiService.batchSignResourceContracts(resourceId, beSignSubjects);
     }
 
     /**
@@ -291,7 +288,7 @@ export class ResourceVersionService implements IResourceVersionService {
         }
 
         // 无效的解决(不在待办发行中)
-        const invalidResolveResources = differenceBy(resolveResources, backlogResources, x => x['resourceId']);
+        const invalidResolveResources = differenceBy(resolveResources, backlogResources, 'resourceId');
         if (invalidResolveResources.length) {
             throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'resolveResources'), {invalidResolveResources});
         }

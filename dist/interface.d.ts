@@ -26,11 +26,11 @@ export interface CreateResourceVersionOptions {
     systemProperty?: object;
     dependencies?: BaseResourceInfo[];
     baseUpcastResources?: BaseResourceInfo[];
-    resolveResources?: object[];
+    resolveResources?: ResolveResource[];
     customPropertyDescriptors?: object[];
 }
 export interface UpdateResourceVersionOptions {
-    resolveResources?: object[];
+    resolveResources?: ResolveResource[];
     description?: string;
     customPropertyDescriptors?: object[];
 }
@@ -38,6 +38,15 @@ export interface GetResourceDependencyOrAuthTreeOptions {
     maxDeep?: number;
     omitFields?: string[];
     isContainRootNode?: boolean;
+}
+export interface BaseContractInfo {
+    policyId: string;
+    contractId?: string;
+}
+export interface ResolveResource {
+    resourceId: string;
+    resourceName?: string;
+    contracts: BaseContractInfo[];
 }
 export interface SubjectInfo {
     subjectId: string;
@@ -105,7 +114,7 @@ export interface ResourceVersionInfo {
     description?: string;
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];
-    resolveResources?: object[];
+    resolveResources?: ResolveResource[];
     systemProperty?: object;
     customPropertyDescriptors?: object[];
     status: number;

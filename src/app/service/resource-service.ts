@@ -100,8 +100,10 @@ export class ResourceService implements IResourceService {
                 existingPolicyMap.set(addPolicy.policyId, addPolicy);
             });
         }
-        resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
-        updateInfo.status = ResourceService._getResourceStatus(resourceInfo);
+        if (isArray(options.addPolicies) || isArray(options.updatePolicies)) {
+            resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
+            updateInfo.status = ResourceService._getResourceStatus(resourceInfo);
+        }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }
 

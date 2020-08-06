@@ -1,7 +1,6 @@
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
 import {IJsonSchemaValidate} from '../../interface';
-import {validator} from 'egg-freelog-base/app/extend/application';
 import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
 
 @scope('Singleton')
@@ -32,13 +31,6 @@ export class ResourcePolicyValidator extends freelogCommonJsonSchema implements 
         super.registerCustomFormats('policyName', (input) => {
             input = input.trim();
             return input.length >= 2 && input.length < 20;
-        });
-
-        /**
-         * 是否base64
-         */
-        super.registerCustomFormats('base64', (input) => {
-            return validator.isBase64(input);
         });
 
         /**

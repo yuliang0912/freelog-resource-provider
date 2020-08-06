@@ -52,7 +52,6 @@ export class ResourceController {
         if (!isUndefined(startResourceId)) {
             condition._id = {$lt: startResourceId};
         }
-
         let dataList = [];
         const totalItem = await this.resourceService.count(condition);
         if (totalItem <= (page - 1) * pageSize) {
