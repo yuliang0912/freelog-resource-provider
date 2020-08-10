@@ -74,7 +74,7 @@ export class ResourceVersionController {
     @visitorIdentity(LoginUser)
     async create(ctx) {
         const fileSha1 = ctx.checkBody('fileSha1').exist().isSha1().toLowercase().value;
-        const filename = ctx.checkBody('filename').exist.type('string').len(1, 200).value;
+        const filename = ctx.checkBody('filename').exist().type('string').len(1, 200).value;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const resolveResources = ctx.checkBody('resolveResources').exist().isArray().value; // 单一资源传递空数组.
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
