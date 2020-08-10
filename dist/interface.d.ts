@@ -22,6 +22,7 @@ export interface CreateResourceVersionOptions {
     version: string;
     versionId: string;
     fileSha1: string;
+    filename: string;
     description: string;
     systemProperty?: object;
     dependencies?: BaseResourceInfo[];
@@ -111,6 +112,7 @@ export interface ResourceVersionInfo {
     version: string;
     resourceType: string;
     fileSha1: string;
+    filename: string;
     description?: string;
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];

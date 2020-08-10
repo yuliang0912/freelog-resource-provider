@@ -1,5 +1,5 @@
 import * as semver from 'semver';
-import {isEmpty} from 'lodash';
+import {isEmpty, isString} from 'lodash';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
 import {LoginUser, InternalClient, ArgumentError, ApplicationError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
@@ -74,6 +74,7 @@ export class ResourceVersionController {
     @visitorIdentity(LoginUser)
     async create(ctx) {
         const fileSha1 = ctx.checkBody('fileSha1').exist().isSha1().toLowercase().value;
+        const filename = ctx.checkBody('filename').exist.type('string').len(1, 200).value;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const resolveResources = ctx.checkBody('resolveResources').exist().isArray().value; // 单一资源传递空数组.
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
@@ -136,7 +137,7 @@ export class ResourceVersionController {
         }
 
         const versionInfo = {
-            version: semver.clean(version), fileSha1, description,
+            version: semver.clean(version), fileSha1, filename, description,
             resolveResources, dependencies, customPropertyDescriptors, baseUpcastResources,
             systemProperty: fileSystemProperty,
             versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, version),
@@ -238,7 +239,12 @@ export class ResourceVersionController {
 
         ctx.body = stream.data;
         ctx.set('content-length', stream.headers['contract-length']);
-        ctx.attachment(resourceVersionInfo.resourceName + '_' + resourceVersionInfo.version);
+
+        let extName = '';
+        if (isString(resourceVersionInfo.filename)) {
+            extName = resourceVersionInfo.filename.substr(resourceVersionInfo.filename.lastIndexOf('.'))
+        }
+        ctx.attachment(resourceVersionInfo.resourceName + '_' + resourceVersionInfo.version + extName);
     }
 
     /**

@@ -49,12 +49,13 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
 
         const resourceVersionScheme = new this.mongoose.Schema({
             versionId: {type: String, unique: true, required: true}, // 由resourceId和version通过算法计算获得
-            resourceId: {type: String, required: true}, // 存储ID,对应存储服务的file-storage
+            resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
             version: {type: String, required: true},
             userId: {type: Number, required: true},
             resourceType: {type: String, required: true},
             fileSha1: {type: String, required: true},
+            filename: {type: String, required: true}, // 文件名称,用于下载时使用.会通过后缀分析
             dependencies: {type: [BaseDependencyScheme], required: false},
             description: {type: String, default: '', required: false},
             upcastResources: {type: [UpcastResourceSchema], required: false},

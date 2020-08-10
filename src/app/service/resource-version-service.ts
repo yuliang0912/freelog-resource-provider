@@ -56,6 +56,7 @@ export class ResourceVersionService implements IResourceVersionService {
             userId: resourceInfo.userId,
             resourceType: resourceInfo.resourceType,
             fileSha1: options.fileSha1,
+            filename: options.filename,
             dependencies: options.dependencies,
             description: options.description,
             resolveResources,
