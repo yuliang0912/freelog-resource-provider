@@ -28,7 +28,7 @@ export class ResourceCollectionController {
     @post('/')
     @visitorIdentity(LoginUser)
     async create(ctx) {
-        const resourceId = ctx.checkBody('resourceId').isMongoObjectId().value;
+        const resourceId = ctx.checkBody('resourceId').exist().isResourceId().value;
         ctx.validateParams();
 
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
@@ -60,7 +60,7 @@ export class ResourceCollectionController {
     @get('/:resourceId')
     @visitorIdentity(LoginUser)
     async show(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         ctx.validateParams();
 
         await this.resourceCollectionService.findOne({
@@ -71,7 +71,7 @@ export class ResourceCollectionController {
     @del('/:resourceId')
     @visitorIdentity(LoginUser)
     async destroy(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         ctx.validateParams();
 
         await this.resourceCollectionService.deleteOne({

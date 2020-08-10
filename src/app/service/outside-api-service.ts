@@ -9,6 +9,17 @@ export class OutsideApiService implements IOutsideApiService {
     ctx;
 
     /**
+     * 获取文件流
+     * @param fileSha1
+     * @param filename
+     */
+    async getFileStream(fileSha1: string): Promise<any> {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, {
+            dataType: 'original'
+        });
+    }
+
+    /**
      * 分析与获取文件系统属性
      * @param fileSha1
      * @param resourceType

@@ -2,6 +2,12 @@ import { SubjectInfo, ContractInfo, IOutsideApiService, PolicyInfo } from '../..
 export declare class OutsideApiService implements IOutsideApiService {
     ctx: any;
     /**
+     * 获取文件流
+     * @param fileSha1
+     * @param filename
+     */
+    getFileStream(fileSha1: string): Promise<any>;
+    /**
      * 分析与获取文件系统属性
      * @param fileSha1
      * @param resourceType

@@ -138,7 +138,7 @@ export class ResourceController {
     @put('/:resourceId')
     @visitorIdentity(LoginUser)
     async update(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const updatePolicies = ctx.checkBody('updatePolicies').optional().isArray().value;
         const addPolicies = ctx.checkBody('addPolicies').optional().isArray().value;
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 1000).value;
@@ -170,7 +170,7 @@ export class ResourceController {
     @visitorIdentity(LoginUser | InternalClient)
     async dependencyTree(ctx) {
 
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default([]).value;
@@ -197,7 +197,7 @@ export class ResourceController {
     @visitorIdentity(LoginUser | InternalClient)
     async authTree(ctx) {
 
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 

@@ -61,7 +61,7 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
             resolveResources: {type: [ResolveResourceSchema], required: false}, // 只有匹配到具体合同ID才算完成解决的承诺
             systemProperty: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: true},  // 需要包含fileSize,文件具体的存储信息通过sha1值去存储服务获取
             customPropertyDescriptors: {type: [CustomPropertyDescriptorScheme], default: [], required: false},
-            status: {type: Number, default: 0, required: true}, // 状态: 0:未就绪 1:已就绪 此状态不可逆,只有主动就绪的版本才正式加入资源的版本库
+            status: {type: Number, default: 0, required: true}, // 状态: 0:正常
         }, {
             minimize: false,
             versionKey: false,

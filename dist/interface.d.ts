@@ -117,7 +117,7 @@ export interface ResourceVersionInfo {
     resolveResources?: ResolveResource[];
     systemProperty?: object;
     customPropertyDescriptors?: object[];
-    status: number;
+    status?: number;
 }
 export interface CollectionResourceInfo {
     resourceId: string;
@@ -134,6 +134,7 @@ export interface IJsonSchemaValidate {
     validate(instance: object[] | object, ...args: any[]): ValidatorResult;
 }
 export interface IOutsideApiService {
+    getFileStream(fileSha1: string): Promise<any>;
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
     getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;

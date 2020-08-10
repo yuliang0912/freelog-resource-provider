@@ -61,8 +61,7 @@ export class ResourceVersionService implements IResourceVersionService {
             resolveResources,
             upcastResources: upcastResources as BaseResourceInfo[],
             systemProperty: options.systemProperty,
-            customPropertyDescriptors: options.customPropertyDescriptors,
-            status: 1
+            customPropertyDescriptors: options.customPropertyDescriptors
         };
 
         if (!isEmpty(resolveResources)) {
@@ -79,12 +78,9 @@ export class ResourceVersionService implements IResourceVersionService {
 
         const resourceVersion = await this.resourceVersionProvider.create(model);
         this.resourceVersionDraftProvider.deleteOne({resourceId: resourceInfo.resourceId}).then();
-        if (resourceVersion.status === 1) {
-            const versionInfo = {
-                version: options.version, versionId: options.versionId, createDate: resourceVersion.createDate
-            };
-            await this.resourceService.createdResourceVersionHandle(resourceInfo, versionInfo);
-        }
+        await this.resourceService.createdResourceVersionHandle(resourceInfo, {
+            version: options.version, versionId: options.versionId, createDate: resourceVersion.createDate
+        });
 
         return resourceVersion;
     }

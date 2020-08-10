@@ -253,7 +253,8 @@ export class ResourceService implements IResourceService {
 
         return this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, {
             $addToSet: {resourceVersions: versionInfo},
-            latestVersion: latestVersionInfo.version
+            latestVersion: latestVersionInfo.version,
+            status: ResourceService._getResourceStatus(resourceInfo)
         }).then(data => Boolean(data.ok));
     }
 
@@ -396,6 +397,6 @@ export class ResourceService implements IResourceService {
      * @private
      */
     static _getResourceStatus(resourceInfo: ResourceInfo): number {
-        return resourceInfo.policies.some(x => x.status === 1) && !isEmpty(resourceInfo.resourceVersions) ? 1 : 0;
+        return (resourceInfo.policies.some(x => x.status === 1) && !isEmpty(resourceInfo.resourceVersions)) ? 1 : 0;
     }
 }

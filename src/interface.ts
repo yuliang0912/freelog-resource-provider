@@ -140,7 +140,7 @@ export interface ResourceVersionInfo {
     resolveResources?: ResolveResource[];
     systemProperty?: object;
     customPropertyDescriptors?: object[];
-    status: number;
+    status?: number;
 }
 
 export interface CollectionResourceInfo {
@@ -160,6 +160,8 @@ export interface IJsonSchemaValidate {
 }
 
 export interface IOutsideApiService {
+
+    getFileStream(fileSha1: string): Promise<any>;
 
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
 

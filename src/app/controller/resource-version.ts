@@ -30,7 +30,7 @@ export class ResourceVersionController {
     @get('/:resourceId/versions')
     @visitorIdentity(LoginUser | InternalClient)
     async index(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
         await this.resourceVersionService.find({resourceId}, projection.join(' ')).then(ctx.success);
@@ -61,7 +61,7 @@ export class ResourceVersionController {
     @visitorIdentity(LoginUser)
     async resourceVersionDraft(ctx) {
 
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         ctx.validateParams();
 
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
@@ -74,7 +74,7 @@ export class ResourceVersionController {
     @visitorIdentity(LoginUser)
     async create(ctx) {
         const fileSha1 = ctx.checkBody('fileSha1').exist().isSha1().toLowercase().value;
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const resolveResources = ctx.checkBody('resolveResources').exist().isArray().value; // 单一资源传递空数组.
         const version = ctx.checkBody('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const description = ctx.checkBody('description').optional().type('string').default('').value;
@@ -162,7 +162,7 @@ export class ResourceVersionController {
     @put('/:resourceId/versions/:version')
     @visitorIdentity(LoginUser)
     async update(ctx) {
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;
         const description = ctx.checkBody('description').optional().type('string').value;
@@ -201,7 +201,7 @@ export class ResourceVersionController {
     @post('/:resourceId/versions/drafts')
     @visitorIdentity(LoginUser)
     async createOrUpdateResourceVersionDraft(ctx) {
-        const resourceId = ctx.checkParams('resourceId').exist().isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const draftData = ctx.checkBody('draftData').exist().isObject().value;
         ctx.validateParams();
 
@@ -214,13 +214,31 @@ export class ResourceVersionController {
     @get('/:resourceId/versions/:version')
     @visitorIdentity(LoginUser | InternalClient)
     async show(ctx) {
-        const resourceId = ctx.checkParams('resourceId').isMongoObjectId().value;
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
         await this.resourceVersionService.findOne({versionId}, projection.join(' ')).then(ctx.success);
+    }
+
+    @get('/:resourceId/versions/:version/download')
+    @visitorIdentity(LoginUser)
+    async download(ctx) {
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
+        const resourceVersionInfo = await this.resourceVersionService.findOne({versionId}, ['fileSha1', 'resourceName', 'version']);
+        ctx.entityNullValueAndUserAuthorizationCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
+
+        const stream = await this.outsideApiService.getFileStream(resourceVersionInfo.fileSha1);
+
+        ctx.body = stream.data;
+        ctx.set('content-length', stream.headers['contract-length']);
+        ctx.attachment(resourceVersionInfo.resourceName + '_' + resourceVersionInfo.version);
     }
 
     /**
