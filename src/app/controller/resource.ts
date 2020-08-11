@@ -217,14 +217,13 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        let dataList = [resourceInfo];
-        if (isLoadLatestVersionInfo) {
-            dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);
+        if (resourceInfo && isLoadLatestVersionInfo) {
+            resourceInfo = await this.resourceService.fillResourceLatestVersionInfo([resourceInfo]).then(first);
         }
-        if (isLoadPolicyInfo) {
-            dataList = await this.resourceService.fillResourcePolicyInfo(dataList);
+        if (resourceInfo && isLoadPolicyInfo) {
+            resourceInfo = await this.resourceService.fillResourcePolicyInfo([resourceInfo]).then(first);
         }
-        ctx.success(first(dataList));
+        ctx.success(resourceInfo);
     }
 
     @get('/:resourceId/contracts/:contractId/coverageVersions')
