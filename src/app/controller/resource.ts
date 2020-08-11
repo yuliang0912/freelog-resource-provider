@@ -2,7 +2,7 @@ import {controller, inject, get, post, put, provide} from 'midway';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
-import {isString, isUndefined, includes, isEmpty} from 'lodash';
+import {isString, isUndefined, includes, pick, uniqBy, isEmpty} from 'lodash';
 import * as semver from 'semver';
 import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
@@ -240,6 +240,46 @@ export class ResourceController {
             resourceInfo.latestVersionInfo = await this.resourceVersionService.findOne({versionId});
         }
         ctx.success(resourceInfo);
+    }
+
+    @get('/:resourceId/contracts/:contractId/coverageVersions')
+    @visitorIdentity(LoginUser)
+    async contractCoverageVersions(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const contractId = ctx.checkParams('contractId').exist().isContractId().value;
+        ctx.validateParams();
+
+        const condition = {resourceId, userId: ctx.userId, 'resolveResources.contracts.contractId': contractId};
+
+        await this.resourceVersionService.find(condition, 'version versionId').then(ctx.success);
+    }
+
+    @get('/:resourceId/contracts/coverageVersions')
+    @visitorIdentity(LoginUser)
+    async ContractsCoverageVersions(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 200).value;
+        ctx.validateParams();
+
+        const condition = {resourceId, userId: ctx.userId, 'resolveResources.contracts.contractId': {$in: contractIds}};
+
+        const contractMap: Map<string, any[]> = new Map(contractIds.map(x => [x, []]));
+        const dataList = await this.resourceVersionService.find(condition, 'version versionId resolveResources.contracts.contractId');
+
+        dataList.forEach(resourceVersion => resourceVersion.resolveResources.forEach(resolveResource => resolveResource.contracts.forEach(contract => {
+            const list = contractMap.get(contract.contractId);
+            if (list) {
+                list.push(pick(resourceVersion, ['version', 'versionId']));
+            }
+        })));
+
+        const result = [];
+        for (let [key, value] of contractMap) {
+            result.push({contractId: key, versions: uniqBy(value, 'versionId')});
+        }
+        ctx.success(result);
     }
 
     /**

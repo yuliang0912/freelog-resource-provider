@@ -18,6 +18,8 @@ export declare class ResourceController {
     dependencyTree(ctx: any): Promise<any>;
     authTree(ctx: any): Promise<any>;
     show(ctx: any): Promise<any>;
+    contractCoverageVersions(ctx: any): Promise<void>;
+    ContractsCoverageVersions(ctx: any): Promise<void>;
     /**
      * 获取资源版本信息
      * @param resourceInfo
