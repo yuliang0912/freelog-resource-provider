@@ -1,10 +1,18 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
-import {isArray, isUndefined, differenceBy, omit, isEmpty, uniqBy, first, chain} from 'lodash';
+import {isArray, isUndefined, isString, differenceBy, omit, isEmpty, uniqBy, first, chain} from 'lodash';
 import {
-    CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService,
-    IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions
+    CreateResourceOptions,
+    GetResourceDependencyOrAuthTreeOptions,
+    IOutsideApiService,
+    IResourceService,
+    PolicyInfo,
+    ResourceInfo,
+    ResourceVersionInfo,
+    UpdateResourceOptions,
+    IResourceVersionService,
+    PageResult
 } from '../../interface';
 import * as semver from 'semver';
 
@@ -16,13 +24,13 @@ export class ResourceService implements IResourceService {
     @inject()
     resourceProvider;
     @inject()
-    resourceVersionProvider;
-    @inject()
     resourcePropertyGenerator;
     @inject()
     resourcePolicyCompiler;
     @inject()
     outsideApiService: IOutsideApiService;
+    @inject()
+    resourceVersionService: IResourceVersionService;
 
     /**
      * 创建资源
@@ -227,8 +235,13 @@ export class ResourceService implements IResourceService {
      * @param {object} orderBy
      * @returns {Promise<ResourceInfo[]>}
      */
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ResourceInfo[]> {
-        return this.resourceProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+        let dataList = [];
+        const totalItem = await this.count(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.resourceProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+        }
+        return {page, pageSize, totalItem, dataList};
     }
 
     /**
@@ -308,7 +321,7 @@ export class ResourceService implements IResourceService {
             versionIds.push(dependencyInfo.versionId);
         }
 
-        const versionInfoMap = await this.resourceVersionProvider.find({versionId: {$in: versionIds}})
+        const versionInfoMap = await this.resourceVersionService.find({versionId: {$in: versionIds}})
             .then(list => new Map(list.map(x => [x.versionId, x])));
 
         const results = [];
@@ -349,7 +362,7 @@ export class ResourceService implements IResourceService {
         if (!resourceVersionIdSet.size) {
             return [];
         }
-        return this.resourceVersionProvider.find({versionId: {$in: [...resourceVersionIdSet.values()]}});
+        return this.resourceVersionService.find({versionId: {$in: [...resourceVersionIdSet.values()]}});
     }
 
     /**
@@ -386,6 +399,63 @@ export class ResourceService implements IResourceService {
         const version = maxSatisfying(resourceVersions.map(x => x.version), versionRange);
 
         return resourceVersions.find(x => x.version === version);
+    }
+
+    /**
+     * 给资源填充最新版本详情信息
+     * @param resources
+     */
+    async fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]> {
+        if (!isArray(resources) || isEmpty(resources)) {
+            return resources;
+        }
+
+        const versionIds = resources.filter(x => isString(x.latestVersion) && x.latestVersion.length).map(resourceInfo => {
+            const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
+            resourceInfo['latestVersionId'] = versionId;
+            return versionId;
+        });
+
+        if (isEmpty(versionIds)) {
+            return resources;
+        }
+
+        const versionInfoMap = await this.resourceVersionService.find({versionId: {$in: versionIds}}).then(list => {
+            return new Map(list.map(x => [x.versionId, x]));
+        })
+        return resources.map((item: any) => {
+            const resourceLatestVersionId = item.latestVersionId;
+            const resourceInfo = item.toObject ? item.toObject() : item;
+            resourceInfo.latestVersionInfo = versionInfoMap.get(resourceLatestVersionId) ?? {};
+            return resourceInfo;
+        });
+    }
+
+    /**
+     * 给资源填充策略详情信息
+     * @param resources
+     */
+    async fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]> {
+        if (!isArray(resources) || isEmpty(resources)) {
+            return resources;
+        }
+        const policyIds = chain(resources).filter(x => isArray(x.policies) && !isEmpty(x.policies)).map(x => x.policies.map(m => m.policyId)).flatten().uniq().value();
+        if (isEmpty(policyIds)) {
+            return resources;
+        }
+        const policyMap: Map<string, PolicyInfo> = await this.outsideApiService.getResourcePolicies(policyIds, ['policyId', 'policyText', 'fsmDescriptionInfo']).then(list => {
+            return new Map(list.map(x => [x.policyId, x]));
+        });
+
+        return resources.map((item: any) => {
+            const resourceInfo = item.toObject ? item.toObject() : item;
+            resourceInfo.policies.forEach(policyInfo => {
+                const {policyText, fsmDescriptionInfo} = policyMap.get(policyInfo.policyId) ?? {};
+                policyInfo.policyText = policyText;
+                policyInfo.fsmDescriptionInfo = fsmDescriptionInfo;
+            })
+            return resourceInfo;
+        });
     }
 
     /**

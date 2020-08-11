@@ -1,6 +1,6 @@
 import {provide, inject} from 'midway';
 import {isString, flatten} from 'lodash';
-import {CollectionResourceInfo, ICollectionService} from '../../interface';
+import {CollectionResourceInfo, ICollectionService, PageResult} from '../../interface';
 
 @provide('resourceCollectionService')
 export class ResourceCollectionService implements ICollectionService {
@@ -39,7 +39,7 @@ export class ResourceCollectionService implements ICollectionService {
         return this.resourceCollectionProvider.deleteOne(condition).then(ret => ret.ok > 0);
     }
 
-    async findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number) {
+    async findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult> {
         const condition: any = {userId: this.ctx.request.userId};
         if (resourceType) {
             condition.resourceType = resourceType;

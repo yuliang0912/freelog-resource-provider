@@ -1,6 +1,13 @@
 import {ValidatorResult} from 'jsonschema';
 import {IdentityType, SubjectTypeEnum, ContractStatusEnum} from './enum';
 
+export interface PageResult {
+    page: number;
+    pageSize: number;
+    totalItem: number;
+    dataList: any[];
+}
+
 export interface CreateResourceOptions {
     userId: number;
     username: string;
@@ -191,11 +198,15 @@ export interface IResourceService {
 
     find(condition: object, ...args): Promise<ResourceInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ResourceInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
 
     count(condition: object): Promise<number>;
 
-    createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>
+    createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
+
+    fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+
+    fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
 }
 
 export interface IResourceVersionService {
@@ -227,5 +238,5 @@ export interface ICollectionService {
 
     deleteOne(condition: object): Promise<boolean>;
 
-    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number);
+    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult>;
 }

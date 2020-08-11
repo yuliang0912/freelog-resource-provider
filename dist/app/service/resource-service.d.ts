@@ -1,11 +1,11 @@
-import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions } from '../../interface';
+import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, PageResult } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: any;
     resourceProvider: any;
-    resourceVersionProvider: any;
     resourcePropertyGenerator: any;
     resourcePolicyCompiler: any;
     outsideApiService: IOutsideApiService;
+    resourceVersionService: IResourceVersionService;
     /**
      * 创建资源
      * @param {CreateResourceOptions} options 资源选项
@@ -75,7 +75,7 @@ export declare class ResourceService implements IResourceService {
      * @param {object} orderBy
      * @returns {Promise<ResourceInfo[]>}
      */
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ResourceInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
     /**
      * 按条件统计资源数量
      * @param {object} condition
@@ -133,6 +133,16 @@ export declare class ResourceService implements IResourceService {
         version: string;
         versionId: string;
     };
+    /**
+     * 给资源填充最新版本详情信息
+     * @param resources
+     */
+    fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    /**
+     * 给资源填充策略详情信息
+     * @param resources
+     */
+    fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
     /**
      * 获取资源状态
      * 1: 必须具备有效的策略

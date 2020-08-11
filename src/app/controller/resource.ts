@@ -1,9 +1,9 @@
+import * as semver from 'semver';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
-import {isString, isUndefined, includes, pick, uniqBy, isEmpty} from 'lodash';
-import * as semver from 'semver';
+import {isString, first, isUndefined, includes, pick, uniqBy, isEmpty} from 'lodash';
 import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
@@ -31,6 +31,7 @@ export class ResourceController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
         const startResourceId = ctx.checkQuery('startResourceId').optional().isResourceId().value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
 
@@ -52,45 +53,20 @@ export class ResourceController {
         if (!isUndefined(startResourceId)) {
             condition._id = {$lt: startResourceId};
         }
-        let dataList = [];
-        const totalItem = await this.resourceService.count(condition);
-        if (totalItem <= (page - 1) * pageSize) {
-            return ctx.success({page, pageSize, totalItem, dataList});
-        }
 
-        dataList = await this.resourceService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        if (!isLoadLatestVersionInfo || !isEmpty(projection) && (!projection.includes('resourceId') || !projection.includes('latestVersion'))) {
-            return ctx.success({page, pageSize, totalItem, dataList});
+        const pageResult = await this.resourceService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }
-
-        const versionIds = dataList.filter(x => !isEmpty(x.latestVersion)).map(resourceInfo => {
-            const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
-            resourceInfo.latestVersionId = versionId;
-            return versionId;
-        });
-        if (!isEmpty(versionIds)) {
-            const versionInfos = await this.resourceVersionService.find({versionId: {$in: versionIds}});
-            dataList = dataList.map(item => {
-                const latestVersionInfo = versionInfos.find(x => x.versionId === item.latestVersionId);
-                item = item.toObject();
-                item.latestVersionInfo = latestVersionInfo;
-                return item;
-            })
+        if (isLoadLatestVersionInfo) {
+            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
         }
-
-        return ctx.success({page, pageSize, totalItem, dataList});
+        return ctx.success(pageResult);
     }
 
-    /**
-     * 创建资源,区别于旧版本,现在资源可以先创建,后添加版本.
-     * 只有具有正式版本,且具有策略,才代表资源上架
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     @post('/')
     @visitorIdentity(LoginUser)
     async create(ctx) {
-
         const name = ctx.checkBody('name').exist().isResourceName().value;
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
@@ -106,16 +82,15 @@ export class ResourceController {
         this._policySchemaValidate(policies);
 
         const {userId, username} = ctx.request.identityInfo.userInfo;
-        const model = {
-            userId, username, resourceType, name, intro, coverImages, policies, tags
-        };
-
         await this.resourceService.findOneByResourceName(`${username}/${name}`, 'resourceName').then(resourceName => {
             if (resourceName) {
                 throw new ArgumentError('name is already existing');
             }
         });
 
+        const model = {
+            userId, username, resourceType, name, intro, coverImages, policies, tags
+        };
         await this.resourceService.createResource(model).then(ctx.success);
     }
 
@@ -123,16 +98,26 @@ export class ResourceController {
     async list(ctx) {
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().value;
         const resourceNames = ctx.checkQuery('resourceNames').optional().toSplitArray().value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
+        let dataList = [];
         if (!isEmpty(resourceIds)) {
-            await this.resourceService.find({_id: {$in: resourceIds}}, projection.join(' ')).then(ctx.success);
+            dataList = await this.resourceService.find({_id: {$in: resourceIds}}, projection.join(' '));
         } else if (!isEmpty(resourceNames)) {
-            await this.resourceService.findByResourceNames(resourceNames, projection.join(' ')).then(ctx.success);
+            dataList = await this.resourceService.findByResourceNames(resourceNames, projection.join(' '));
         } else {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
+        if (isLoadPolicyInfo) {
+            dataList = await this.resourceService.fillResourcePolicyInfo(dataList);
+        }
+        if (isLoadLatestVersionInfo) {
+            dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);
+        }
+        ctx.success(dataList);
     }
 
     @put('/:resourceId')
@@ -218,6 +203,7 @@ export class ResourceController {
     @get('/:resourceIdOrName')
     async show(ctx) {
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
@@ -234,12 +220,14 @@ export class ResourceController {
         if (!resourceInfo) {
             return ctx.success(null);
         }
-        resourceInfo = resourceInfo.toObject();
-        if (isLoadLatestVersionInfo && resourceInfo.latestVersion) {
-            const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
-            resourceInfo.latestVersionInfo = await this.resourceVersionService.findOne({versionId});
+        let dataList = [resourceInfo];
+        if (isLoadLatestVersionInfo) {
+            dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);
         }
-        ctx.success(resourceInfo);
+        if (isLoadPolicyInfo) {
+            dataList = await this.resourceService.fillResourcePolicyInfo(dataList);
+        }
+        ctx.success(first(dataList));
     }
 
     @get('/:resourceId/contracts/:contractId/coverageVersions')
@@ -257,7 +245,7 @@ export class ResourceController {
 
     @get('/:resourceId/contracts/coverageVersions')
     @visitorIdentity(LoginUser)
-    async ContractsCoverageVersions(ctx) {
+    async contractsCoverageVersions(ctx) {
 
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 200).value;
