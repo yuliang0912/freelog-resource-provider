@@ -11,7 +11,7 @@ export declare class ResourceController {
     update(ctx: any): Promise<void>;
     dependencyTree(ctx: any): Promise<any>;
     authTree(ctx: any): Promise<any>;
-    show(ctx: any): Promise<any>;
+    show(ctx: any): Promise<void>;
     contractCoverageVersions(ctx: any): Promise<void>;
     contractsCoverageVersions(ctx: any): Promise<void>;
     /**

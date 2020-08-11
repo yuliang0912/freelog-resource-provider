@@ -2,12 +2,12 @@ import { IJsonSchemaValidate, IResourceService, IResourceVersionService, IOutsid
 export declare class ResourceVersionController {
     resourcePropertyGenerator: any;
     resourceService: IResourceService;
+    outsideApiService: IOutsideApiService;
+    customPropertyValidator: IJsonSchemaValidate;
     resourceUpcastValidator: IJsonSchemaValidate;
     resourceVersionService: IResourceVersionService;
     resolveDependencyOrUpcastValidator: IJsonSchemaValidate;
     resourceVersionDependencyValidator: IJsonSchemaValidate;
-    customPropertyValidator: IJsonSchemaValidate;
-    outsideApiService: IOutsideApiService;
     index(ctx: any): Promise<void>;
     detail(ctx: any): Promise<void>;
     list(ctx: any): Promise<void>;

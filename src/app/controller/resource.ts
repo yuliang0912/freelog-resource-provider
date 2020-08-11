@@ -217,9 +217,6 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        if (!resourceInfo) {
-            return ctx.success(null);
-        }
         let dataList = [resourceInfo];
         if (isLoadLatestVersionInfo) {
             dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);

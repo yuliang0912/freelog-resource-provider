@@ -15,6 +15,10 @@ export class ResourceVersionController {
     @inject()
     resourceService: IResourceService;
     @inject()
+    outsideApiService: IOutsideApiService;
+    @inject()
+    customPropertyValidator: IJsonSchemaValidate;
+    @inject()
     resourceUpcastValidator: IJsonSchemaValidate;
     @inject()
     resourceVersionService: IResourceVersionService;
@@ -22,10 +26,6 @@ export class ResourceVersionController {
     resolveDependencyOrUpcastValidator: IJsonSchemaValidate;
     @inject()
     resourceVersionDependencyValidator: IJsonSchemaValidate;
-    @inject()
-    customPropertyValidator: IJsonSchemaValidate;
-    @inject()
-    outsideApiService: IOutsideApiService;
 
     @get('/:resourceId/versions')
     @visitorIdentity(LoginUser | InternalClient)
@@ -242,7 +242,7 @@ export class ResourceVersionController {
 
         let extName = '';
         if (isString(resourceVersionInfo.filename)) {
-            extName = resourceVersionInfo.filename.substr(resourceVersionInfo.filename.lastIndexOf('.'))
+            extName = resourceVersionInfo.filename.substr(resourceVersionInfo.filename.lastIndexOf('.'));
         }
         ctx.attachment(resourceVersionInfo.resourceName + '_' + resourceVersionInfo.version + extName);
     }

@@ -410,7 +410,7 @@ export class ResourceService implements IResourceService {
             return resources;
         }
 
-        const versionIds = resources.filter(x => isString(x.latestVersion) && x.latestVersion.length).map(resourceInfo => {
+        const versionIds = resources.filter(x => isString(x?.latestVersion) && x.latestVersion.length).map(resourceInfo => {
             const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, resourceInfo.latestVersion);
             resourceInfo['latestVersionId'] = versionId;
             return versionId;
@@ -439,7 +439,7 @@ export class ResourceService implements IResourceService {
         if (!isArray(resources) || isEmpty(resources)) {
             return resources;
         }
-        const policyIds = chain(resources).filter(x => isArray(x.policies) && !isEmpty(x.policies)).map(x => x.policies.map(m => m.policyId)).flatten().uniq().value();
+        const policyIds = chain(resources).filter(x => isArray(x?.policies) && !isEmpty(x.policies)).map(x => x.policies.map(m => m.policyId)).flatten().uniq().value();
         if (isEmpty(policyIds)) {
             return resources;
         }
