@@ -26,4 +26,5 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param projection
      */
     getResourcePolicies(policyIds: string[], projection?: string[]): Promise<PolicyInfo[]>;
+    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<any>;
 }

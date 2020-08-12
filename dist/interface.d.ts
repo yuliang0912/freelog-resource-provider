@@ -81,6 +81,8 @@ export interface ContractInfo {
     status?: ContractStatusEnum;
     authStatus: number;
     createDate?: Date;
+    isAuth?: boolean;
+    isTestAuth?: boolean;
 }
 export interface PolicyInfo {
     policyId: string;

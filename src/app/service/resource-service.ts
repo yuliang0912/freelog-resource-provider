@@ -165,7 +165,7 @@ export class ResourceService implements IResourceService {
                     contracts: resolveResource['contracts'],
                     versions: uniqBy(list, x => x['versionId']).map(item => Object({
                         version: item['version'],
-                        resolveReleases: recursionAuthTree(item)
+                        resolveResources: recursionAuthTree(item)
                     })),
                     versionRanges: chain(list).map(x => x['versionRange']).uniq().value()
                 };

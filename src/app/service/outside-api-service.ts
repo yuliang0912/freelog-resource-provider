@@ -53,4 +53,11 @@ export class OutsideApiService implements IOutsideApiService {
     async getResourcePolicies(policyIds: string[], projection: string[] = []): Promise<PolicyInfo[]> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&projection=${projection.toString()}`);
     }
+
+    async getResourceContractByContractIds(contractIds: string[], options?: object) {
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&${optionParams.join('&')}`)
+    }
+
+    // async getResourceContracts(subjectId: string, licensorId: string, licenseeId: string | number)
 }

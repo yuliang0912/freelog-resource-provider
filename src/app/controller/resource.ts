@@ -38,7 +38,7 @@ export class ResourceController {
         const condition: any = {};
         if (isSelf) {
             ctx.validateVisitorIdentity(LoginUser);
-            condition.userId = ctx.request.userId;
+            condition.userId = ctx.userId;
         }
         if (resourceType) {
             condition.resourceType = new RegExp(`^${resourceType}$`, 'i');
@@ -81,7 +81,7 @@ export class ResourceController {
 
         this._policySchemaValidate(policies);
 
-        const {userId, username} = ctx.request.identityInfo.userInfo;
+        const {userId, username} = ctx.userInfo;
         await this.resourceService.findOneByResourceName(`${username}/${name}`, 'resourceName').then(resourceName => {
             if (resourceName) {
                 throw new ArgumentError('name is already existing');
@@ -282,15 +282,11 @@ export class ResourceController {
                 resolveResourceMap.set(resourceId, {resourceId, resourceName, contracts: []});
             }
             const existingContracts = resolveResourceMap.get(resourceId).contracts;
-            contracts.forEach(({policyId, contractId}) => {
-                if (!existingContracts.some(x => x.policyId === policyId && x.contractId === contractId)) {
-                    existingContracts.push({
-                        policyId, contractId,
-                        version: resourceVersion.version,
-                        versionId: resourceVersion.versionId
-                    });
-                }
-            });
+            contracts.forEach(({policyId, contractId}) => existingContracts.push({
+                policyId, contractId,
+                version: resourceVersion.version,
+                versionId: resourceVersion.versionId
+            }));
         }));
 
         ctx.success([...resolveResourceMap.values()]);

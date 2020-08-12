@@ -42,7 +42,7 @@ export class ResourceCollectionController {
             resourceType: resourceInfo.resourceType,
             authorId: resourceInfo.userId,
             authorName: resourceInfo.username,
-            userId: ctx.request.userId
+            userId: ctx.userId
         };
 
         await this.resourceCollectionService.collectionResource(collectionInfo).then(ctx.success);
@@ -64,7 +64,7 @@ export class ResourceCollectionController {
         ctx.validateParams();
 
         await this.resourceCollectionService.findOne({
-            resourceId, userId: ctx.request.userId
+            resourceId, userId: ctx.userId
         }).then(ctx.success).catch(ctx.error);
     }
 
@@ -75,7 +75,7 @@ export class ResourceCollectionController {
         ctx.validateParams();
 
         await this.resourceCollectionService.deleteOne({
-            resourceId, userId: ctx.request.userId
+            resourceId, userId: ctx.userId
         }).then(ctx.success);
     }
 }
