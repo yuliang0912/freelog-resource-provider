@@ -14,6 +14,7 @@ export declare class ResourceController {
     show(ctx: any): Promise<void>;
     contractCoverageVersions(ctx: any): Promise<void>;
     contractsCoverageVersions(ctx: any): Promise<void>;
+    allResolveResources(ctx: any): Promise<void>;
     /**
      * 获取资源版本信息
      * @param resourceInfo

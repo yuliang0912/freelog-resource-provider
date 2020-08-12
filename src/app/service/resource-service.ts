@@ -62,7 +62,7 @@ export class ResourceService implements IResourceService {
             }));
         }
 
-        resourceInfo.status = ResourceService._getResourceStatus(resourceInfo);
+        resourceInfo.status = ResourceService._getResourceStatus(resourceInfo.resourceVersions, resourceInfo.policies);
         resourceInfo.uniqueKey = this.resourcePropertyGenerator.generateResourceUniqueKey(resourceInfo.resourceName);
 
         return this.resourceProvider.create(resourceInfo);
@@ -110,7 +110,7 @@ export class ResourceService implements IResourceService {
         }
         if (isArray(options.addPolicies) || isArray(options.updatePolicies)) {
             resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
-            updateInfo.status = ResourceService._getResourceStatus(resourceInfo);
+            updateInfo.status = ResourceService._getResourceStatus(resourceInfo.resourceVersions, resourceInfo.policies);
         }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }
@@ -267,7 +267,7 @@ export class ResourceService implements IResourceService {
         return this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, {
             $addToSet: {resourceVersions: versionInfo},
             latestVersion: latestVersionInfo.version,
-            status: ResourceService._getResourceStatus(resourceInfo)
+            status: ResourceService._getResourceStatus([versionInfo], resourceInfo.policies)
         }).then(data => Boolean(data.ok));
     }
 
@@ -466,7 +466,7 @@ export class ResourceService implements IResourceService {
      * @returns {number} 资源状态
      * @private
      */
-    static _getResourceStatus(resourceInfo: ResourceInfo): number {
-        return (resourceInfo.policies.some(x => x.status === 1) && !isEmpty(resourceInfo.resourceVersions)) ? 1 : 0;
+    static _getResourceStatus(resourceVersions: object[], policies: PolicyInfo[]): number {
+        return (policies.some(x => x.status === 1) && !isEmpty(resourceVersions)) ? 1 : 0;
     }
 }

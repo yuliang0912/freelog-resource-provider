@@ -266,6 +266,36 @@ export class ResourceController {
         ctx.success(result);
     }
 
+    // 同一个资源下所有版本解决的子依赖(含上抛)列表以及对应的解决方式
+    @get('/:resourceId/resolveResources')
+    @visitorIdentity(LoginUser)
+    async allResolveResources(ctx) {
+
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        ctx.validateParams();
+
+        const resolveResourceMap = new Map();
+        const allResourceVersions = await this.resourceVersionService.find({resourceId}, 'version versionId resolveResources');
+        allResourceVersions.forEach(resourceVersion => resourceVersion.resolveResources.forEach(resourceResource => {
+            const {resourceId, resourceName, contracts} = resourceResource;
+            if (!resolveResourceMap.has(resourceId)) {
+                resolveResourceMap.set(resourceId, {resourceId, resourceName, contracts: []});
+            }
+            const existingContracts = resolveResourceMap.get(resourceId).contracts;
+            contracts.forEach(({policyId, contractId}) => {
+                if (!existingContracts.some(x => x.policyId === policyId && x.contractId === contractId)) {
+                    existingContracts.push({
+                        policyId, contractId,
+                        version: resourceVersion.version,
+                        versionId: resourceVersion.versionId
+                    });
+                }
+            });
+        }));
+
+        ctx.success([...resolveResourceMap.values()]);
+    }
+
     /**
      * 获取资源版本信息
      * @param resourceInfo

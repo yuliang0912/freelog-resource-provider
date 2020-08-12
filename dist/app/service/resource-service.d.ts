@@ -151,5 +151,5 @@ export declare class ResourceService implements IResourceService {
      * @returns {number} 资源状态
      * @private
      */
-    static _getResourceStatus(resourceInfo: ResourceInfo): number;
+    static _getResourceStatus(resourceVersions: object[], policies: PolicyInfo[]): number;
 }
