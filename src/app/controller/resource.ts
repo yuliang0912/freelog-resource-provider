@@ -276,18 +276,29 @@ export class ResourceController {
 
         const resolveResourceMap = new Map();
         const allResourceVersions = await this.resourceVersionService.find({resourceId}, 'version versionId resolveResources');
-        allResourceVersions.forEach(resourceVersion => resourceVersion.resolveResources.forEach(resourceResource => {
+
+        allResourceVersions.forEach(resourceVersion => resourceVersion.resolveResources.forEach((resourceResource, index) => {
             const {resourceId, resourceName, contracts} = resourceResource;
             if (!resolveResourceMap.has(resourceId)) {
-                resolveResourceMap.set(resourceId, {resourceId, resourceName, contracts: []});
+                resolveResourceMap.set(resourceId, {resourceId, resourceName, versions: []});
             }
-            const existingContracts = resolveResourceMap.get(resourceId).contracts;
-            contracts.forEach(({policyId, contractId}) => existingContracts.push({
-                policyId, contractId,
-                version: resourceVersion.version,
-                versionId: resourceVersion.versionId
-            }));
+            resolveResourceMap.get(resourceId).versions.push({
+                version: resourceVersion.version, versionId: resourceVersion.versionId, contracts
+            });
         }));
+        //
+        // allResourceVersions.forEach(resourceVersion => resourceVersion.resolveResources.forEach(resourceResource => {
+        //     const {resourceId, resourceName, contracts} = resourceResource;
+        //     if (!resolveResourceMap.has(resourceId)) {
+        //         resolveResourceMap.set(resourceId, {resourceId, resourceName, versions: []});
+        //     }
+        //     const existingContracts = resolveResourceMap.get(resourceId).contracts;
+        //     contracts.forEach(({policyId, contractId}) => existingContracts.push({
+        //         policyId, contractId,
+        //         version: resourceVersion.version,
+        //         versionId: resourceVersion.versionId
+        //     }));
+        // }));
 
         ctx.success([...resolveResourceMap.values()]);
     }
