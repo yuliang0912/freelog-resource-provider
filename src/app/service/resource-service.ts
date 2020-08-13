@@ -1,7 +1,7 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
-import {isArray, isUndefined, isString, differenceBy, omit, isEmpty, uniqBy, first, chain} from 'lodash';
+import {isArray, isUndefined, isString, differenceBy, omit, isEmpty, pick, uniqBy, first, chain} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -261,14 +261,19 @@ export class ResourceService implements IResourceService {
      */
     async createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean> {
 
-        resourceInfo.resourceVersions.push(versionInfo);
+        resourceInfo.resourceVersions.push(pick(versionInfo, ['version', 'versionId', 'createDate']));
         const latestVersionInfo: any = resourceInfo.resourceVersions.sort((x, y) => semver.lt(x['version'], y['version']) ? 1 : -1).shift();
 
-        return this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, {
+        const modifyModel: any = {
             $addToSet: {resourceVersions: versionInfo},
             latestVersion: latestVersionInfo.version,
             status: ResourceService._getResourceStatus([versionInfo], resourceInfo.policies)
-        }).then(data => Boolean(data.ok));
+        }
+        if (isEmpty(resourceInfo.resourceVersions)) {
+            modifyModel.baseUpcastResources = versionInfo.upcastResources;
+        }
+
+        return this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, modifyModel).then(data => Boolean(data.ok));
     }
 
     /**

@@ -79,9 +79,7 @@ export class ResourceVersionService implements IResourceVersionService {
 
         const resourceVersion = await this.resourceVersionProvider.create(model);
         this.resourceVersionDraftProvider.deleteOne({resourceId: resourceInfo.resourceId}).then();
-        await this.resourceService.createdResourceVersionHandle(resourceInfo, {
-            version: options.version, versionId: options.versionId, createDate: resourceVersion.createDate
-        });
+        await this.resourceService.createdResourceVersionHandle(resourceInfo, resourceVersion);
 
         return resourceVersion;
     }

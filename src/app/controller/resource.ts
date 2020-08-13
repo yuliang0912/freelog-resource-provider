@@ -286,19 +286,6 @@ export class ResourceController {
                 version: resourceVersion.version, versionId: resourceVersion.versionId, contracts
             });
         }));
-        //
-        // allResourceVersions.forEach(resourceVersion => resourceVersion.resolveResources.forEach(resourceResource => {
-        //     const {resourceId, resourceName, contracts} = resourceResource;
-        //     if (!resolveResourceMap.has(resourceId)) {
-        //         resolveResourceMap.set(resourceId, {resourceId, resourceName, versions: []});
-        //     }
-        //     const existingContracts = resolveResourceMap.get(resourceId).contracts;
-        //     contracts.forEach(({policyId, contractId}) => existingContracts.push({
-        //         policyId, contractId,
-        //         version: resourceVersion.version,
-        //         versionId: resourceVersion.versionId
-        //     }));
-        // }));
 
         ctx.success([...resolveResourceMap.values()]);
     }
