@@ -49,7 +49,7 @@ export class ResourceAuthController {
             throw new ApplicationError('授权失败')
         }
 
-        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'fileSha1 resourceName version systemProperty');
+        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'fileSha1 filename resourceName version systemProperty');
         ctx.entityNullObjectCheck(resourceVersionInfo, {
             msg: ctx.gettext('params-validate-failed', 'version'), data: {resourceId}
         });

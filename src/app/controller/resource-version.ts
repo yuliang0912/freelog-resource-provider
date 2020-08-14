@@ -217,7 +217,7 @@ export class ResourceVersionController {
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
-        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 resourceName version systemProperty');
+        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 filename resourceName version systemProperty');
         ctx.entityNullValueAndUserAuthorizationCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
 
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
