@@ -1,5 +1,5 @@
 import * as semver from 'semver';
-import {isEmpty, isString} from 'lodash';
+import {isEmpty} from 'lodash';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
 import {LoginUser, InternalClient, ArgumentError, ApplicationError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
@@ -11,17 +11,15 @@ import {IJsonSchemaValidate, IResourceService, IResourceVersionService, IOutside
 export class ResourceVersionController {
 
     @inject()
-    resourcePropertyGenerator;
-    @inject()
     resourceService: IResourceService;
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()
+    resourceVersionService: IResourceVersionService;
+    @inject()
     customPropertyValidator: IJsonSchemaValidate;
     @inject()
     resourceUpcastValidator: IJsonSchemaValidate;
-    @inject()
-    resourceVersionService: IResourceVersionService;
     @inject()
     resolveDependencyOrUpcastValidator: IJsonSchemaValidate;
     @inject()
@@ -52,11 +50,6 @@ export class ResourceVersionController {
         await this.resourceVersionService.find({versionId: {$in: versionIds}}, projection.join(' ')).then(ctx.success);
     }
 
-    /**
-     * 保存草稿.一个资源只能保存一次草稿
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     @get('/:resourceId/versions/drafts')
     @visitorIdentity(LoginUser)
     async resourceVersionDraft(ctx) {
@@ -139,8 +132,7 @@ export class ResourceVersionController {
         const versionInfo = {
             version: semver.clean(version), fileSha1, filename, description,
             resolveResources, dependencies, customPropertyDescriptors, baseUpcastResources,
-            systemProperty: fileSystemProperty,
-            versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, version),
+            systemProperty: fileSystemProperty
         };
 
         await this.resourceVersionService.createResourceVersion(resourceInfo, versionInfo).then(ctx.success);
@@ -184,8 +176,7 @@ export class ResourceVersionController {
             });
         }
 
-        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
-        const resourceVersion = await this.resourceVersionService.findOne({versionId});
+        const resourceVersion = await this.resourceVersionService.findOneByVersion(resourceId, version);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceVersion, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
 
         const options = {
@@ -194,11 +185,6 @@ export class ResourceVersionController {
         await this.resourceVersionService.updateResourceVersion(resourceVersion, options).then(ctx.success);
     }
 
-    /**
-     * 保存草稿.一个资源只能保存一次草稿
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     @post('/:resourceId/versions/drafts')
     @visitorIdentity(LoginUser)
     async createOrUpdateResourceVersionDraft(ctx) {
@@ -209,6 +195,7 @@ export class ResourceVersionController {
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
+        // 一个资源只能保存一次草稿.
         await this.resourceVersionService.saveOrUpdateResourceVersionDraft(resourceInfo, draftData).then(ctx.success);
     }
 
@@ -220,8 +207,7 @@ export class ResourceVersionController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
-        await this.resourceVersionService.findOne({versionId}, projection.join(' ')).then(ctx.success);
+        await this.resourceVersionService.findOneByVersion(resourceId, version, projection.join(' ')).then(ctx.success);
     }
 
     @get('/:resourceId/versions/:version/download')
@@ -231,25 +217,16 @@ export class ResourceVersionController {
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
-        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
-        const resourceVersionInfo = await this.resourceVersionService.findOne({versionId}, ['fileSha1', 'resourceName', 'version']);
+        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 resourceName version systemProperty');
         ctx.entityNullValueAndUserAuthorizationCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
 
-        const stream = await this.outsideApiService.getFileStream(resourceVersionInfo.fileSha1);
+        const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
 
-        ctx.body = stream.data;
-        ctx.set('content-length', stream.headers['contract-length']);
-
-        let extName = '';
-        if (isString(resourceVersionInfo.filename)) {
-            extName = resourceVersionInfo.filename.substr(resourceVersionInfo.filename.lastIndexOf('.'));
-        }
-        ctx.attachment(resourceVersionInfo.resourceName + '_' + resourceVersionInfo.version + extName);
+        ctx.body = fileStreamInfo.fileStream;
+        ctx.set('content-length', fileStreamInfo.fileSize);
+        ctx.attachment(fileStreamInfo.fileName);
     }
 
-    /**
-     * 验证文件是否可以被创建成资源版本
-     */
     @get('/versions/isCanBeCreate')
     @visitorIdentity(LoginUser)
     async fileIsCanBeCreate(ctx) {

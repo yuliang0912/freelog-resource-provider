@@ -10,7 +10,7 @@ import {
     IOutsideApiService
 } from '../../interface';
 import {ArgumentError, ApplicationError} from 'egg-freelog-base';
-import {isEmpty, isUndefined, uniqBy, chain, differenceBy, assign, pick} from 'lodash';
+import {isEmpty, isUndefined, uniqBy, chain, differenceBy, assign, pick, isString} from 'lodash';
 
 @provide('resourceVersionService')
 export class ResourceVersionService implements IResourceVersionService {
@@ -28,14 +28,6 @@ export class ResourceVersionService implements IResourceVersionService {
     @inject()
     outsideApiService: IOutsideApiService;
 
-    async find(condition: object, ...args): Promise<ResourceVersionInfo[]> {
-        return this.resourceVersionProvider.find(condition, ...args);
-    }
-
-    async findOne(condition: object, ...args): Promise<ResourceVersionInfo> {
-        return this.resourceVersionProvider.findOne(condition, ...args);
-    }
-
     /**
      * 为资源创建版本
      * @param {ResourceInfo} resourceInfo 资源信息
@@ -49,7 +41,6 @@ export class ResourceVersionService implements IResourceVersionService {
         const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
 
         const model: ResourceVersionInfo = {
-            versionId: options.versionId,
             version: options.version,
             resourceId: resourceInfo.resourceId,
             resourceName: resourceInfo.resourceName,
@@ -62,7 +53,8 @@ export class ResourceVersionService implements IResourceVersionService {
             resolveResources,
             upcastResources: upcastResources as BaseResourceInfo[],
             systemProperty: options.systemProperty,
-            customPropertyDescriptors: options.customPropertyDescriptors
+            customPropertyDescriptors: options.customPropertyDescriptors,
+            versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, options.version)
         };
 
         if (!isEmpty(resolveResources)) {
@@ -156,6 +148,27 @@ export class ResourceVersionService implements IResourceVersionService {
     }
 
     /**
+     * 获取资源文件流
+     * @param resourceId
+     * @param version
+     */
+    async getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }> {
+
+        let extName = '';
+        if (isString(versionInfo.filename)) {
+            extName = versionInfo.filename.substr(versionInfo.filename.lastIndexOf('.'));
+        }
+
+        const stream = await this.outsideApiService.getFileStream(versionInfo.fileSha1);
+        return {
+            fileSha1: versionInfo.fileSha1,
+            fileName: `${versionInfo.resourceName}_${versionInfo.version}${extName}`,
+            fileSize: versionInfo.systemProperty.fileSize,
+            fileStream: stream.data
+        }
+    }
+
+    /**
      * 检查文件是否可以被创建成资源的版本
      * @param fileSha1
      */
@@ -163,6 +176,19 @@ export class ResourceVersionService implements IResourceVersionService {
         return this.resourceVersionProvider.findOne({
             fileSha1, userId: {$ne: this.ctx.userId}
         }, '_id').then(x => !Boolean(x));
+    }
+
+    async find(condition: object, ...args): Promise<ResourceVersionInfo[]> {
+        return this.resourceVersionProvider.find(condition, ...args);
+    }
+
+    async findOne(condition: object, ...args): Promise<ResourceVersionInfo> {
+        return this.resourceVersionProvider.findOne(condition, ...args);
+    }
+
+    async findOneByVersion(resourceId: string, version: string, ...args): Promise<ResourceVersionInfo> {
+        const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
+        return this.findOne({versionId}, ...args);
     }
 
     /**
@@ -321,7 +347,7 @@ export class ResourceVersionService implements IResourceVersionService {
         }
 
         allUntreatedResources = chain(dependResources).map(x => x.baseUpcastResources)
-            .flattenDeep().concat(dependencies).uniqBy(x => x.resoruceId).map(x => pick(x, ['resourceId', 'resourceName'])).value();
+            .flattenDeep().concat(dependencies).uniqBy('resourceId').map(x => pick(x, ['resourceId', 'resourceName'])).value();
 
         // 真实需要解决的和需要上抛的(实际后续版本真实上抛可能会比基础上抛少,考虑以后授权可能会用到)
         backlogResources = differenceBy(allUntreatedResources, baseUpcastResources, x => x['resourceId']);

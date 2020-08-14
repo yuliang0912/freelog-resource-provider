@@ -1,16 +1,16 @@
 import {inject, provide} from 'midway';
-import {ContractInfo, IResourceService} from '../../interface';
+import {ContractInfo, IResourceService, IResourceAuthService} from '../../interface';
 import {isArray, isEmpty} from 'lodash';
 import {ArgumentError} from 'egg-freelog-base';
 import {SubjectTypeEnum} from "../../enum";
 
-@provide('resourceVersionService')
-export class ResourceVersionService {
+@provide()
+export class ResourceAuthService implements IResourceAuthService {
 
     @inject()
     resourceService: IResourceService;
 
-    async contractAuth(subjectId, contracts: ContractInfo[], authType: 'auth' | 'testAuth') {
+    async contractAuth(subjectId, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<boolean> {
         if (!isArray(contracts) || isEmpty(contracts)) {
             throw new ArgumentError('please check code logic');
         }

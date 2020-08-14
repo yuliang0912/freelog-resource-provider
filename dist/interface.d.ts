@@ -26,7 +26,6 @@ export interface UpdateResourceOptions {
 }
 export interface CreateResourceVersionOptions {
     version: string;
-    versionId: string;
     fileSha1: string;
     filename: string;
     description: string;
@@ -125,7 +124,7 @@ export interface ResourceVersionInfo {
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];
     resolveResources?: ResolveResource[];
-    systemProperty?: object;
+    systemProperty?: any;
     customPropertyDescriptors?: object[];
     status?: number;
 }
@@ -148,6 +147,7 @@ export interface IOutsideApiService {
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
     getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
+    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
 }
 export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
@@ -170,9 +170,16 @@ export interface IResourceVersionService {
     updateResourceVersion(versionInfo: ResourceVersionInfo, options: UpdateResourceVersionOptions): Promise<ResourceVersionInfo>;
     find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
+    findOneByVersion(resourceId: string, version: string, ...args: any[]): Promise<ResourceVersionInfo>;
     saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object): any;
     getResourceVersionDraft(resourceId: string): any;
     checkFileIsCanBeCreate(fileSha1: string): Promise<boolean>;
+    getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{
+        fileSha1: string;
+        fileName: string;
+        fileSize: number;
+        fileStream: any;
+    }>;
 }
 export interface ICollectionService {
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;
@@ -184,4 +191,7 @@ export interface ICollectionService {
     findOne(condition: object, ...args: any[]): Promise<CollectionResourceInfo>;
     deleteOne(condition: object): Promise<boolean>;
     findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult>;
+}
+export interface IResourceAuthService {
+    contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<boolean>;
 }

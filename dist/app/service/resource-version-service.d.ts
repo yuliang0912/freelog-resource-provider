@@ -6,8 +6,6 @@ export declare class ResourceVersionService implements IResourceVersionService {
     resourcePropertyGenerator: any;
     resourceVersionDraftProvider: any;
     outsideApiService: IOutsideApiService;
-    find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
-    findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
     /**
      * 为资源创建版本
      * @param {ResourceInfo} resourceInfo 资源信息
@@ -35,10 +33,24 @@ export declare class ResourceVersionService implements IResourceVersionService {
      */
     getResourceVersionDraft(resourceId: string): Promise<any>;
     /**
+     * 获取资源文件流
+     * @param resourceId
+     * @param version
+     */
+    getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{
+        fileSha1: string;
+        fileName: string;
+        fileSize: number;
+        fileStream: any;
+    }>;
+    /**
      * 检查文件是否可以被创建成资源的版本
      * @param fileSha1
      */
     checkFileIsCanBeCreate(fileSha1: string): Promise<boolean>;
+    find(condition: object, ...args: any[]): Promise<ResourceVersionInfo[]>;
+    findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
+    findOneByVersion(resourceId: string, version: string, ...args: any[]): Promise<ResourceVersionInfo>;
     /**
      * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态

@@ -1,7 +1,6 @@
 import { IJsonSchemaValidate, IResourceService, IResourceVersionService } from '../../interface';
 export declare class ResourceController {
     ctx: any;
-    resourcePropertyGenerator: any;
     resourceService: IResourceService;
     resourcePolicyValidator: IJsonSchemaValidate;
     resourceVersionService: IResourceVersionService;

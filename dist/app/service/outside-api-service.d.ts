@@ -4,7 +4,6 @@ export declare class OutsideApiService implements IOutsideApiService {
     /**
      * 获取文件流
      * @param fileSha1
-     * @param filename
      */
     getFileStream(fileSha1: string): Promise<any>;
     /**
@@ -26,5 +25,10 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param projection
      */
     getResourcePolicies(policyIds: string[], projection?: string[]): Promise<PolicyInfo[]>;
-    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<any>;
+    /**
+     * 获取资源合约
+     * @param contractIds
+     * @param options
+     */
+    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
 }

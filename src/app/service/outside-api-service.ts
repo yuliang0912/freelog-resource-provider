@@ -11,7 +11,6 @@ export class OutsideApiService implements IOutsideApiService {
     /**
      * 获取文件流
      * @param fileSha1
-     * @param filename
      */
     async getFileStream(fileSha1: string): Promise<any> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, {
@@ -54,7 +53,12 @@ export class OutsideApiService implements IOutsideApiService {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&projection=${projection.toString()}`);
     }
 
-    async getResourceContractByContractIds(contractIds: string[], options?: object) {
+    /**
+     * 获取资源合约
+     * @param contractIds
+     * @param options
+     */
+    async getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&${optionParams.join('&')}`)
     }

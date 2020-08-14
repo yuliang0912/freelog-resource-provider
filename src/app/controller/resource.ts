@@ -13,8 +13,6 @@ export class ResourceController {
     @inject()
     ctx;
     @inject()
-    resourcePropertyGenerator;
-    @inject()
     resourceService: IResourceService;
     @inject()
     resourcePolicyValidator: IJsonSchemaValidate;
