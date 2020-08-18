@@ -52,6 +52,12 @@ export declare class ResourceVersionService implements IResourceVersionService {
     findOne(condition: object, ...args: any[]): Promise<ResourceVersionInfo>;
     findOneByVersion(resourceId: string, version: string, ...args: any[]): Promise<ResourceVersionInfo>;
     /**
+     * 批量签约并且应用到版本中
+     * @param resourceInfo
+     * @param subjects
+     */
+    batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]): Promise<boolean>;
+    /**
      * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态
      * 2.依赖的资源与主资源之间不能存在循环引用.

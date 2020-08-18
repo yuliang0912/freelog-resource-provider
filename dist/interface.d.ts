@@ -57,6 +57,7 @@ export interface ResolveResource {
 export interface SubjectInfo {
     subjectId: string;
     policyId: string;
+    operation?: number;
 }
 export interface ContractInfo {
     contractId: string;
@@ -96,8 +97,8 @@ export interface ResourceInfo {
     resourceType: string;
     userId: number;
     username: string;
-    resourceVersions: object[];
-    baseUpcastResources: object[];
+    resourceVersions: BaseResourceVersion[];
+    baseUpcastResources: BaseResourceInfo[];
     intro?: string;
     coverImages?: string[];
     policies?: PolicyInfo[];
@@ -111,12 +112,14 @@ export interface BaseResourceInfo {
     resourceName?: string;
     versionRange?: string;
 }
-export interface ResourceVersionInfo {
+export interface BaseResourceVersion {
+    versionId: string;
+    version: string;
+}
+export interface ResourceVersionInfo extends BaseResourceVersion {
     resourceId: string;
     resourceName: string;
     userId: number;
-    versionId: string;
-    version: string;
     resourceType: string;
     fileSha1: string;
     filename: string;
@@ -136,6 +139,17 @@ export interface CollectionResourceInfo {
     authorId: number;
     authorName: string;
 }
+export interface ResourceAuthTreeNodeInfo {
+    resourceId: string;
+    resourceName: string;
+    contracts: BaseContractInfo[];
+    versions: ResourceAuthTreeVersionInfo[];
+}
+export interface ResourceAuthTreeVersionInfo {
+    version: string;
+    versionId: string;
+    resolveResources: ResourceAuthTreeNodeInfo[];
+}
 /**
  * 针对object做校验的基础接口
  */
@@ -148,12 +162,13 @@ export interface IOutsideApiService {
     getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
+    getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
 }
 export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
     updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
     getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
-    getResourceAuthTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<object[]>;
+    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTreeNodeInfo[]>;
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     findOneByResourceName(resourceName: string, ...args: any[]): Promise<ResourceInfo>;
     findByResourceNames(resourceNames: string[], ...args: any[]): Promise<ResourceInfo[]>;
@@ -174,6 +189,7 @@ export interface IResourceVersionService {
     saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object): any;
     getResourceVersionDraft(resourceId: string): any;
     checkFileIsCanBeCreate(fileSha1: string): Promise<boolean>;
+    batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]): any;
     getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{
         fileSha1: string;
         fileName: string;

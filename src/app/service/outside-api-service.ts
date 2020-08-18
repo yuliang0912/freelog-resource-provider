@@ -63,5 +63,14 @@ export class OutsideApiService implements IOutsideApiService {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&${optionParams.join('&')}`)
     }
 
-    // async getResourceContracts(subjectId: string, licensorId: string, licenseeId: string | number)
+    /**
+     * 获取指定乙方与甲方的资源合约
+     * @param subjectId (资源体系中标的物ID与甲方ID均为资源ID)
+     * @param licenseeId
+     * @param options
+     */
+    async getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]> {
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectId=${subjectId}&Licensee=${licenseeId}&subjectType=${SubjectTypeEnum.Resource}&${optionParams.join('&')}`)
+    }
 }

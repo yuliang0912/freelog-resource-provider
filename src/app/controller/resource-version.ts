@@ -24,6 +24,8 @@ export class ResourceVersionController {
     resolveDependencyOrUpcastValidator: IJsonSchemaValidate;
     @inject()
     resourceVersionDependencyValidator: IJsonSchemaValidate;
+    @inject()
+    batchSignSubjectValidator: IJsonSchemaValidate;
 
     @get('/:resourceId/versions')
     @visitorIdentity(LoginUser | InternalClient)
@@ -152,39 +154,6 @@ export class ResourceVersionController {
         }, projection.join(' ')).then(ctx.success);
     }
 
-    @put('/:resourceId/versions/:version')
-    @visitorIdentity(LoginUser)
-    async update(ctx) {
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
-        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
-        const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;
-        const description = ctx.checkBody('description').optional().type('string').value;
-        const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().value;
-        ctx.validateParams();
-
-        const resolveResourceValidateResult = await this.resolveDependencyOrUpcastValidator.validate(resolveResources);
-        if (!isEmpty(resolveResources) && !isEmpty(resolveResourceValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resolveResources'), {
-                errors: resolveResourceValidateResult.errors
-            });
-        }
-
-        const customPropertyDescriptorValidateResult = await this.customPropertyValidator.validate(customPropertyDescriptors);
-        if (!isEmpty(customPropertyDescriptors) && !isEmpty(customPropertyDescriptorValidateResult.errors)) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'customPropertyDescriptors'), {
-                errors: customPropertyDescriptorValidateResult.errors
-            });
-        }
-
-        const resourceVersion = await this.resourceVersionService.findOneByVersion(resourceId, version);
-        ctx.entityNullValueAndUserAuthorizationCheck(resourceVersion, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
-
-        const options = {
-            description, resolveResources, customPropertyDescriptors
-        };
-        await this.resourceVersionService.updateResourceVersion(resourceVersion, options).then(ctx.success);
-    }
-
     @post('/:resourceId/versions/drafts')
     @visitorIdentity(LoginUser)
     async createOrUpdateResourceVersionDraft(ctx) {
@@ -234,5 +203,57 @@ export class ResourceVersionController {
         ctx.validateParams();
 
         await this.resourceVersionService.checkFileIsCanBeCreate(fileSha1).then(ctx.success);
+    }
+
+    @put('/:resourceId/versions/batchSetContracts')
+    async batchSignAndSetContractToVersion(ctx) {
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const subjects = ctx.checkBody('subjects').exist().isArray().value;
+        ctx.validateParams();
+
+        const subjectValidateResult = this.batchSignSubjectValidator.validate(subjects);
+        if (!isEmpty(subjectValidateResult.errors)) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'policies'), {
+                errors: subjectValidateResult.errors
+            });
+        }
+
+        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
+        ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
+
+        await this.resourceVersionService.batchSetPolicyToVersions(resourceInfo, subjects).then(ctx.success);
+    }
+
+    @put('/:resourceId/versions/:version')
+    @visitorIdentity(LoginUser)
+    async update(ctx) {
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;
+        const description = ctx.checkBody('description').optional().type('string').value;
+        const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().value;
+        ctx.validateParams();
+
+        const resolveResourceValidateResult = await this.resolveDependencyOrUpcastValidator.validate(resolveResources);
+        if (!isEmpty(resolveResources) && !isEmpty(resolveResourceValidateResult.errors)) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resolveResources'), {
+                errors: resolveResourceValidateResult.errors
+            });
+        }
+
+        const customPropertyDescriptorValidateResult = await this.customPropertyValidator.validate(customPropertyDescriptors);
+        if (!isEmpty(customPropertyDescriptors) && !isEmpty(customPropertyDescriptorValidateResult.errors)) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'customPropertyDescriptors'), {
+                errors: customPropertyDescriptorValidateResult.errors
+            });
+        }
+
+        const resourceVersion = await this.resourceVersionService.findOneByVersion(resourceId, version);
+        ctx.entityNullValueAndUserAuthorizationCheck(resourceVersion, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
+
+        const options = {
+            description, resolveResources, customPropertyDescriptors
+        };
+        await this.resourceVersionService.updateResourceVersion(resourceVersion, options).then(ctx.success);
     }
 }

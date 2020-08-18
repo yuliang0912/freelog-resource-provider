@@ -1,16 +1,19 @@
 import {provide, inject} from 'midway';
 import * as semver from 'semver';
 import {
-    BaseResourceInfo,
-    CreateResourceVersionOptions,
-    IResourceVersionService,
-    ResourceInfo,
-    ResourceVersionInfo,
+    BaseResourceInfo, CreateResourceVersionOptions,
+    IResourceVersionService, ResourceInfo, ResourceVersionInfo,
     UpdateResourceVersionOptions,
-    IOutsideApiService
+    IOutsideApiService,
+    SubjectInfo
 } from '../../interface';
 import {ArgumentError, ApplicationError} from 'egg-freelog-base';
-import {isEmpty, isUndefined, uniqBy, chain, differenceBy, assign, pick, isString} from 'lodash';
+import {
+    isEmpty, isUndefined,
+    uniqBy, chain, differenceBy,
+    assign, pick, isString,
+    differenceWith, intersectionWith
+} from 'lodash';
 
 @provide('resourceVersionService')
 export class ResourceVersionService implements IResourceVersionService {
@@ -189,6 +192,87 @@ export class ResourceVersionService implements IResourceVersionService {
     async findOneByVersion(resourceId: string, version: string, ...args): Promise<ResourceVersionInfo> {
         const versionId = this.resourcePropertyGenerator.generateResourceVersionId(resourceId, version);
         return this.findOne({versionId}, ...args);
+    }
+
+    /**
+     * 批量签约并且应用到版本中
+     * @param resourceInfo
+     * @param subjects
+     */
+    async batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]) {
+
+        const toBeModifyVersions: string[] = [];
+        const toBeSignSubjects: SubjectInfo[] = [];
+        const versionModifyPolicyMap = new Map<string, SubjectInfo[]>();
+        subjects.forEach(subject => subject.versions.forEach(({version, policyId, operation}) => {
+            if (!versionModifyPolicyMap.has(version)) {
+                toBeModifyVersions.push(version);
+                versionModifyPolicyMap.set(version, []);
+            }
+            versionModifyPolicyMap.get(version).push({subjectId: subject.subjectId, policyId, operation});
+        }));
+
+        const invalidVersions = differenceWith(toBeModifyVersions, resourceInfo.resourceVersions, (x, y) => x === y.version);
+        if (!isEmpty(invalidVersions)) {
+            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'subjects'), {invalidVersions});
+        }
+
+        const invalidSubjects = [];
+        const versionIds = intersectionWith(resourceInfo.resourceVersions, toBeModifyVersions, (x, y) => x.version === y).map(x => x.versionId);
+        const resourceVersionMap = await this.find({versionId: {$in: versionIds}}, 'version versionId resolveResources').then(list => new Map(list.map(x => [x.version, x])));
+        for (let [version, subjectInfos] of versionModifyPolicyMap) {
+            const resolveResources = resourceVersionMap.get(version)?.resolveResources ?? [];
+            subjectInfos.forEach(({subjectId, policyId, operation}) => {
+                if (operation === 1 && !toBeSignSubjects.some(x => x.subjectId == subjectId && x.policyId === policyId)) {
+                    toBeSignSubjects.push({subjectId, policyId});
+                }
+                if (!resolveResources.some(x => x.resourceId === subjectId)) {
+                    invalidSubjects.push({subjectId, policyId, version});
+                }
+            });
+        }
+        if (!isEmpty(invalidSubjects)) {
+            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'subjects'), {invalidSubjects});
+        }
+        const contractMap: Map<string, string> = await this.outsideApiService.batchSignResourceContracts(resourceInfo.resourceId, toBeSignSubjects).then(list => {
+            return new Map(list.map(x => [x.subjectId + x.policyId, x.contractId]));
+        });
+
+        const tasks = [], cancelFailedPolicies = [];
+        for (let [version, subjectInfos] of versionModifyPolicyMap) {
+            const resourceVersionInfo = resourceVersionMap.get(version);
+            resourceVersionInfo.resolveResources.forEach(resolveResource => {
+                const modifySubjects = subjectInfos.filter(x => x.subjectId === resolveResource.resourceId);
+                if (isEmpty(modifySubjects)) {
+                    return;
+                }
+                modifySubjects.forEach(({subjectId, policyId, operation}) => {
+                    if (operation === 0) {
+                        resolveResource.contracts = resolveResource.contracts.filter(x => x.policyId !== policyId);
+                        return;
+                    }
+                    const contractId = contractMap.get(subjectId + policyId) ?? '';
+                    const modifyContract = resolveResource.contracts.find(x => x.policyId === policyId);
+                    if (modifyContract) {
+                        modifyContract.contractId = contractId;
+                    } else {
+                        resolveResource.contracts.push({policyId, contractId});
+                    }
+                })
+            })
+            if (resourceVersionInfo.resolveResources.some(x => isEmpty(x.contracts))) {
+                cancelFailedPolicies.push({
+                    version: version,
+                    subjectInfos: subjectInfos.filter(x => x.operation === 0)
+                });
+            } else {
+                tasks.push(this.resourceVersionProvider.updateOne({
+                    versionId: resourceVersionInfo.versionId
+                }, {resolveResources: resourceVersionInfo.resolveResources}));
+            }
+        }
+
+        return Promise.all(tasks).then(list => Boolean(list.length && list.every(x => x.ok)));
     }
 
     /**

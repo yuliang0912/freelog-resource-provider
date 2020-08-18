@@ -189,13 +189,13 @@ export class ResourceController {
             msg: ctx.gettext('params-validate-failed', 'resourceId'), data: {resourceId}
         });
 
-        const {versionId} = this._getResourceVersionInfo(resourceInfo, version) || {};
+        const {versionId} = this._getResourceVersionInfo(resourceInfo, version) ?? {};
         if (!versionId) {
             return ctx.success([]);
         }
         const versionInfo = await this.resourceVersionService.findOne({versionId});
 
-        await this.resourceService.getResourceAuthTree(resourceInfo, versionInfo).then(ctx.success);
+        await this.resourceService.getResourceAuthTree(versionInfo).then(ctx.success);
     }
 
     @get('/:resourceIdOrName')

@@ -1,7 +1,7 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
-import {isArray, isUndefined, isString, differenceBy, omit, isEmpty, pick, uniqBy, first, chain} from 'lodash';
+import {isArray, isUndefined, isString, differenceBy, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -12,7 +12,9 @@ import {
     ResourceVersionInfo,
     UpdateResourceOptions,
     IResourceVersionService,
-    PageResult
+    PageResult,
+    ResourceAuthTreeNodeInfo,
+    BaseResourceVersion
 } from '../../interface';
 import * as semver from 'semver';
 
@@ -135,6 +137,7 @@ export class ResourceService implements IResourceService {
             versionRange: versionInfo.version,
             versionId: versionInfo.versionId,
             baseUpcastResources: resourceInfo.baseUpcastResources,
+            resolveResources: versionInfo.resolveResources,
             dependencies: await this._buildDependencyTree(versionInfo.dependencies, options.maxDeep, 1, options.omitFields)
         };
 
@@ -143,34 +146,33 @@ export class ResourceService implements IResourceService {
 
     /**
      * 获取资源授权树
-     * @param {ResourceInfo} resourceInfo
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<object[]>}
      */
-    async getResourceAuthTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<object[]> {
+    async getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTreeNodeInfo[]> {
 
-        const options = {maxDeep: 100, omitFields: [], isContainRootNode: true};
+        if (isEmpty(versionInfo.resolveResources ?? [])) {
+            return [];
+        }
+
+        const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
+        const resourceInfo = {resourceVersions: []} as ResourceInfo; //减少不必要的数据需求,自行构造一个
         const dependencyTree = await this.getResourceDependencyTree(resourceInfo, versionInfo, options);
 
-        const resourceVersionMap = await this._getAllVersionInfoFormDependencyTree(dependencyTree)
-            .then(list => new Map(list.map(x => [x.versionId, x])));
-
-        const recursionAuthTree = (dependencyTreeNode) => {
-            const treeNodeVersionInfo = resourceVersionMap.get(dependencyTreeNode.versionId);
-            return treeNodeVersionInfo.resolveResources.map(resolveResource => {
-                const list = this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource);
-                return {
-                    resourceId: resolveResource['resourceId'],
-                    resourceName: resolveResource['resourceName'],
-                    contracts: resolveResource['contracts'],
-                    versions: uniqBy(list, x => x['versionId']).map(item => Object({
-                        version: item['version'],
-                        resolveResources: recursionAuthTree(item)
-                    })),
-                    versionRanges: chain(list).map(x => x['versionRange']).uniq().value()
-                };
-            });
-        };
+        const recursionAuthTree = (dependencyTreeNode) => dependencyTreeNode.resolveResources.map(resolveResource => {
+            const list = this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource);
+            return {
+                resourceId: resolveResource.resourceId,
+                resourceName: resolveResource.resourceName,
+                contracts: resolveResource.contracts,
+                versions: uniqBy(list, 'versionId').map(item => Object({
+                    version: item['version'],
+                    versionId: item['versionId'],
+                    resolveResources: recursionAuthTree(item)
+                })),
+                versionRanges: chain(list).map(x => x['versionRange']).uniq().value()
+            };
+        });
 
         return recursionAuthTree(first(dependencyTree));
     }
@@ -261,7 +263,7 @@ export class ResourceService implements IResourceService {
      */
     async createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean> {
 
-        resourceInfo.resourceVersions.push(pick(versionInfo, ['version', 'versionId', 'createDate']));
+        resourceInfo.resourceVersions.push(pick(versionInfo, ['version', 'versionId', 'createDate']) as BaseResourceVersion);
         const latestVersionInfo: any = resourceInfo.resourceVersions.sort((x, y) => semver.lt(x['version'], y['version']) ? 1 : -1).shift();
 
         const modifyModel: any = {
@@ -307,7 +309,7 @@ export class ResourceService implements IResourceService {
      */
     async _buildDependencyTree(dependencies, maxDeep = 100, currDeep = 1, omitFields = []) {
 
-        if (!dependencies.length || currDeep++ > maxDeep) {
+        if (isEmpty(dependencies ?? []) || currDeep++ > maxDeep) {
             return [];
         }
 
@@ -336,7 +338,8 @@ export class ResourceService implements IResourceService {
             const {versionId, versionRange, versions, version} = dependencyMap.get(resourceId) as any;
             const versionInfo = versionInfoMap.get(versionId);
             let result: any = {
-                resourceId, resourceName, versions, version, resourceType, versionRange, baseUpcastResources, versionId
+                resourceId, resourceName, versions, version, resourceType, versionRange, baseUpcastResources, versionId,
+                resolveResources: versionInfo.resolveResources,
             };
             if (!isEmpty(omitFields)) {
                 result = omit(result, omitFields);
