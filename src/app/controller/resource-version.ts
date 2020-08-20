@@ -169,10 +169,10 @@ export class ResourceVersionController {
     }
 
     @visitorIdentity(LoginUser)
-    @post('/:resourceId/versions/validator')
+    @post('/:resourceId/versions/cycleDependencyCheck')
     async validateResourceVersionDependencies(ctx) {
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
-        const dependencies = ctx.checkBody('dependencies').optional().isArray().default([]).value;
+        const dependencies = ctx.checkBody('dependencies').exist().isArray().len(1).value;
         ctx.validateParams();
 
         const dependencyValidateResult = await this.resourceVersionDependencyValidator.validate(dependencies);
@@ -182,9 +182,9 @@ export class ResourceVersionController {
             });
         }
 
-        await this.resourceVersionService.validateDependencies(resourceId, dependencies);
+        const cycleDependCheckResult = await this.resourceVersionService.cycleDependCheck(resourceId, dependencies, 1);
 
-        ctx.success(true);
+        ctx.success(Boolean(!cycleDependCheckResult.ret));
     }
 
     @get('/:resourceId/versions/:version')

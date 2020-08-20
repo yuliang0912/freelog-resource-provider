@@ -299,7 +299,7 @@ export class ResourceVersionService implements IResourceVersionService {
             throw new ArgumentError(this.ctx.gettext('resource-depend-release-invalid'), {dependencies});
         }
 
-        const cycleDependCheckResult = await this._cycleDependCheck(resourceId, dependencies || []);
+        const cycleDependCheckResult = await this.cycleDependCheck(resourceId, dependencies || [], 1);
         if (cycleDependCheckResult.ret) {
             throw new ApplicationError(this.ctx.gettext('release-circular-dependency-error'), {
                 resourceId, deep: cycleDependCheckResult.deep
@@ -341,7 +341,7 @@ export class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<{ret: boolean; deep?: number}>}
      * @private
      */
-    async _cycleDependCheck(resourceId, dependencies, deep = 1): Promise<{ ret: boolean, deep?: number }> {
+    async cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{ ret: boolean, deep?: number }> {
 
         if (deep > 20) {
             throw new ApplicationError('资源嵌套层级超过系统限制');
@@ -365,7 +365,7 @@ export class ResourceVersionService implements IResourceVersionService {
         const dependVersionInfos = await this.resourceVersionProvider.find({versionId: {$in: [...dependVersionIdSet.values()]}}, 'dependencies');
         const dependSubResources = chain(dependVersionInfos).map(m => m.dependencies).flattenDeep().value();
 
-        return this._cycleDependCheck(resourceId, dependSubResources, deep + 1);
+        return this.cycleDependCheck(resourceId, dependSubResources, deep + 1);
     }
 
     /**

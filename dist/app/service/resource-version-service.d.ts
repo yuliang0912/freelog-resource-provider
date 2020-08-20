@@ -76,7 +76,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<{ret: boolean; deep?: number}>}
      * @private
      */
-    _cycleDependCheck(resourceId: any, dependencies: any, deep?: number): Promise<{
+    cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{
         ret: boolean;
         deep?: number;
     }>;

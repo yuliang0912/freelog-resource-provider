@@ -256,6 +256,8 @@ export interface IResourceVersionService {
     getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }>;
 
     validateDependencies(resourceId, dependencies): Promise<object[]>;
+
+    cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{ ret: boolean, deep?: number }>;
 }
 
 export interface ICollectionService {

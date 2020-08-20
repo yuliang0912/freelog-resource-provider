@@ -198,6 +198,10 @@ export interface IResourceVersionService {
         fileStream: any;
     }>;
     validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;
+    cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{
+        ret: boolean;
+        deep?: number;
+    }>;
 }
 export interface ICollectionService {
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;
