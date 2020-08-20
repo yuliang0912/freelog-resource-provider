@@ -1,5 +1,6 @@
 import {ValidatorResult} from 'jsonschema';
 import {IdentityType, SubjectTypeEnum, ContractStatusEnum} from './enum';
+import {SubjectAuthResult} from "./auth-enum";
 
 export interface PageResult {
     page: number;
@@ -197,7 +198,7 @@ export interface IOutsideApiService {
 
     batchSignResourceContracts(licenseeResourceId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 
-    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
+    getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
 
     getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
 }
@@ -253,6 +254,8 @@ export interface IResourceVersionService {
     batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]);
 
     getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }>;
+
+    validateDependencies(resourceId, dependencies): Promise<object[]>;
 }
 
 export interface ICollectionService {
@@ -272,8 +275,7 @@ export interface ICollectionService {
 
 export interface IResourceAuthService {
 
-    contractAuth(subjectId, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<boolean>;
+    contractAuth(subjectId, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<SubjectAuthResult>;
 
-    // resourceDependencyAuth(versionInfo: ResourceVersionInfo);
-
+    resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
 }

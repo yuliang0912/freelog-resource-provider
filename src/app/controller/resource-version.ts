@@ -168,6 +168,25 @@ export class ResourceVersionController {
         await this.resourceVersionService.saveOrUpdateResourceVersionDraft(resourceInfo, draftData).then(ctx.success);
     }
 
+    @visitorIdentity(LoginUser)
+    @post('/:resourceId/versions/validator')
+    async validateResourceVersionDependencies(ctx) {
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const dependencies = ctx.checkBody('dependencies').optional().isArray().default([]).value;
+        ctx.validateParams();
+
+        const dependencyValidateResult = await this.resourceVersionDependencyValidator.validate(dependencies);
+        if (!isEmpty(dependencyValidateResult.errors)) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {
+                errors: dependencyValidateResult.errors
+            });
+        }
+
+        await this.resourceVersionService.validateDependencies(resourceId, dependencies);
+
+        ctx.success(true);
+    }
+
     @get('/:resourceId/versions/:version')
     @visitorIdentity(LoginUser | InternalClient)
     async show(ctx) {

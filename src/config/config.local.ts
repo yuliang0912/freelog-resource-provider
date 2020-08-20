@@ -21,7 +21,7 @@ export default () => {
     ];
 
     config.mongoose = {
-        url: 'mongodb://127.0.0.1:27017/storage'
+        url: 'mongodb://127.0.0.1:27017/resource-beta'
     };
 
     // config.gatewayUrl= "http://api.testfreelog.com",

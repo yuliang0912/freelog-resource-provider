@@ -3,9 +3,7 @@ import * as semver from 'semver';
 import {
     BaseResourceInfo, CreateResourceVersionOptions,
     IResourceVersionService, ResourceInfo, ResourceVersionInfo,
-    UpdateResourceVersionOptions,
-    IOutsideApiService,
-    SubjectInfo
+    UpdateResourceVersionOptions, IOutsideApiService, SubjectInfo
 } from '../../interface';
 import {ArgumentError, ApplicationError} from 'egg-freelog-base';
 import {
@@ -39,7 +37,7 @@ export class ResourceVersionService implements IResourceVersionService {
      */
     async createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo> {
 
-        await this._validateDependencies(resourceInfo.resourceId, options.dependencies);
+        await this.validateDependencies(resourceInfo.resourceId, options.dependencies);
         const isFirstVersion = isEmpty(resourceInfo.resourceVersions);
         const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
 
@@ -137,7 +135,7 @@ export class ResourceVersionService implements IResourceVersionService {
         };
 
         return this.resourceVersionDraftProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, model, {new: true}).then(data => {
-            return data || this.resourceVersionDraftProvider.create(model);
+            return data ?? this.resourceVersionDraftProvider.create(model);
         });
     }
 
@@ -157,12 +155,18 @@ export class ResourceVersionService implements IResourceVersionService {
      */
     async getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }> {
 
+        const stream = await this.outsideApiService.getFileStream(versionInfo.fileSha1);
+        if ((stream.res.headers['content-type'] ?? '').includes('application/json')) {
+            throw new ApplicationError('文件读取失败', {msg: JSON.parse(stream.data.toString())?.msg});
+        }
+        if (!stream.res.statusCode.toString().startsWith('2')) {
+            throw new ApplicationError('文件读取失败');
+        }
+
         let extName = '';
         if (isString(versionInfo.filename)) {
             extName = versionInfo.filename.substr(versionInfo.filename.lastIndexOf('.'));
         }
-
-        const stream = await this.outsideApiService.getFileStream(versionInfo.fileSha1);
         return {
             fileSha1: versionInfo.fileSha1,
             fileName: `${versionInfo.resourceName}_${versionInfo.version}${extName}`,
@@ -285,7 +289,7 @@ export class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<any>}
      * @private
      */
-    async _validateDependencies(resourceId, dependencies): Promise<object[]> {
+    async validateDependencies(resourceId, dependencies): Promise<object[]> {
 
         if (isEmpty(dependencies)) {
             return dependencies;

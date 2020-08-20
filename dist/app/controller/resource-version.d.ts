@@ -15,6 +15,7 @@ export declare class ResourceVersionController {
     create(ctx: any): Promise<void>;
     versionsBySha1(ctx: any): Promise<void>;
     createOrUpdateResourceVersionDraft(ctx: any): Promise<void>;
+    validateResourceVersionDependencies(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     download(ctx: any): Promise<void>;
     fileIsCanBeCreate(ctx: any): Promise<void>;

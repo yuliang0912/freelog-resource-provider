@@ -67,7 +67,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<any>}
      * @private
      */
-    _validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;
+    validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;
     /**
      * 循坏依赖检查
      * @param resourceId

@@ -110,7 +110,7 @@ module.exports = {
 
     'mock-convert-to-resource-depend-validate-failed': 'mock资源的依赖中存在其他mock,无法转换成资源',
 
-    'release-circular-dependency-error': '资源的依赖发行与目标发行之间存在循环依赖,无法加入当前发行',
+    'release-circular-dependency-error': '循环依赖不支持授权',
 
     'subject-policy-validate-failed': '资源策略校验失败,请检查',
 

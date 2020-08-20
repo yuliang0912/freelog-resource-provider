@@ -1,5 +1,6 @@
 import { ValidatorResult } from 'jsonschema';
 import { IdentityType, SubjectTypeEnum, ContractStatusEnum } from './enum';
+import { SubjectAuthResult } from "./auth-enum";
 export interface PageResult {
     page: number;
     pageSize: number;
@@ -161,7 +162,7 @@ export interface IOutsideApiService {
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
     getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
-    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
+    getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
 }
 export interface IResourceService {
@@ -196,6 +197,7 @@ export interface IResourceVersionService {
         fileSize: number;
         fileStream: any;
     }>;
+    validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;
 }
 export interface ICollectionService {
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;
@@ -209,5 +211,6 @@ export interface ICollectionService {
     findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult>;
 }
 export interface IResourceAuthService {
-    contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<boolean>;
+    contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<SubjectAuthResult>;
+    resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
 }

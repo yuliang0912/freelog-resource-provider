@@ -8,20 +8,11 @@ export declare class ResourceController {
     create(ctx: any): Promise<void>;
     list(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
-    dependencyTree(ctx: any): Promise<any>;
-    authTree(ctx: any): Promise<any>;
+    dependencyTree(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     contractCoverageVersions(ctx: any): Promise<void>;
     contractsCoverageVersions(ctx: any): Promise<void>;
     allResolveResources(ctx: any): Promise<void>;
-    /**
-     * 获取资源版本信息
-     * @param resourceInfo
-     * @param version
-     * @returns {Object}
-     * @private
-     */
-    _getResourceVersionInfo(resourceInfo: any, version: any): any;
     /**
      * 策略格式校验
      * @param policies

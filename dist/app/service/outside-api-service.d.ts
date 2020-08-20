@@ -30,7 +30,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param contractIds
      * @param options
      */
-    getResourceContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
+    getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     /**
      * 获取指定乙方与甲方的资源合约
      * @param subjectId (资源体系中标的物ID与甲方ID均为资源ID)

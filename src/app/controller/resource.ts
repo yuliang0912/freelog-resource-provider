@@ -165,37 +165,14 @@ export class ResourceController {
             msg: ctx.gettext('params-validate-failed', 'resourceId'), data: {resourceId}
         });
 
-        const {versionId} = this._getResourceVersionInfo(resourceInfo, version) || {};
-        if (!versionId) {
-            return ctx.success([]);
-        }
-        const versionInfo = await this.resourceVersionService.findOne({versionId});
+        const versionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version ?? resourceInfo.latestVersion);
+        ctx.entityNullObjectCheck(versionInfo, {
+            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
+        });
 
         await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, {
             isContainRootNode, maxDeep, omitFields
         }).then(ctx.success);
-    }
-
-    @get('/:resourceId/authTree')
-    @visitorIdentity(LoginUser | InternalClient)
-    async authTree(ctx) {
-
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
-        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
-        ctx.validateParams();
-
-        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceId'), data: {resourceId}
-        });
-
-        const {versionId} = this._getResourceVersionInfo(resourceInfo, version) ?? {};
-        if (!versionId) {
-            return ctx.success([]);
-        }
-        const versionInfo = await this.resourceVersionService.findOne({versionId});
-
-        await this.resourceService.getResourceAuthTree(versionInfo).then(ctx.success);
     }
 
     @get('/:resourceIdOrName')
@@ -286,23 +263,6 @@ export class ResourceController {
         }));
 
         ctx.success([...resolveResourceMap.values()]);
-    }
-
-    /**
-     * 获取资源版本信息
-     * @param resourceInfo
-     * @param version
-     * @returns {Object}
-     * @private
-     */
-    _getResourceVersionInfo(resourceInfo, version) {
-        if (version && !resourceInfo.resourceVersions.some(x => x.version === version)) {
-            throw new ArgumentError(this.ctx.gettext('params-validate-failed', 'version'));
-        }
-        if (!version) {
-            version = resourceInfo.latestVersion;
-        }
-        return resourceInfo.resourceVersions.find(x => x.version === semver.clean(version));
     }
 
     /**
