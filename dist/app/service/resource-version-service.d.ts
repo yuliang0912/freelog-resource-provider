@@ -89,7 +89,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<{resolveResources: any; upcastResources: object[]}>}
      * @private
      */
-    _validateUpcastAndResolveResource(dependencies: any, resolveResources: any, baseUpcastResources: any, isCheckBaseUpcast?: boolean): Promise<{
+    _validateUpcastAndResolveResource(dependencies: any, resolveResources: any, baseUpcastResources: any): Promise<{
         resolveResources: any;
         upcastResources: object[];
     }>;

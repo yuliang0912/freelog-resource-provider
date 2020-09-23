@@ -2,7 +2,7 @@ import * as semver from 'semver';
 import {controller, inject, get, post, put, provide} from 'midway';
 import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
+import {IJsonSchemaValidate, IResourceService, IResourceVersionService, ResourceInfo} from '../../interface';
 import {isString, first, isUndefined, includes, pick, uniqBy, isEmpty} from 'lodash';
 import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
@@ -54,10 +54,10 @@ export class ResourceController {
 
         const pageResult = await this.resourceService.findPageList(condition, page, pageSize, projection, {createDate: -1});
         if (isLoadPolicyInfo) {
-            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
+            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList as ResourceInfo[]);
         }
         if (isLoadLatestVersionInfo) {
-            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
+            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList as ResourceInfo[]);
         }
         return ctx.success(pageResult);
     }
@@ -95,7 +95,7 @@ export class ResourceController {
     @get('/list')
     async list(ctx) {
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().value;
-        const resourceNames = ctx.checkQuery('resourceNames').optional().toSplitArray().value;
+        const resourceNames = ctx.checkQuery('resourceNames').optional().decodeURIComponent().toSplitArray().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -149,23 +149,45 @@ export class ResourceController {
         await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
     }
 
-    @get('/:resourceId/dependencyTree')
+    @get('/:resourceIdOrName/dependencyTree')
     @visitorIdentity(LoginUser | InternalClient)
     async dependencyTree(ctx) {
 
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value;
         const omitFields = ctx.checkQuery('omitFields').optional().toSplitArray().default([]).value;
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value;
         ctx.validateParams();
 
-        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceId'), data: {resourceId}
-        });
+        let resourceInfo = null;
+        if (mongoObjectId.test(resourceIdOrName)) {
+            resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName);
+        } else if (fullResourceName.test(resourceIdOrName)) {
+            resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName);
+        } else {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
+        }
 
-        const versionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version ?? resourceInfo.latestVersion);
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'), data: {resourceIdOrName}
+        });
+        if (isEmpty(resourceInfo.resourceVersions)) {
+            return ctx.success([]);
+        }
+
+        let resourceVersion = resourceInfo.latestVersion;
+        if (isString(version)) {
+            resourceVersion = version;
+        } else if (isString(versionRange)) {
+            resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange)
+        }
+        if (!resourceVersion) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'))
+        }
+
+        const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
         ctx.entityNullObjectCheck(versionInfo, {
             msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
         });

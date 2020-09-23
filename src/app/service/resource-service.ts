@@ -13,7 +13,7 @@ import {
     UpdateResourceOptions,
     IResourceVersionService,
     PageResult,
-    ResourceAuthTreeNodeInfo,
+    ResourceAuthTree,
     BaseResourceVersion
 } from '../../interface';
 import * as semver from 'semver';
@@ -124,6 +124,7 @@ export class ResourceService implements IResourceService {
      * @param options
      */
     async getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]> {
+
         if (!options.isContainRootNode) {
             return this._buildDependencyTree(versionInfo.dependencies, options.maxDeep, 1, options.omitFields);
         }
@@ -136,6 +137,7 @@ export class ResourceService implements IResourceService {
             resourceType: resourceInfo.resourceType,
             versionRange: versionInfo.version,
             versionId: versionInfo.versionId,
+            fileSha1: versionInfo.fileSha1,
             baseUpcastResources: resourceInfo.baseUpcastResources,
             resolveResources: versionInfo.resolveResources,
             dependencies: await this._buildDependencyTree(versionInfo.dependencies, options.maxDeep, 1, options.omitFields)
@@ -149,7 +151,7 @@ export class ResourceService implements IResourceService {
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<object[]>}
      */
-    async getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTreeNodeInfo[]> {
+    async getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]> {
 
         if (isEmpty(versionInfo.resolveResources ?? [])) {
             return [];
@@ -168,6 +170,7 @@ export class ResourceService implements IResourceService {
                 versions: uniqBy(list, 'versionId').map(item => Object({
                     version: item['version'],
                     versionId: item['versionId'],
+                    fileSha1: item['fileSha1'],
                     resolveResources: recursionAuthTree(item)
                 })),
                 versionRanges: chain(list).map(x => x['versionRange']).uniq().value()
@@ -339,7 +342,7 @@ export class ResourceService implements IResourceService {
             const versionInfo = versionInfoMap.get(versionId);
             let result: any = {
                 resourceId, resourceName, versions, version, resourceType, versionRange, baseUpcastResources, versionId,
-                resolveResources: versionInfo.resolveResources,
+                fileSha1: versionInfo.fileSha1, resolveResources: versionInfo.resolveResources,
             };
             if (!isEmpty(omitFields)) {
                 result = omit(result, omitFields);

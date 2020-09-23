@@ -1,4 +1,4 @@
-import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, PageResult, ResourceAuthTreeNodeInfo } from '../../interface';
+import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, PageResult, ResourceAuthTree } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: any;
     resourceProvider: any;
@@ -30,7 +30,7 @@ export declare class ResourceService implements IResourceService {
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<object[]>}
      */
-    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTreeNodeInfo[]>;
+    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]>;
     /**
      * 根据资源名批量获取资源
      * @param {string[]} resourceNames 资源名称集

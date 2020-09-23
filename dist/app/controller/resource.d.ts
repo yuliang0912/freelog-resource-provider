@@ -8,7 +8,7 @@ export declare class ResourceController {
     create(ctx: any): Promise<void>;
     list(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
-    dependencyTree(ctx: any): Promise<void>;
+    dependencyTree(ctx: any): Promise<any>;
     show(ctx: any): Promise<void>;
     contractCoverageVersions(ctx: any): Promise<void>;
     contractsCoverageVersions(ctx: any): Promise<void>;

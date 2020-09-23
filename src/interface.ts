@@ -1,12 +1,12 @@
 import {ValidatorResult} from 'jsonschema';
 import {IdentityType, SubjectTypeEnum, ContractStatusEnum} from './enum';
-import {SubjectAuthResult} from "./auth-enum";
+import {SubjectAuthResult} from "./auth-interface";
 
 export interface PageResult {
     page: number;
     pageSize: number;
     totalItem: number;
-    dataList: any[];
+    dataList: CollectionResourceInfo[] | ResourceInfo[];
 }
 
 export interface CreateResourceOptions {
@@ -168,7 +168,7 @@ export interface CollectionResourceInfo {
     authorName: string;
 }
 
-export interface ResourceAuthTreeNodeInfo {
+export interface ResourceAuthTree {
     resourceId: string;
     resourceName: string;
     contracts: BaseContractInfo[];
@@ -178,7 +178,7 @@ export interface ResourceAuthTreeNodeInfo {
 export interface ResourceAuthTreeVersionInfo {
     version: string;
     versionId: string;
-    resolveResources: ResourceAuthTreeNodeInfo[];
+    resolveResources: ResourceAuthTree[];
 }
 
 /**
@@ -210,7 +210,7 @@ export interface IResourceService {
 
     getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
 
-    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTreeNodeInfo[]>;
+    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]>;
 
     findByResourceId(resourceId: string, ...args): Promise<ResourceInfo>;
 
@@ -277,7 +277,9 @@ export interface ICollectionService {
 
 export interface IResourceAuthService {
 
-    contractAuth(subjectId, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): Promise<SubjectAuthResult>;
+    contractAuth(subjectId, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
 
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
+
+    resourceBatchAuth(resourceVersions: ResourceVersionInfo[]): Promise<any[]>;
 }

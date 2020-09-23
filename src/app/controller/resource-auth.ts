@@ -2,9 +2,9 @@ import * as semver from 'semver';
 import {ContractStatusEnum} from '../../enum';
 import {differenceWith, isEmpty} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
-import {InternalClient, LoginUser} from 'egg-freelog-base';
+import {InternalClient, LoginUser, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-enum";
+import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-interface";
 import {IOutsideApiService, IResourceAuthService, IResourceService, IResourceVersionService} from '../../interface';
 
 @provide()
@@ -20,8 +20,25 @@ export class ResourceAuthController {
     @inject()
     resourceVersionService: IResourceVersionService;
 
+    @visitorIdentity(InternalClient | LoginUser)
+    @get('/batchAuth/result')
+    async resourceBatchAuth(ctx) {
+
+        const resourceVersionIds = ctx.checkQuery('resourceVersionIds').exist().isSplitMd5().toSplitArray().len(1, 500).value;
+        ctx.validateParams();
+
+        const resourceVersions = await this.resourceVersionService.find({versionId: {$in: resourceVersionIds}},
+            'resourceId resourceName version versionId resolveResources');
+
+        const validVersionIds = differenceWith(resourceVersionIds, resourceVersions, (x, y) => x === y.versionId)
+        if (!isEmpty(validVersionIds)) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'resourceVersionIds'), {validVersionIds});
+        }
+
+        await this.resourceAuthService.resourceBatchAuth(resourceVersions).then(ctx.success);
+    }
+
     @get('/:subjectId/result')
-    @visitorIdentity(LoginUser)
     async resourceAuth(ctx) {
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
         const licenseeId = ctx.checkQuery('licenseeId').optional().value;
@@ -94,7 +111,7 @@ export class ResourceAuthController {
             return ctx.success(authResult);
         }
 
-        const downstreamContractAuthResult = await this.resourceAuthService.contractAuth(resourceId, contracts, 'auth');
+        const downstreamContractAuthResult = this.resourceAuthService.contractAuth(resourceId, contracts, 'auth');
         if (!downstreamContractAuthResult.isAuth || ctx.request.url.includes('/contractAuth/result')) {
             return ctx.success(downstreamContractAuthResult);
         }

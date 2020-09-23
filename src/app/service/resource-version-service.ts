@@ -39,7 +39,7 @@ export class ResourceVersionService implements IResourceVersionService {
 
         await this.validateDependencies(resourceInfo.resourceId, options.dependencies);
         const isFirstVersion = isEmpty(resourceInfo.resourceVersions);
-        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
+        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources);
 
         const model: ResourceVersionInfo = {
             version: options.version,
@@ -377,17 +377,15 @@ export class ResourceVersionService implements IResourceVersionService {
      * @returns {Promise<{resolveResources: any; upcastResources: object[]}>}
      * @private
      */
-    async _validateUpcastAndResolveResource(dependencies, resolveResources, baseUpcastResources, isCheckBaseUpcast = false) {
+    async _validateUpcastAndResolveResource(dependencies, resolveResources, baseUpcastResources) {
 
         // 检查发行有效性,策略有效性,上抛发行是否合理,声明处理的发行是否合理以及未处理的依赖项
         const {upcastResources, backlogResources, allUntreatedResources} = await this._getRealUpcastAndResolveResources(dependencies, baseUpcastResources);
 
         // 第一个发行方案需要检查基础上抛是否在范围内
-        if (isCheckBaseUpcast) {
-            const invalidBaseUpcastResources = differenceBy(baseUpcastResources, upcastResources, x => x['resourceId']);
-            if (invalidBaseUpcastResources.length) {
-                throw new ApplicationError(this.ctx.gettext('release-scheme-upcast-validate-failed'), {invalidBaseUpcastResources});
-            }
+        const invalidBaseUpcastResources = differenceBy(baseUpcastResources, upcastResources, 'resourceId');
+        if (invalidBaseUpcastResources.length) {
+            throw new ApplicationError(this.ctx.gettext('release-scheme-upcast-validate-failed'), {invalidBaseUpcastResources});
         }
 
         // 未解决的发行(待办发行没有全部解决)

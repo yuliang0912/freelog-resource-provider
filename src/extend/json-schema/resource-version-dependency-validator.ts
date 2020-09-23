@@ -43,7 +43,7 @@ export class ResourceVersionDependencyValidator extends freelogCommonJsonSchema 
                 properties: {
                     resourceId: {type: 'string', required: true, format: 'mongoObjectId'},
                     versionRange: {type: 'string', required: true, format: 'versionRange'},
-                    versionRangeType: {type: 'integer', required: false, enum: [1, 2]},
+                    // versionRangeType: {type: 'integer', required: false, enum: [1, 2]},
                 }
             }
         });
