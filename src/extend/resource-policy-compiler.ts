@@ -13,19 +13,20 @@ export class ResourcePolicyCompiler {
      * @returns {PolicyInfo}
      */
     compilePolicyText(policyText, policyName): PolicyInfo {
-        return {
-            policyId: this.generatePolicyId(policyText), policyText, policyName,
-            fsmDescriptionInfo: {
-                initial: {
-                    authorization: [
-                        'active', 'presentable'
-                    ],
-                    transition: {
-                        terminate: null
-                    }
-                }
-            }
-        };
+        return null;
+        // return {
+        //     policyId: this.generatePolicyId(policyText), policyText, policyName,
+        //     fsmDescriptionInfo: {
+        //         initial: {
+        //             authorization: [
+        //                 'active', 'presentable'
+        //             ],
+        //             transition: {
+        //                 terminate: null
+        //             }
+        //         }
+        //     }
+        // };
     }
 
     /**

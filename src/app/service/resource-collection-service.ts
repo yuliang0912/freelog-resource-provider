@@ -39,7 +39,11 @@ export class ResourceCollectionService implements ICollectionService {
         return this.resourceCollectionProvider.deleteOne(condition).then(ret => ret.ok > 0);
     }
 
-    async findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult> {
+    async count(condition: object): Promise<number> {
+        return this.resourceCollectionProvider.count(condition);
+    }
+
+    async findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>> {
         const condition: any = {userId: this.ctx.request.userId};
         if (resourceType) {
             condition.resourceType = resourceType;

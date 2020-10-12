@@ -12,7 +12,7 @@ export declare class ResourceAuthService implements IResourceAuthService {
      * 资源批量授权,不调用授权树,直接对比合约状态
      * @param resourceVersions
      */
-    resourceBatchAuth(resourceVersions: ResourceVersionInfo[]): Promise<any[]>;
+    resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'auth' | 'testAuth'): Promise<any[]>;
     contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
     /**
      * 从授权树中获取授权失败的资源

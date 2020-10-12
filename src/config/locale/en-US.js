@@ -114,6 +114,10 @@ module.exports = {
 
     'subject-policy-validate-failed': '资源策略校验失败,请检查',
 
+    'subject-policy-create-failed': '资源策略创建失败,请稍后再试',
+
+    'subject-policy-name-duplicate-failed': '策略名称存在重复',
+
     'subject-policy-repeatability-validate-failed': '资源策略校验失败,存在重复的策略'
 }
 

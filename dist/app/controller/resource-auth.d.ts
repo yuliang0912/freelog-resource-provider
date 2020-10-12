@@ -4,8 +4,8 @@ export declare class ResourceAuthController {
     outsideApiService: IOutsideApiService;
     resourceAuthService: IResourceAuthService;
     resourceVersionService: IResourceVersionService;
-    resourceBatchAuth(ctx: any): Promise<void>;
+    resourceVersionBatchAuth(ctx: any): Promise<void>;
     resourceAuth(ctx: any): Promise<any>;
     subjectContractAuth(ctx: any): Promise<any>;
-    authTree(ctx: any): Promise<void>;
+    resourceRelationTreeAuthResult(ctx: any): Promise<void>;
 }

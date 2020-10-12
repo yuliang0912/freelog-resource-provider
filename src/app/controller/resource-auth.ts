@@ -22,9 +22,10 @@ export class ResourceAuthController {
 
     @visitorIdentity(InternalClient | LoginUser)
     @get('/batchAuth/result')
-    async resourceBatchAuth(ctx) {
+    async resourceVersionBatchAuth(ctx) {
 
         const resourceVersionIds = ctx.checkQuery('resourceVersionIds').exist().isSplitMd5().toSplitArray().len(1, 500).value;
+        const authType = ctx.checkQuery('authType').optional().in(['testAuth', 'auth']).default('auth').value;
         ctx.validateParams();
 
         const resourceVersions = await this.resourceVersionService.find({versionId: {$in: resourceVersionIds}},
@@ -35,11 +36,12 @@ export class ResourceAuthController {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'resourceVersionIds'), {validVersionIds});
         }
 
-        await this.resourceAuthService.resourceBatchAuth(resourceVersions).then(ctx.success);
+        await this.resourceAuthService.resourceBatchAuth(resourceVersions, authType).then(ctx.success);
     }
 
     @get('/:subjectId/result')
     async resourceAuth(ctx) {
+
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
         const licenseeId = ctx.checkQuery('licenseeId').optional().value;
         const isIncludeUpstreamAuth = ctx.checkQuery('isIncludeUpstreamAuth').optional().toInt().in([0, 1]).default(1).value;
@@ -97,7 +99,7 @@ export class ResourceAuthController {
 
         const getResourceInfoTask = this.resourceService.findByResourceId(resourceId, 'latestVersion');
         const getContractsTask = this.outsideApiService.getContractByContractIds(contractIds, {
-            projection: 'authStatus subjectType subjectId'
+            projection: 'authStatus,subjectType,subjectId'
         });
 
         const [resourceInfo, contracts] = await Promise.all([getResourceInfoTask, getContractsTask]);
@@ -128,24 +130,9 @@ export class ResourceAuthController {
         ctx.attachment(fileStreamInfo.fileName);
     }
 
-    @get('/:resourceId/authTree')
-    @visitorIdentity(LoginUser | InternalClient)
-    async authTree(ctx) {
+    @visitorIdentity(InternalClient | LoginUser)
+    @get('/:subjectId/relationTreeAuth/result')
+    async resourceRelationTreeAuthResult(ctx) {
 
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
-        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
-        ctx.validateParams();
-
-        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceId'), data: {resourceId}
-        });
-
-        const versionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version ?? resourceInfo.latestVersion);
-        ctx.entityNullObjectCheck(versionInfo, {
-            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
-        });
-
-        await this.resourceService.getResourceAuthTree(versionInfo).then(ctx.success);
     }
 }

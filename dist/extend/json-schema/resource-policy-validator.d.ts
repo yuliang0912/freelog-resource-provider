@@ -8,7 +8,7 @@ export declare class ResourcePolicyValidator extends freelogCommonJsonSchema imp
      * @param {boolean} isUpdateMode 是否更新模式
      * @returns {ValidatorResult}
      */
-    validate(operations: object[]): ValidatorResult;
+    validate(operations: object[], mode: 'addPolicy' | 'updatePolicy'): ValidatorResult;
     /**
      * 注册所有的校验
      * @private

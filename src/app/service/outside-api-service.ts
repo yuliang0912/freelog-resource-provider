@@ -1,6 +1,6 @@
 import {provide, inject} from 'midway';
 import {IdentityType, SubjectTypeEnum} from '../../enum';
-import {SubjectInfo, ContractInfo, IOutsideApiService, PolicyInfo} from '../../interface';
+import {SubjectInfo, ContractInfo, IOutsideApiService, BasePolicyInfo} from '../../interface';
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
@@ -45,11 +45,23 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 创建策略
+     * @param policyText
+     */
+    async createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]> {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}`, {
+            method: 'post', contentType: 'json', data: {
+                policyTexts, subjectType: SubjectTypeEnum.Resource
+            }
+        });
+    }
+
+    /**
      * 获取资源策略
      * @param policyIds
      * @param projection
      */
-    async getResourcePolicies(policyIds: string[], projection: string[] = []): Promise<PolicyInfo[]> {
+    async getResourcePolicies(policyIds: string[], projection: string[] = []): Promise<BasePolicyInfo[]> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&projection=${projection.toString()}`);
     }
 

@@ -10,5 +10,6 @@ export declare class ResourceCollectionService implements ICollectionService {
     find(condition: object, ...args: any[]): Promise<CollectionResourceInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<CollectionResourceInfo>;
     deleteOne(condition: object): Promise<boolean>;
-    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult>;
+    count(condition: object): Promise<number>;
+    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>>;
 }

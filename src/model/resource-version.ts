@@ -1,4 +1,4 @@
-import {omit} from 'lodash';
+import {omit, isUndefined, isArray, isEmpty} from 'lodash';
 import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
@@ -14,7 +14,7 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
             defaultValue: {type: this.mongoose.Schema.Types.Mixed, required: true},
             type: {type: String, required: true, enum: ['editableText', 'readonlyText', 'radio', 'checkbox', 'select']}, // 类型目前分为: 可编辑文本框,不可编辑文本框,单选框,多选框,下拉选择框
             candidateItems: {type: [String], required: false}, // 选项列表
-            remark: {type: String, required: false, default: ''}, // 对外显示的名称
+            remark: {type: String, required: false, default: ''}, //备注,对外显示信息,例如字段说明或者用途信息等
         }, {_id: false});
 
         // 把依赖单独从systemMeta提取出来,是因为依赖作为一个通用的必备项,因为失去了就版本的资源实体.由版本作为主要的信息承载体
@@ -34,12 +34,6 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
             policyId: {type: String, required: true},
             contractId: {type: String, required: true},
         }, {_id: false});
-
-        // const SystemPropertyInfoSchema = new this.mongoose.Schema({
-        //     name: {type: String, required: true}, // 对外显示的名称
-        //     key: {type: String, required: true},
-        //     value: {type: this.mongoose.Schema.Types.Mixed, required: true},
-        // }, {_id: false});
 
         const ResolveResourceSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
@@ -75,14 +69,14 @@ export class ResourceVersionModel extends MongooseModelBase implements IMongoose
         resourceVersionScheme.index({fileSha1: 1, userId: 1});
 
         resourceVersionScheme.virtual('customProperty').get(function (this: any) {
-            if (this.customPropertyDescriptors === undefined) {
+            if (isUndefined(this.customPropertyDescriptors) || !isArray(this.customPropertyDescriptors)) {
                 return undefined; // 不查询customPropertyDescriptors时,不自动生成customProperty
             }
-            let customProperty = {} as any;
-            if (Array.isArray(this.customPropertyDescriptors) && this.customPropertyDescriptors.length) {
-                this.customPropertyDescriptors.forEach(({key, defaultValue}) => {
+            const customProperty = {} as any;
+            if (!isEmpty(this.customPropertyDescriptors)) {
+                for (const {key, defaultValue} of this.customPropertyDescriptors) {
                     customProperty[key] = defaultValue;
-                });
+                }
             }
             return customProperty;
         });

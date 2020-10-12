@@ -1,4 +1,4 @@
-import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, PageResult, ResourceAuthTree } from '../../interface';
+import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, PageResult, ResourceAuthTree, ResourceDependencyTree, BaseResourceInfo, operationPolicyInfo } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: any;
     resourceProvider: any;
@@ -24,13 +24,27 @@ export declare class ResourceService implements IResourceService {
      * @param versionInfo
      * @param options
      */
-    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
+    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<ResourceDependencyTree[]>;
     /**
      * 获取资源授权树
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<object[]>}
      */
     getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]>;
+    getRelationTree_(versionInfo: ResourceVersionInfo): Promise<{
+        resourceId: string;
+        resourceName: string;
+        children: {
+            resourceId: string;
+            resourceName: string;
+            children: BaseResourceInfo[];
+        }[];
+    }[]>;
+    /**
+     * 获取资源关系树
+     * @param versionInfo
+     */
+    getRelationTree(versionInfo: ResourceVersionInfo): Promise<any>;
     /**
      * 根据资源名批量获取资源
      * @param {string[]} resourceNames 资源名称集
@@ -74,7 +88,7 @@ export declare class ResourceService implements IResourceService {
      * @param {object} orderBy
      * @returns {Promise<ResourceInfo[]>}
      */
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
     /**
      * 按条件统计资源数量
      * @param {object} condition
@@ -93,7 +107,7 @@ export declare class ResourceService implements IResourceService {
      * @param policyIds
      * @private
      */
-    _validateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]>;
+    _validateAndCreateSubjectPolicies(policies: operationPolicyInfo[]): Promise<PolicyInfo[]>;
     /**
      * 构建依赖树
      * @param dependencies
@@ -103,7 +117,7 @@ export declare class ResourceService implements IResourceService {
      * @returns {Promise<any>}
      * @private
      */
-    _buildDependencyTree(dependencies: any, maxDeep?: number, currDeep?: number, omitFields?: any[]): Promise<any[]>;
+    _buildDependencyTree(dependencies: BaseResourceInfo[], maxDeep?: number, currDeep?: number, omitFields?: string[]): Promise<ResourceDependencyTree[]>;
     /**
      * 从依赖树中获取所有相关的版本信息
      * @param {any[]} dependencyTree
@@ -120,7 +134,7 @@ export declare class ResourceService implements IResourceService {
      * @param _list
      * @private
      */
-    _findResourceVersionFromDependencyTree(dependencies: any, resource: any, _list?: any[]): object[];
+    _findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list?: ResourceDependencyTree[]): ResourceDependencyTree[];
     /**
      * 获取最匹配的semver版本
      * @param resourceVersions

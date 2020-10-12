@@ -1,4 +1,4 @@
-import { SubjectInfo, ContractInfo, IOutsideApiService, PolicyInfo } from '../../interface';
+import { SubjectInfo, ContractInfo, IOutsideApiService, BasePolicyInfo } from '../../interface';
 export declare class OutsideApiService implements IOutsideApiService {
     ctx: any;
     /**
@@ -20,11 +20,16 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     /**
+     * 创建策略
+     * @param policyText
+     */
+    createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
+    /**
      * 获取资源策略
      * @param policyIds
      * @param projection
      */
-    getResourcePolicies(policyIds: string[], projection?: string[]): Promise<PolicyInfo[]>;
+    getResourcePolicies(policyIds: string[], projection?: string[]): Promise<BasePolicyInfo[]>;
     /**
      * 获取资源合约
      * @param contractIds

@@ -17,19 +17,20 @@ let ResourcePolicyCompiler = class ResourcePolicyCompiler {
      * @returns {PolicyInfo}
      */
     compilePolicyText(policyText, policyName) {
-        return {
-            policyId: this.generatePolicyId(policyText), policyText, policyName,
-            fsmDescriptionInfo: {
-                initial: {
-                    authorization: [
-                        'active', 'presentable'
-                    ],
-                    transition: {
-                        terminate: null
-                    }
-                }
-            }
-        };
+        return null;
+        // return {
+        //     policyId: this.generatePolicyId(policyText), policyText, policyName,
+        //     fsmDescriptionInfo: {
+        //         initial: {
+        //             authorization: [
+        //                 'active', 'presentable'
+        //             ],
+        //             transition: {
+        //                 terminate: null
+        //             }
+        //         }
+        //     }
+        // };
     }
     /**
      * 生成策略Id
@@ -44,4 +45,4 @@ ResourcePolicyCompiler = __decorate([
     midway_1.scope('Singleton')
 ], ResourcePolicyCompiler);
 exports.ResourcePolicyCompiler = ResourcePolicyCompiler;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtcG9saWN5LWNvbXBpbGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL2V4dGVuZC9yZXNvdXJjZS1wb2xpY3ktY29tcGlsZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsbUNBQXNDO0FBRXRDLG9GQUFxRTtBQUlyRSxJQUFhLHNCQUFzQixHQUFuQyxNQUFhLHNCQUFzQjtJQUUvQjs7Ozs7T0FLRztJQUNILGlCQUFpQixDQUFDLFVBQVUsRUFBRSxVQUFVO1FBQ3BDLE9BQU87WUFDSCxRQUFRLEVBQUUsSUFBSSxDQUFDLGdCQUFnQixDQUFDLFVBQVUsQ0FBQyxFQUFFLFVBQVUsRUFBRSxVQUFVO1lBQ25FLGtCQUFrQixFQUFFO2dCQUNoQixPQUFPLEVBQUU7b0JBQ0wsYUFBYSxFQUFFO3dCQUNYLFFBQVEsRUFBRSxhQUFhO3FCQUMxQjtvQkFDRCxVQUFVLEVBQUU7d0JBQ1IsU0FBUyxFQUFFLElBQUk7cUJBQ2xCO2lCQUNKO2FBQ0o7U0FDSixDQUFDO0lBQ04sQ0FBQztJQUVEOzs7T0FHRztJQUNILGdCQUFnQixDQUFDLFVBQWtCO1FBQy9CLE9BQU8sbUJBQUcsQ0FBQyxVQUFVLENBQUMsT0FBTyxDQUFDLFNBQVMsRUFBRSxFQUFFLENBQUMsQ0FBQyxXQUFXLEVBQUUsQ0FBQyxDQUFDO0lBQ2hFLENBQUM7Q0FDSixDQUFBO0FBL0JZLHNCQUFzQjtJQUZsQyxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztHQUNOLHNCQUFzQixDQStCbEM7QUEvQlksd0RBQXNCIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb3VyY2UtcG9saWN5LWNvbXBpbGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL2V4dGVuZC9yZXNvdXJjZS1wb2xpY3ktY29tcGlsZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsbUNBQXNDO0FBRXRDLG9GQUFxRTtBQUlyRSxJQUFhLHNCQUFzQixHQUFuQyxNQUFhLHNCQUFzQjtJQUUvQjs7Ozs7T0FLRztJQUNILGlCQUFpQixDQUFDLFVBQVUsRUFBRSxVQUFVO1FBQ3BDLE9BQU8sSUFBSSxDQUFDO1FBQ1osV0FBVztRQUNYLDJFQUEyRTtRQUMzRSw0QkFBNEI7UUFDNUIscUJBQXFCO1FBQ3JCLCtCQUErQjtRQUMvQiwwQ0FBMEM7UUFDMUMsaUJBQWlCO1FBQ2pCLDRCQUE0QjtRQUM1QixrQ0FBa0M7UUFDbEMsZ0JBQWdCO1FBQ2hCLFlBQVk7UUFDWixRQUFRO1FBQ1IsS0FBSztJQUNULENBQUM7SUFFRDs7O09BR0c7SUFDSCxnQkFBZ0IsQ0FBQyxVQUFrQjtRQUMvQixPQUFPLG1CQUFHLENBQUMsVUFBVSxDQUFDLE9BQU8sQ0FBQyxTQUFTLEVBQUUsRUFBRSxDQUFDLENBQUMsV0FBVyxFQUFFLENBQUMsQ0FBQztJQUNoRSxDQUFDO0NBQ0osQ0FBQTtBQWhDWSxzQkFBc0I7SUFGbEMsZ0JBQU8sRUFBRTtJQUNULGNBQUssQ0FBQyxXQUFXLENBQUM7R0FDTixzQkFBc0IsQ0FnQ2xDO0FBaENZLHdEQUFzQiJ9

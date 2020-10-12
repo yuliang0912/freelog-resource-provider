@@ -51,6 +51,7 @@ export class ResourceCollectionController {
     @get('/isCollected')
     @visitorIdentity(LoginUser | InternalClient)
     async isCollected(ctx) {
+
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitMongoObjectId().toSplitArray().value;
         ctx.validateParams();
 
@@ -77,5 +78,14 @@ export class ResourceCollectionController {
         await this.resourceCollectionService.deleteOne({
             resourceId, userId: ctx.userId
         }).then(ctx.success);
+    }
+
+    @get('/:resourceId/count')
+    @visitorIdentity(LoginUser)
+    async count(ctx) {
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        ctx.validateParams();
+
+        await this.resourceCollectionService.count({resourceId}).then(ctx.success);
     }
 }

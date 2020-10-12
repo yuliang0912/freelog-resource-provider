@@ -2,11 +2,18 @@ import {ValidatorResult} from 'jsonschema';
 import {IdentityType, SubjectTypeEnum, ContractStatusEnum} from './enum';
 import {SubjectAuthResult} from "./auth-interface";
 
-export interface PageResult {
+export interface PageResult<T> {
     page: number;
     pageSize: number;
     totalItem: number;
-    dataList: CollectionResourceInfo[] | ResourceInfo[];
+    dataList: T[];
+}
+
+export interface operationPolicyInfo {
+    policyId?: string;
+    policyText?: string;
+    policyName?: string;
+    status?: number;
 }
 
 export interface CreateResourceOptions {
@@ -15,7 +22,7 @@ export interface CreateResourceOptions {
     resourceType: string;
     name: string;
     intro?: string;
-    policies?: PolicyInfo[];
+    policies?: operationPolicyInfo[];
     coverImages?: string[];
     tags?: string[];
 }
@@ -25,8 +32,8 @@ export interface UpdateResourceOptions {
     intro?: string;
     coverImages?: [string];
     tags?: string[];
-    addPolicies?: PolicyInfo[];
-    updatePolicies?: PolicyInfo[];
+    addPolicies?: operationPolicyInfo[];
+    updatePolicies?: operationPolicyInfo[];
 }
 
 export interface CreateResourceVersionOptions {
@@ -107,12 +114,16 @@ export interface ContractInfo {
     isTestAuth?: boolean;
 }
 
-export interface PolicyInfo {
+export interface BasePolicyInfo {
     policyId: string;
-    policyName?: string;
-    policyText?: string;
-    status?: number;
-    fsmDescriptionInfo?: object;
+    policyText: string;
+    subjectType?: number;
+    fsmDescriptionInfo: object;
+}
+
+export interface PolicyInfo extends BasePolicyInfo {
+    status: number;
+    policyName: string;
 }
 
 export interface ResourceInfo {
@@ -168,6 +179,20 @@ export interface CollectionResourceInfo {
     authorName: string;
 }
 
+export interface ResourceDependencyTree {
+    resourceId: string,
+    resourceName: string,
+    version: string,
+    versions: string[],
+    resourceType: string,
+    versionRange: string,
+    versionId: string,
+    fileSha1: string,
+    baseUpcastResources: BaseResourceInfo[],
+    resolveResources: ResolveResource[],
+    dependencies: ResourceDependencyTree[]
+}
+
 export interface ResourceAuthTree {
     resourceId: string;
     resourceName: string;
@@ -194,7 +219,9 @@ export interface IOutsideApiService {
 
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
 
-    getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
+    createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
+
+    getResourcePolicies(policyIds: string[], projection: string[]): Promise<BasePolicyInfo[]>;
 
     batchSignResourceContracts(licenseeResourceId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 
@@ -218,11 +245,13 @@ export interface IResourceService {
 
     findByResourceNames(resourceNames: string[], ...args): Promise<ResourceInfo[]>;
 
+    getRelationTree(versionInfo: ResourceVersionInfo): Promise<any[]>;
+
     findOne(condition: object, ...args): Promise<ResourceInfo>;
 
     find(condition: object, ...args): Promise<ResourceInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
 
     count(condition: object): Promise<number>;
 
@@ -272,7 +301,9 @@ export interface ICollectionService {
 
     deleteOne(condition: object): Promise<boolean>;
 
-    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult>;
+    count(condition: object): Promise<number>;
+
+    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>>;
 }
 
 export interface IResourceAuthService {
@@ -281,5 +312,5 @@ export interface IResourceAuthService {
 
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
 
-    resourceBatchAuth(resourceVersions: ResourceVersionInfo[]): Promise<any[]>;
+    resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
 }

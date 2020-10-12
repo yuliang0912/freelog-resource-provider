@@ -1,7 +1,7 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
-import {isArray, isUndefined, isString, differenceBy, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
+import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -14,7 +14,7 @@ import {
     IResourceVersionService,
     PageResult,
     ResourceAuthTree,
-    BaseResourceVersion
+    BaseResourceVersion, ResourceDependencyTree, BaseResourceInfo, operationPolicyInfo, BasePolicyInfo
 } from '../../interface';
 import * as semver from 'semver';
 
@@ -55,13 +55,8 @@ export class ResourceService implements IResourceService {
             status: 0
         };
 
-        if (isArray(options.policies)) {
-            const policyIdNameMap: Map<string, string> = await this._validateSubjectPolicies(options.policies).then(list => new Map(list.map(x => [x.policyId, x.policyName])));
-            options.policies.forEach(addPolicy => resourceInfo.policies.push({
-                policyId: addPolicy.policyId,
-                policyName: addPolicy.policyName ?? policyIdNameMap.get(addPolicy.policyId),
-                status: addPolicy.status ?? 1
-            }));
+        if (isArray(options.policies) && !isEmpty(options.policies)) {
+            resourceInfo.policies = await this._validateAndCreateSubjectPolicies(options.policies);
         }
 
         resourceInfo.status = ResourceService._getResourceStatus(resourceInfo.resourceVersions, resourceInfo.policies);
@@ -88,27 +83,29 @@ export class ResourceService implements IResourceService {
             updateInfo.tags = options.tags;
         }
         const existingPolicyMap = new Map<string, PolicyInfo>(resourceInfo.policies.map(x => [x.policyId, x]));
-        if (isArray(options.updatePolicies)) {
+        if (isArray(options.updatePolicies) && !isEmpty(options.updatePolicies)) {
             options.updatePolicies.forEach(modifyPolicy => {
                 const existingPolicy = existingPolicyMap.get(modifyPolicy.policyId);
                 if (existingPolicy) {
-                    existingPolicy.policyName = modifyPolicy.policyName ?? existingPolicy.policyName;
                     existingPolicy.status = modifyPolicy.status ?? existingPolicy.status;
                 }
                 // 如果选的策略无效,直接忽略.不做过多干扰
                 // throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'policyId'), modifyPolicy);
             });
         }
-        if (isArray(options.addPolicies)) {
-            const policyIdNameMap: Map<string, string> = await this._validateSubjectPolicies(options.addPolicies).then(list => new Map(list.map(x => [x.policyId, x.policyName])));
-            options.addPolicies.forEach(addPolicy => {
-                if (existingPolicyMap.has(addPolicy.policyId)) {
-                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), addPolicy);
+        if (isArray(options.addPolicies) && !isEmpty(options.addPolicies)) {
+            const existingPolicyNameSet = new Set(resourceInfo.policies.map(x => x.policyName));
+            const duplicatePolicyNames = options.addPolicies.filter(x => existingPolicyNameSet.has(x.policyName));
+            if (!isEmpty(duplicatePolicyNames)) {
+                throw new ApplicationError(this.ctx.gettext('subject-policy-name-duplicate-failed'), duplicatePolicyNames);
+            }
+            const createdPolicyList = await this._validateAndCreateSubjectPolicies(options.addPolicies);
+            for (const createdPolicy of createdPolicyList) {
+                if (existingPolicyMap.has(createdPolicy.policyId)) {
+                    throw new ApplicationError(this.ctx.gettext('policy-create-duplicate-error'), createdPolicy);
                 }
-                addPolicy.policyName = addPolicy.policyName ?? policyIdNameMap.get(addPolicy.policyId);
-                addPolicy.status = addPolicy.status ?? 1;
-                existingPolicyMap.set(addPolicy.policyId, addPolicy);
-            });
+                existingPolicyMap.set(createdPolicy.policyId, createdPolicy);
+            }
         }
         if (isArray(options.addPolicies) || isArray(options.updatePolicies)) {
             resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
@@ -123,18 +120,18 @@ export class ResourceService implements IResourceService {
      * @param versionInfo
      * @param options
      */
-    async getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]> {
+    async getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<ResourceDependencyTree[]> {
 
         if (!options.isContainRootNode) {
             return this._buildDependencyTree(versionInfo.dependencies, options.maxDeep, 1, options.omitFields);
         }
 
-        const rootTreeNode = {
-            resourceId: resourceInfo.resourceId,
-            resourceName: resourceInfo.resourceName,
+        const rootTreeNode: ResourceDependencyTree = {
+            resourceId: versionInfo.resourceId,
+            resourceName: versionInfo.resourceName,
             version: versionInfo.version,
-            versions: resourceInfo.resourceVersions.map(x => x['version']),
-            resourceType: resourceInfo.resourceType,
+            versions: resourceInfo.resourceVersions?.map(x => x['version']),
+            resourceType: versionInfo.resourceType,
             versionRange: versionInfo.version,
             versionId: versionInfo.versionId,
             fileSha1: versionInfo.fileSha1,
@@ -143,7 +140,7 @@ export class ResourceService implements IResourceService {
             dependencies: await this._buildDependencyTree(versionInfo.dependencies, options.maxDeep, 1, options.omitFields)
         };
 
-        return [omit(rootTreeNode, options.omitFields)];
+        return [omit(rootTreeNode, options.omitFields) as ResourceDependencyTree];
     }
 
     /**
@@ -158,23 +155,81 @@ export class ResourceService implements IResourceService {
         }
 
         const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
-        const resourceInfo = {resourceVersions: []} as ResourceInfo; //减少不必要的数据需求,自行构造一个
+        const dependencyTree = await this.getResourceDependencyTree({} as ResourceInfo, versionInfo, options);
+
+        const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree) => dependencyTreeNode.resolveResources.map(resolveResource => {
+            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
+                return {
+                    resourceId: resolveResource.resourceId,
+                    resourceName: resolveResource.resourceName,
+                    versionId: x.versionId,
+                    version: x.version,
+                    versionRange: x.versionRange,
+                    fileSha1: x.fileSha1,
+                    contracts: resolveResource.contracts,
+                    children: recursionAuthTree(x)
+                }
+            });
+        });
+
+        return recursionAuthTree(first(dependencyTree));
+    }
+
+    async getRelationTree_(versionInfo: ResourceVersionInfo) {
+
+        const resourceBaseUpcastMap = new Map<string, BaseResourceInfo[]>();
+        const dependencyIds = versionInfo.dependencies.map(x => x.resourceId);
+        if (!isEmpty(dependencyIds)) {
+            await this.find({_id: {$in: dependencyIds}}, 'baseUpcastResources').then(list => {
+                list.forEach(x => resourceBaseUpcastMap.set(x.resourceId, x.baseUpcastResources));
+            });
+        }
+
+        return [{
+            resourceId: versionInfo.resourceId,
+            resourceName: versionInfo.resourceName,
+            children: versionInfo.dependencies.map(x => {
+                return {
+                    resourceId: x.resourceId,
+                    resourceName: x.resourceName,
+                    children: resourceBaseUpcastMap.get(x.resourceId)
+                }
+            })
+        }];
+    }
+
+    /**
+     * 获取资源关系树
+     * @param versionInfo
+     */
+    async getRelationTree(versionInfo: ResourceVersionInfo) {
+
+        const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
+        const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
         const dependencyTree = await this.getResourceDependencyTree(resourceInfo, versionInfo, options);
 
-        const recursionAuthTree = (dependencyTreeNode) => dependencyTreeNode.resolveResources.map(resolveResource => {
-            const list = this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource);
-            return {
-                resourceId: resolveResource.resourceId,
-                resourceName: resolveResource.resourceName,
-                contracts: resolveResource.contracts,
-                versions: uniqBy(list, 'versionId').map(item => Object({
-                    version: item['version'],
-                    versionId: item['versionId'],
-                    fileSha1: item['fileSha1'],
-                    resolveResources: recursionAuthTree(item)
-                })),
-                versionRanges: chain(list).map(x => x['versionRange']).uniq().value()
-            };
+        const rootResource = first(dependencyTree);
+        rootResource.baseUpcastResources = [];
+        for (const upcastResource of versionInfo.upcastResources) {
+            rootResource.resolveResources.push({
+                resourceId: upcastResource.resourceId,
+                resourceName: upcastResource.resourceName,
+                contracts: []
+            })
+        }
+
+        const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree) => dependencyTreeNode.resolveResources.map(resolveResource => {
+            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
+                return {
+                    resourceId: resolveResource.resourceId,
+                    resourceName: resolveResource.resourceName,
+                    versionId: x.versionId,
+                    version: x.version,
+                    versionRange: x.versionRange,
+                    contracts: resolveResource.contracts,
+                    children: recursionAuthTree(x)
+                }
+            });
         });
 
         return recursionAuthTree(first(dependencyTree));
@@ -240,7 +295,7 @@ export class ResourceService implements IResourceService {
      * @param {object} orderBy
      * @returns {Promise<ResourceInfo[]>}
      */
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>> {
         let dataList = [];
         const totalItem = await this.count(condition);
         if (totalItem > (page - 1) * pageSize) {
@@ -286,19 +341,35 @@ export class ResourceService implements IResourceService {
      * @param policyIds
      * @private
      */
-    async _validateSubjectPolicies(policies: PolicyInfo[]): Promise<PolicyInfo[]> {
+    async _validateAndCreateSubjectPolicies(policies: operationPolicyInfo[]): Promise<PolicyInfo[]> {
+
         if (isEmpty(policies)) {
             return [];
         }
-        if (uniqBy(policies, 'policyId').length !== policies.length) {
+        // 名称不允许重复
+        if (uniqBy(policies, 'policyName').length !== policies.length) {
             throw new ApplicationError(this.ctx.gettext('subject-policy-repeatability-validate-failed'));
         }
-        const policyInfos = await this.outsideApiService.getResourcePolicies(policies.map(x => x.policyId), ['policyId', 'policyName', 'userId']);
-        const invalidPolicies = differenceBy(policies, policyInfos, 'policyId');
-        if (!isEmpty(invalidPolicies)) {
-            throw new ApplicationError(this.ctx.gettext('subject-policy-validate-failed'), invalidPolicies);
+        const policyInfos = await this.outsideApiService.createPolicies(policies.map(x => x.policyText));
+        if (policyInfos.length !== policies.length) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-create-failed'));
         }
-        return policyInfos;
+        if (uniqBy(policyInfos, 'policyId').length !== policyInfos.length) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-repeatability-validate-failed'));
+        }
+
+        const result: PolicyInfo[] = [];
+        for (let i = 0, j = policyInfos.length; i < j; i++) {
+            const policyInfo = policyInfos[i];
+            result.push({
+                policyId: policyInfo.policyId,
+                policyText: policyInfo.policyText,
+                fsmDescriptionInfo: policyInfo.fsmDescriptionInfo,
+                policyName: policies[i].policyName,
+                status: policies[i].status ?? 1,
+            })
+        }
+        return result;
     }
 
     /**
@@ -310,19 +381,18 @@ export class ResourceService implements IResourceService {
      * @returns {Promise<any>}
      * @private
      */
-    async _buildDependencyTree(dependencies, maxDeep = 100, currDeep = 1, omitFields = []) {
+    async _buildDependencyTree(dependencies: BaseResourceInfo[], maxDeep: number = 100, currDeep: number = 1, omitFields: string[] = []): Promise<ResourceDependencyTree[]> {
 
         if (isEmpty(dependencies ?? []) || currDeep++ > maxDeep) {
             return [];
         }
 
-        const dependencyMap = new Map(dependencies.map(item => [item.resourceId, {versionRange: item.versionRange}]));
-        const resourceList = await this.resourceProvider.find({_id: {$in: Array.from(dependencyMap.keys())}});
+        const dependencyMap: Map<string, any> = new Map(dependencies.map(item => [item.resourceId, {versionRange: item.versionRange}]));
+        const resourceList: ResourceInfo[] = await this.resourceProvider.find({_id: {$in: Array.from(dependencyMap.keys())}});
 
         const versionIds = [];
-        for (let i = 0, j = resourceList.length; i < j; i++) {
-            const {resourceId, resourceVersions} = resourceList[i];
-            const dependencyInfo: any = dependencyMap.get(resourceId);
+        for (const {resourceId, resourceVersions} of resourceList) {
+            const dependencyInfo = dependencyMap.get(resourceId);
             const {version, versionId} = this._getResourceMaxSatisfying(resourceVersions, dependencyInfo.versionRange);
 
             dependencyInfo.version = version;
@@ -334,18 +404,18 @@ export class ResourceService implements IResourceService {
         const versionInfoMap = await this.resourceVersionService.find({versionId: {$in: versionIds}})
             .then(list => new Map(list.map(x => [x.versionId, x])));
 
-        const results = [];
         const tasks = [];
-        for (let i = 0, j = resourceList.length; i < j; i++) {
-            const {resourceId, resourceName, resourceType, baseUpcastResources} = resourceList[i];
-            const {versionId, versionRange, versions, version} = dependencyMap.get(resourceId) as any;
+        const results: ResourceDependencyTree[] = [];
+        for (const {resourceId, resourceName, resourceType, baseUpcastResources} of resourceList) {
+            const {versionId, versionRange, versions, version} = dependencyMap.get(resourceId);
             const versionInfo = versionInfoMap.get(versionId);
-            let result: any = {
+            let result: ResourceDependencyTree = {
                 resourceId, resourceName, versions, version, resourceType, versionRange, baseUpcastResources, versionId,
                 fileSha1: versionInfo.fileSha1, resolveResources: versionInfo.resolveResources,
+                dependencies: []
             };
             if (!isEmpty(omitFields)) {
-                result = omit(result, omitFields);
+                result = omit(result, omitFields) as ResourceDependencyTree;
             }
             tasks.push(this._buildDependencyTree(versionInfo.dependencies || [], maxDeep, currDeep, omitFields)
                 .then(list => result.dependencies = list));
@@ -385,16 +455,16 @@ export class ResourceService implements IResourceService {
      * @param _list
      * @private
      */
-    _findResourceVersionFromDependencyTree(dependencies, resource, _list = []): object[] {
+    _findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list: ResourceDependencyTree[] = []): ResourceDependencyTree[] {
         return dependencies.reduce((acc, dependencyTreeNode) => {
-            if (dependencyTreeNode.resourceId === resource.resourceId) {
+            if (dependencyTreeNode.resourceId === resourceId) {
                 acc.push(dependencyTreeNode);
             }
             // 如果依赖项未上抛该发行,则终止检查子级节点
-            if (!dependencyTreeNode.baseUpcastResources.some(x => x.resourceId === resource.resourceId)) {
+            if (!dependencyTreeNode.baseUpcastResources.some(x => x.resourceId === resourceId)) {
                 return acc;
             }
-            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resource, acc);
+            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resourceId, acc);
         }, _list);
     }
 
@@ -447,6 +517,7 @@ export class ResourceService implements IResourceService {
      * @param resources
      */
     async fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]> {
+
         if (!isArray(resources) || isEmpty(resources)) {
             return resources;
         }
@@ -454,10 +525,9 @@ export class ResourceService implements IResourceService {
         if (isEmpty(policyIds)) {
             return resources;
         }
-        const policyMap: Map<string, PolicyInfo> = await this.outsideApiService.getResourcePolicies(policyIds, ['policyId', 'policyText', 'fsmDescriptionInfo']).then(list => {
+        const policyMap: Map<string, BasePolicyInfo> = await this.outsideApiService.getResourcePolicies(policyIds, ['policyId', 'policyText', 'fsmDescriptionInfo']).then(list => {
             return new Map(list.map(x => [x.policyId, x]));
         });
-
         return resources.map((item: any) => {
             const resourceInfo = item.toObject ? item.toObject() : item;
             resourceInfo.policies.forEach(policyInfo => {

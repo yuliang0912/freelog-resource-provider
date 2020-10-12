@@ -9,6 +9,8 @@ export declare class ResourceController {
     list(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
     dependencyTree(ctx: any): Promise<any>;
+    authTree(ctx: any): Promise<any>;
+    relationTree(ctx: any): Promise<any>;
     show(ctx: any): Promise<void>;
     contractCoverageVersions(ctx: any): Promise<void>;
     contractsCoverageVersions(ctx: any): Promise<void>;
@@ -18,5 +20,5 @@ export declare class ResourceController {
      * @param policies
      * @private
      */
-    _policySchemaValidate(policies: any): void;
+    _policySchemaValidate(policies: any[], mode: 'addPolicy' | 'updatePolicy'): void;
 }

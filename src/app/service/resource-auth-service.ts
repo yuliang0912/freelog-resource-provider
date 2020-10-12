@@ -60,7 +60,7 @@ export class ResourceAuthService implements IResourceAuthService {
      * 资源批量授权,不调用授权树,直接对比合约状态
      * @param resourceVersions
      */
-    async resourceBatchAuth(resourceVersions: ResourceVersionInfo[]): Promise<any[]> {
+    async resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'auth' | 'testAuth'): Promise<any[]> {
 
         const authResultMap = new Map<string, SubjectAuthResult>();
         const allContractIds = chain(resourceVersions).map(x => x.resolveResources).flattenDeep().map(x => x.contracts).flattenDeep().map(x => x.contractId).uniq().value();
@@ -73,7 +73,7 @@ export class ResourceAuthService implements IResourceAuthService {
             for (const resourceVersion of resourceVersions) {
                 for (const resolveResource of resourceVersion.resolveResources) {
                     const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
-                    const authResult = this.contractAuth(resolveResource.resourceId, contracts, 'auth');
+                    const authResult = this.contractAuth(resolveResource.resourceId, contracts, authType);
                     authResultMap.set(`${resourceVersion.versionId}_${resolveResource.resourceId}`, authResult);
                 }
             }

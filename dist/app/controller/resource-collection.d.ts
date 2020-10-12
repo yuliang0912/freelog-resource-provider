@@ -7,4 +7,5 @@ export declare class ResourceCollectionController {
     isCollected(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     destroy(ctx: any): Promise<void>;
+    count(ctx: any): Promise<void>;
 }

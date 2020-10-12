@@ -1,11 +1,17 @@
 import { ValidatorResult } from 'jsonschema';
 import { IdentityType, SubjectTypeEnum, ContractStatusEnum } from './enum';
 import { SubjectAuthResult } from "./auth-interface";
-export interface PageResult {
+export interface PageResult<T> {
     page: number;
     pageSize: number;
     totalItem: number;
-    dataList: CollectionResourceInfo[] | ResourceInfo[];
+    dataList: T[];
+}
+export interface operationPolicyInfo {
+    policyId?: string;
+    policyText?: string;
+    policyName?: string;
+    status?: number;
 }
 export interface CreateResourceOptions {
     userId: number;
@@ -13,7 +19,7 @@ export interface CreateResourceOptions {
     resourceType: string;
     name: string;
     intro?: string;
-    policies?: PolicyInfo[];
+    policies?: operationPolicyInfo[];
     coverImages?: string[];
     tags?: string[];
 }
@@ -22,8 +28,8 @@ export interface UpdateResourceOptions {
     intro?: string;
     coverImages?: [string];
     tags?: string[];
-    addPolicies?: PolicyInfo[];
-    updatePolicies?: PolicyInfo[];
+    addPolicies?: operationPolicyInfo[];
+    updatePolicies?: operationPolicyInfo[];
 }
 export interface CreateResourceVersionOptions {
     version: string;
@@ -85,12 +91,15 @@ export interface ContractInfo {
     isAuth?: boolean;
     isTestAuth?: boolean;
 }
-export interface PolicyInfo {
+export interface BasePolicyInfo {
     policyId: string;
-    policyName?: string;
-    policyText?: string;
-    status?: number;
-    fsmDescriptionInfo?: object;
+    policyText: string;
+    subjectType?: number;
+    fsmDescriptionInfo: object;
+}
+export interface PolicyInfo extends BasePolicyInfo {
+    status: number;
+    policyName: string;
 }
 export interface ResourceInfo {
     resourceId?: string;
@@ -140,6 +149,19 @@ export interface CollectionResourceInfo {
     authorId: number;
     authorName: string;
 }
+export interface ResourceDependencyTree {
+    resourceId: string;
+    resourceName: string;
+    version: string;
+    versions: string[];
+    resourceType: string;
+    versionRange: string;
+    versionId: string;
+    fileSha1: string;
+    baseUpcastResources: BaseResourceInfo[];
+    resolveResources: ResolveResource[];
+    dependencies: ResourceDependencyTree[];
+}
 export interface ResourceAuthTree {
     resourceId: string;
     resourceName: string;
@@ -160,7 +182,8 @@ export interface IJsonSchemaValidate {
 export interface IOutsideApiService {
     getFileStream(fileSha1: string): Promise<any>;
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
-    getResourcePolicies(policyIds: string[], projection: string[]): Promise<PolicyInfo[]>;
+    createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
+    getResourcePolicies(policyIds: string[], projection: string[]): Promise<BasePolicyInfo[]>;
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
@@ -173,9 +196,10 @@ export interface IResourceService {
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     findOneByResourceName(resourceName: string, ...args: any[]): Promise<ResourceInfo>;
     findByResourceNames(resourceNames: string[], ...args: any[]): Promise<ResourceInfo[]>;
+    getRelationTree(versionInfo: ResourceVersionInfo): Promise<any[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceInfo>;
     find(condition: object, ...args: any[]): Promise<ResourceInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
     count(condition: object): Promise<number>;
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
     fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
@@ -212,10 +236,11 @@ export interface ICollectionService {
     find(condition: object, ...args: any[]): Promise<CollectionResourceInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<CollectionResourceInfo>;
     deleteOne(condition: object): Promise<boolean>;
-    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult>;
+    count(condition: object): Promise<number>;
+    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>>;
 }
 export interface IResourceAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
-    resourceBatchAuth(resourceVersions: ResourceVersionInfo[]): Promise<any[]>;
+    resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
 }
