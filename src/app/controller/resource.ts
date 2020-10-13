@@ -137,7 +137,7 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
         if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'previewImages'));
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
         this._policySchemaValidate(addPolicies, 'addPolicy');
