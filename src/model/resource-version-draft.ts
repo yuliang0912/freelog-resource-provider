@@ -3,13 +3,13 @@ import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
-@provide('model.ResourceVersionDraft') // 此model可能考虑不要
+@provide('model.ResourceVersionDraft')
 export class ResourceVersionDraftModel extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {
 
         const ResourceVersionDraftScheme = new this.mongoose.Schema({
-            resourceId: {type: String, required: true}, // 存储ID,对应存储服务的file-storage
+            resourceId: {type: String, required: true}, // 资源ID,每个资源只能有一个草稿信息,数据提交过来如果存在,则直接更新
             userId: {type: Number, required: true},
             resourceType: {type: String, required: true},
             draftData: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: false},

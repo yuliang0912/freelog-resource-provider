@@ -7,5 +7,5 @@ export declare class ResourceAuthController {
     resourceVersionBatchAuth(ctx: any): Promise<void>;
     resourceAuth(ctx: any): Promise<any>;
     subjectContractAuth(ctx: any): Promise<any>;
-    resourceRelationTreeAuthResult(ctx: any): Promise<void>;
+    resourceRelationTreeAuthResult(ctx: any): Promise<any>;
 }

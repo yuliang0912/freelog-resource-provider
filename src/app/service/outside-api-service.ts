@@ -1,3 +1,4 @@
+import {uniq, chunk, flatten} from 'lodash';
 import {provide, inject} from 'midway';
 import {IdentityType, SubjectTypeEnum} from '../../enum';
 import {SubjectInfo, ContractInfo, IOutsideApiService, BasePolicyInfo} from '../../interface';
@@ -71,8 +72,13 @@ export class OutsideApiService implements IOutsideApiService {
      * @param options
      */
     async getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]> {
+
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&${optionParams.join('&')}`)
+        const tasks = chunk(uniq(contractIds), 100).map(contractIdChunk => {
+            return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&${optionParams.join('&')}`);
+        })
+
+        return Promise.all(tasks).then(results => flatten(results));
     }
 
     /**

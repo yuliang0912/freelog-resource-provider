@@ -166,12 +166,11 @@ export interface ResourceAuthTree {
     resourceId: string;
     resourceName: string;
     contracts: BaseContractInfo[];
-    versions: ResourceAuthTreeVersionInfo[];
-}
-export interface ResourceAuthTreeVersionInfo {
-    version: string;
     versionId: string;
-    resolveResources: ResourceAuthTree[];
+    version: string;
+    versionRange: string;
+    fileSha1?: string;
+    children: ResourceAuthTree[][];
 }
 /**
  * 针对object做校验的基础接口
@@ -191,12 +190,13 @@ export interface IOutsideApiService {
 export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
     updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
-    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
-    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]>;
+    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<ResourceDependencyTree[]>;
+    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[][]>;
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     findOneByResourceName(resourceName: string, ...args: any[]): Promise<ResourceInfo>;
     findByResourceNames(resourceNames: string[], ...args: any[]): Promise<ResourceInfo[]>;
-    getRelationTree(versionInfo: ResourceVersionInfo): Promise<any[]>;
+    getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
+    getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceInfo>;
     find(condition: object, ...args: any[]): Promise<ResourceInfo[]>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
@@ -243,4 +243,5 @@ export interface IResourceAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
+    resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;
 }

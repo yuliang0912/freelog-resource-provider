@@ -13,6 +13,17 @@ export declare class ResourceAuthService implements IResourceAuthService {
      * @param resourceVersions
      */
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'auth' | 'testAuth'): Promise<any[]>;
+    /**
+     * 资源关系树授权
+     * @param versionInfo
+     */
+    resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;
+    /**
+     * 合同授权
+     * @param subjectId
+     * @param contracts
+     * @param authType
+     */
     contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
     /**
      * 从授权树中获取授权失败的资源
@@ -21,5 +32,11 @@ export declare class ResourceAuthService implements IResourceAuthService {
      * @param startDeep
      * @param endDeep
      */
-    _getAuthFailedResourceFromAuthTree(authTree: ResourceAuthTree[], contractMap: Map<string, ContractInfo>, startDeep: number, endDeep: number): any[];
+    _getAuthFailedResourceFromAuthTree(authTree: ResourceAuthTree[][], contractMap: Map<string, ContractInfo>, startDeep: number, endDeep: number): any[];
+    /**
+     * 从授权树中递归获取所有的合同ID
+     * @param resourceAuthTree
+     * @private
+     */
+    _getContractIdFromResourceAuthTree(resourceAuthTree: ResourceAuthTree[][]): string[];
 }

@@ -197,13 +197,11 @@ export interface ResourceAuthTree {
     resourceId: string;
     resourceName: string;
     contracts: BaseContractInfo[];
-    versions: ResourceAuthTreeVersionInfo[];
-}
-
-export interface ResourceAuthTreeVersionInfo {
-    version: string;
     versionId: string;
-    resolveResources: ResourceAuthTree[];
+    version: string;
+    versionRange: string;
+    fileSha1?: string;
+    children: ResourceAuthTree[][];
 }
 
 /**
@@ -235,9 +233,9 @@ export interface IResourceService {
 
     updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
 
-    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<object[]>;
+    getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<ResourceDependencyTree[]>;
 
-    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]>;
+    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[][]>;
 
     findByResourceId(resourceId: string, ...args): Promise<ResourceInfo>;
 
@@ -245,7 +243,9 @@ export interface IResourceService {
 
     findByResourceNames(resourceNames: string[], ...args): Promise<ResourceInfo[]>;
 
-    getRelationTree(versionInfo: ResourceVersionInfo): Promise<any[]>;
+    getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
+
+    getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
 
     findOne(condition: object, ...args): Promise<ResourceInfo>;
 
@@ -313,4 +313,6 @@ export interface IResourceAuthService {
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
 
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
+
+    resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;
 }

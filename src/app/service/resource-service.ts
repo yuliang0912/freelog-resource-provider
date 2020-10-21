@@ -14,7 +14,11 @@ import {
     IResourceVersionService,
     PageResult,
     ResourceAuthTree,
-    BaseResourceVersion, ResourceDependencyTree, BaseResourceInfo, operationPolicyInfo, BasePolicyInfo
+    BaseResourceVersion,
+    ResourceDependencyTree,
+    BaseResourceInfo,
+    operationPolicyInfo,
+    BasePolicyInfo
 } from '../../interface';
 import * as semver from 'semver';
 
@@ -148,7 +152,7 @@ export class ResourceService implements IResourceService {
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<object[]>}
      */
-    async getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]> {
+    async getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[][]> {
 
         if (isEmpty(versionInfo.resolveResources ?? [])) {
             return [];
@@ -175,24 +179,35 @@ export class ResourceService implements IResourceService {
         return recursionAuthTree(first(dependencyTree));
     }
 
-    async getRelationTree_(versionInfo: ResourceVersionInfo) {
+    /**
+     * 获取关系树(资源=>资源的依赖=>依赖的上抛,最多三层)
+     * @param versionInfo
+     */
+    async getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]> {
 
-        const resourceBaseUpcastMap = new Map<string, BaseResourceInfo[]>();
-        const dependencyIds = versionInfo.dependencies.map(x => x.resourceId);
-        if (!isEmpty(dependencyIds)) {
-            await this.find({_id: {$in: dependencyIds}}, 'baseUpcastResources').then(list => {
-                list.forEach(x => resourceBaseUpcastMap.set(x.resourceId, x.baseUpcastResources));
-            });
+        if (!dependencyTree) {
+            dependencyTree = await this.getResourceDependencyTree({} as ResourceInfo, versionInfo, {isContainRootNode: true});
         }
-
         return [{
             resourceId: versionInfo.resourceId,
             resourceName: versionInfo.resourceName,
-            children: versionInfo.dependencies.map(x => {
+            versions: [versionInfo.version],
+            versionIds: [versionInfo.versionId],
+            children: first(dependencyTree).dependencies?.map(dependency => {
                 return {
-                    resourceId: x.resourceId,
-                    resourceName: x.resourceName,
-                    children: resourceBaseUpcastMap.get(x.resourceId)
+                    resourceId: dependency.resourceId,
+                    resourceName: dependency.resourceName,
+                    versions: [dependency.version],
+                    versionIds: [dependency.versionId],
+                    children: dependency.baseUpcastResources.map(upcastResource => {
+                        const resolveVersions = uniqBy(this._findResourceVersionFromDependencyTree(dependency.dependencies, upcastResource.resourceId), 'versionId');
+                        return {
+                            resourceId: upcastResource.resourceId,
+                            resourceName: upcastResource.resourceName,
+                            versions: resolveVersions.map(x => x.version),
+                            versionIds: resolveVersions.map(x => x.versionId)
+                        }
+                    })
                 }
             })
         }];
@@ -202,23 +217,24 @@ export class ResourceService implements IResourceService {
      * 获取资源关系树
      * @param versionInfo
      */
-    async getRelationTree(versionInfo: ResourceVersionInfo) {
+    async getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]> {
 
         const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
         const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
-        const dependencyTree = await this.getResourceDependencyTree(resourceInfo, versionInfo, options);
-
+        if (!dependencyTree) {
+            dependencyTree = await this.getResourceDependencyTree(resourceInfo, versionInfo, options);
+        }
         const rootResource = first(dependencyTree);
         rootResource.baseUpcastResources = [];
         for (const upcastResource of versionInfo.upcastResources) {
             rootResource.resolveResources.push({
                 resourceId: upcastResource.resourceId,
                 resourceName: upcastResource.resourceName,
-                contracts: []
+                contracts: null
             })
         }
 
-        const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree) => dependencyTreeNode.resolveResources.map(resolveResource => {
+        const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree): ResourceAuthTree[][] => dependencyTreeNode.resolveResources.map(resolveResource => {
             return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
                 return {
                     resourceId: resolveResource.resourceId,
@@ -228,7 +244,7 @@ export class ResourceService implements IResourceService {
                     versionRange: x.versionRange,
                     contracts: resolveResource.contracts,
                     children: recursionAuthTree(x)
-                }
+                };
             });
         });
 

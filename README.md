@@ -1,6 +1,6 @@
-# my_first_midway_project
+# freelog-resource-provider
 
-{{description}}
+飞致网络资源服务
 
 ## QuickStart
 
@@ -13,7 +13,7 @@ see [midway docs][midway] for more detail.
 ```bash
 $ npm i
 $ npm run dev
-$ open http://localhost:7001/
+$ open http://localhost:7101/
 ```
 
 ### Deploy

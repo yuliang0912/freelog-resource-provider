@@ -30,21 +30,17 @@ export declare class ResourceService implements IResourceService {
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<object[]>}
      */
-    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[]>;
-    getRelationTree_(versionInfo: ResourceVersionInfo): Promise<{
-        resourceId: string;
-        resourceName: string;
-        children: {
-            resourceId: string;
-            resourceName: string;
-            children: BaseResourceInfo[];
-        }[];
-    }[]>;
+    getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[][]>;
+    /**
+     * 获取关系树(资源=>资源的依赖=>依赖的上抛,最多三层)
+     * @param versionInfo
+     */
+    getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
     /**
      * 获取资源关系树
      * @param versionInfo
      */
-    getRelationTree(versionInfo: ResourceVersionInfo): Promise<any>;
+    getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
     /**
      * 根据资源名批量获取资源
      * @param {string[]} resourceNames 资源名称集

@@ -1,11 +1,12 @@
 import * as semver from 'semver';
 import {ContractStatusEnum} from '../../enum';
-import {differenceWith, isEmpty} from 'lodash';
+import {differenceWith, isEmpty, isString} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {InternalClient, LoginUser, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-interface";
 import {IOutsideApiService, IResourceAuthService, IResourceService, IResourceVersionService} from '../../interface';
+import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
 @controller('/v2/auths/resource') // 统一URL v2/auths/:subjectType
@@ -134,5 +135,43 @@ export class ResourceAuthController {
     @get('/:subjectId/relationTreeAuth/result')
     async resourceRelationTreeAuthResult(ctx) {
 
+        const resourceIdOrName = ctx.checkParams('subjectId').exist().decodeURIComponent().value;
+        const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value;
+        // const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value;
+        ctx.validateParams();
+
+        let resourceInfo = null;
+        if (mongoObjectId.test(resourceIdOrName)) {
+            resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName);
+        } else if (fullResourceName.test(resourceIdOrName)) {
+            resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName);
+        } else {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
+        }
+
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'), data: {resourceIdOrName}
+        });
+        if (isEmpty(resourceInfo.resourceVersions)) {
+            return ctx.success([]);
+        }
+
+        let resourceVersion = resourceInfo.latestVersion;
+        if (isString(version)) {
+            resourceVersion = version;
+        } else if (isString(versionRange)) {
+            resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange);
+        }
+        if (!resourceVersion) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'))
+        }
+
+        const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
+        ctx.entityNullObjectCheck(versionInfo, {
+            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
+        });
+
+        await this.resourceAuthService.resourceRelationTreeAuth(versionInfo).then(ctx.success);
     }
 }

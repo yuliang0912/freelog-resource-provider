@@ -4,7 +4,7 @@ import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {isString, first, isUndefined, includes, pick, uniqBy, isEmpty} from 'lodash';
 import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
-import {IJsonSchemaValidate, IResourceService, IResourceVersionService, ResourceInfo} from '../../interface';
+import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
 
 @provide()
 @controller('/v2/resources')
@@ -55,10 +55,10 @@ export class ResourceController {
 
         const pageResult = await this.resourceService.findPageList(condition, page, pageSize, projection, {createDate: -1});
         if (isLoadPolicyInfo) {
-            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList as ResourceInfo[]);
+            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }
         if (isLoadLatestVersionInfo) {
-            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList as ResourceInfo[]);
+            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
         }
         return ctx.success(pageResult);
     }
