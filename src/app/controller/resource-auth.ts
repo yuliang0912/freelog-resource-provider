@@ -132,7 +132,7 @@ export class ResourceAuthController {
     }
 
     @visitorIdentity(InternalClient | LoginUser)
-    @get('/:subjectId/relationTreeAuth/result')
+    @get('/:subjectId/relationTreeAuth')
     async resourceRelationTreeAuthResult(ctx) {
 
         const resourceIdOrName = ctx.checkParams('subjectId').exist().decodeURIComponent().value;

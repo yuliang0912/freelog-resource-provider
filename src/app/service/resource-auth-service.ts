@@ -106,7 +106,9 @@ export class ResourceAuthService implements IResourceAuthService {
             return new Map(list.map(x => [x.contractId, x]));
         });
 
-        for (const item of first(resourceRelationTree).children) {
+        const rootResource = first(resourceRelationTree);
+        rootResource['authFailedResources'] = [];
+        for (const item of rootResource.children) {
             const authTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === item.resourceId));
             item['authFailedResources'] = this._getAuthFailedResourceFromAuthTree(authTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
         }
