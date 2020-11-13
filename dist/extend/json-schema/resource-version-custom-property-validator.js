@@ -39,9 +39,9 @@ let ResourceVersionCustomPropertyValidator = class ResourceVersionCustomProperty
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    remark: { type: 'string', required: true, minLength: 0, maxLength: 15 },
+                    remark: { type: 'string', required: true, minLength: 0, maxLength: 50 },
                     key: {
-                        type: 'string', required: true, minLength: 1, maxLength: 15,
+                        type: 'string', required: true, minLength: 1, maxLength: 20,
                         pattern: '^[a-zA-Z0-9_]{1,20}$'
                     },
                     defaultValue: {

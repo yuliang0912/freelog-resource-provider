@@ -32,7 +32,7 @@ export class ResourceAuthController {
         const resourceVersions = await this.resourceVersionService.find({versionId: {$in: resourceVersionIds}},
             'resourceId resourceName version versionId resolveResources');
 
-        const validVersionIds = differenceWith(resourceVersionIds, resourceVersions, (x, y) => x === y.versionId)
+        const validVersionIds = differenceWith(resourceVersionIds, resourceVersions, (x: string, y) => x === y.versionId)
         if (!isEmpty(validVersionIds)) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'resourceVersionIds'), {validVersionIds});
         }
@@ -85,10 +85,38 @@ export class ResourceAuthController {
         ctx.attachment(fileStreamInfo.fileName);
     }
 
+    @get('/:subjectId/upstreamAuth/result')
+    @visitorIdentity(LoginUser)
+    async resourceUpstreamAuth(ctx) {
+
+        const resourceId = ctx.checkParams('subjectId').isResourceId().value;
+        const version = ctx.checkBody('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const resourceInfo = await this.resourceService.findByResourceId(resourceId, 'latestVersion');
+        if (!resourceInfo) {
+            const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg(ctx.gettext('params-validate-failed', 'subject'));
+            return ctx.success(authResult);
+        }
+
+        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version ?? resourceInfo.latestVersion, 'fileSha1 filename resourceName version systemProperty');
+        if (!resourceVersionInfo) {
+            const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.AuthArgumentsError)
+                .setData({resourceId, version})
+                .setErrorMsg(ctx.gettext('params-validate-failed', 'version'));
+            return ctx.success(authResult);
+        }
+
+        const resourceAuthTree = await this.resourceService.getResourceAuthTree(resourceVersionInfo);
+        const upstreamAuthResult = await this.resourceAuthService.resourceUpstreamAuth(resourceAuthTree);
+
+        ctx.success(upstreamAuthResult);
+    }
+
     // 由于无法确定当前用户与乙方之间的关联,所以关系层面由请求方标的物服务校验,并保证数据真实性.
     // 合同授权接口属于内部接口,不对外提供.后续如果考虑实现身份授权链的验证,则可以开放外部调用
     @visitorIdentity(InternalClient | LoginUser)
-    @get('/:subjectId/contractAuth/(content|result)')
+    @get('/:subjectId/contractAuth/(fileStream|result)')
     async subjectContractAuth(ctx) {
 
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
@@ -108,7 +136,7 @@ export class ResourceAuthController {
             authResult.setAuthCode(SubjectAuthCodeEnum.SubjectNotFound).setErrorMsg(ctx.gettext('params-validate-failed', 'subjectId'));
             return ctx.success(authResult);
         }
-        const notFoundContractIds = differenceWith(contractIds, contracts, (x, y) => x === y.contractId);
+        const notFoundContractIds = differenceWith(contractIds, contracts, (x: string, y) => x === y.contractId);
         if (!isEmpty(notFoundContractIds)) {
             authResult.setData({notFoundContractIds}).setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound).setErrorMsg('未找到指定的合约');
             return ctx.success(authResult);

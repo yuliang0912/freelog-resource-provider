@@ -7,8 +7,8 @@ import {
 } from '../../interface';
 import {ArgumentError, ApplicationError} from 'egg-freelog-base';
 import {
-    isEmpty, isUndefined,
-    uniqBy, chain, differenceBy,
+    isEmpty, isUndefined, isArray,
+    uniqBy, chain, differenceBy, difference,
     assign, pick, isString,
     differenceWith, intersectionWith
 } from 'lodash';
@@ -58,6 +58,10 @@ export class ResourceVersionService implements IResourceVersionService {
             versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, options.version)
         };
 
+        if (isArray(options.customPropertyDescriptors)) {
+            this._checkCustomPropertyDescriptors(options.systemProperty ?? {}, options.customPropertyDescriptors);
+        }
+
         if (!isEmpty(resolveResources)) {
             const beSignSubjects = chain(resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
                 subjectId: resourceId, policyId
@@ -87,7 +91,8 @@ export class ResourceVersionService implements IResourceVersionService {
         if (!isUndefined(options.description)) {
             model.description = options.description;
         }
-        if (!isUndefined(options.customPropertyDescriptors)) {
+        if (isArray(options.customPropertyDescriptors)) {
+            this._checkCustomPropertyDescriptors(versionInfo.systemProperty, options.customPropertyDescriptors);
             model.customPropertyDescriptors = options.customPropertyDescriptors;
         }
         // 更新合约代码较复杂,如果本次更新不牵扯到合约内容,则提前返回
@@ -442,5 +447,20 @@ export class ResourceVersionService implements IResourceVersionService {
         upcastResources = differenceBy(allUntreatedResources, backlogResources, x => x['resourceId']);
 
         return {allUntreatedResources, backlogResources, upcastResources};
+    }
+
+    /**
+     * 校验自定义属性描述器
+     * @param systemProperty
+     * @param customPropertyDescriptors
+     * @private
+     */
+    _checkCustomPropertyDescriptors(systemProperty: object, customPropertyDescriptors: any[]) {
+        const systemPropertyKeys = Object.keys(systemProperty ?? {});
+        const customPropertyKeys = customPropertyDescriptors?.map(x => x.key);
+        const repetitiveKeys = difference(customPropertyKeys, systemPropertyKeys);
+        if (!isEmpty(repetitiveKeys)) {
+            throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'customPropertyDescriptors'), {repetitiveKeys})
+        }
     }
 }

@@ -312,6 +312,8 @@ export interface IResourceAuthService {
 
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
 
+    resourceUpstreamAuth(resourceAuthTree: ResourceAuthTree[][]): Promise<SubjectAuthResult>;
+
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
 
     resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;

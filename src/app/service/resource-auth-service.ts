@@ -50,6 +50,29 @@ export class ResourceAuthService implements IResourceAuthService {
     }
 
     /**
+     * 资源上游授权(不包含自身)
+     * @param resourceAuthTree
+     */
+    async resourceUpstreamAuth(resourceAuthTree: ResourceAuthTree[][]): Promise<SubjectAuthResult> {
+
+        const authResult = new SubjectAuthResult(SubjectAuthCodeEnum.BasedOnContractAuthorized);
+        const allContractIds = this._getContractIdFromResourceAuthTree(resourceAuthTree, 2);
+
+        const contractMap = await this.outsideApiService.getContractByContractIds(allContractIds, {
+            projection: 'subjectId,subjectType,authStatus'
+        }).then(list => new Map(list.map(x => [x.contractId, x])));
+
+        const resourceUpstreamAuthFailedDependencies = this._getAuthFailedResourceFromAuthTree(resourceAuthTree, contractMap, 2, Number.MAX_SAFE_INTEGER);
+        if (isEmpty(resourceUpstreamAuthFailedDependencies)) {
+            return authResult;
+        }
+
+        return authResult.setErrorMsg('资源上游合约授权未通过')
+            .setData({resourceUpstreamAuthFailedDependencies})
+            .setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('资源上游合约授权未通过');
+    }
+
+    /**
      * 资源批量授权,不调用授权树,直接对比合约状态
      * @param resourceVersions
      */
@@ -185,18 +208,21 @@ export class ResourceAuthService implements IResourceAuthService {
      * @param resourceAuthTree
      * @private
      */
-    _getContractIdFromResourceAuthTree(resourceAuthTree: ResourceAuthTree[][]): string[] {
+    _getContractIdFromResourceAuthTree(resourceAuthTree: ResourceAuthTree[][], startDeep: number = 1, endDeep: number = Number.MAX_SAFE_INTEGER): string[] {
 
-        function recursionPushContractId(authTree: ResourceAuthTree[][], allContractIds: string[]) {
+        function recursionPushContractId(authTree: ResourceAuthTree[][], allContractIds: string[], deep: number = 1) {
+            if (deep < startDeep || deep > endDeep) {
+                return allContractIds;
+            }
             for (const allResourceVersions of authTree) {
                 for (const resourceRelationAuthTree of allResourceVersions) {
                     resourceRelationAuthTree.contracts?.forEach(x => allContractIds.push(x.contractId));
-                    recursionPushContractId(resourceRelationAuthTree.children, allContractIds);
+                    recursionPushContractId(resourceRelationAuthTree.children, allContractIds, deep + 1);
                 }
             }
             return allContractIds;
         }
 
-        return recursionPushContractId(resourceAuthTree, []);
+        return recursionPushContractId(resourceAuthTree, [], 1);
     }
 }

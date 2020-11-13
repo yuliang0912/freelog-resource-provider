@@ -242,6 +242,7 @@ export interface ICollectionService {
 export interface IResourceAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
+    resourceUpstreamAuth(resourceAuthTree: ResourceAuthTree[][]): Promise<SubjectAuthResult>;
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
     resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;
 }

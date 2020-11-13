@@ -9,6 +9,11 @@ export declare class ResourceAuthService implements IResourceAuthService {
      */
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
     /**
+     * 资源上游授权(不包含自身)
+     * @param resourceAuthTree
+     */
+    resourceUpstreamAuth(resourceAuthTree: ResourceAuthTree[][]): Promise<SubjectAuthResult>;
+    /**
      * 资源批量授权,不调用授权树,直接对比合约状态
      * @param resourceVersions
      */
@@ -38,5 +43,5 @@ export declare class ResourceAuthService implements IResourceAuthService {
      * @param resourceAuthTree
      * @private
      */
-    _getContractIdFromResourceAuthTree(resourceAuthTree: ResourceAuthTree[][]): string[];
+    _getContractIdFromResourceAuthTree(resourceAuthTree: ResourceAuthTree[][], startDeep?: number, endDeep?: number): string[];
 }

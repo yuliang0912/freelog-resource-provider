@@ -108,4 +108,11 @@ export declare class ResourceVersionService implements IResourceVersionService {
         backlogResources: object[];
         allUntreatedResources: object[];
     }>;
+    /**
+     * 校验自定义属性描述器
+     * @param systemProperty
+     * @param customPropertyDescriptors
+     * @private
+     */
+    _checkCustomPropertyDescriptors(systemProperty: object, customPropertyDescriptors: any[]): void;
 }
