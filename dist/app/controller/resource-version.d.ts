@@ -1,5 +1,7 @@
-import { IJsonSchemaValidate, IResourceService, IResourceVersionService, IOutsideApiService } from '../../interface';
+import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
+import { IResourceService, IResourceVersionService, IOutsideApiService } from '../../interface';
 export declare class ResourceVersionController {
+    ctx: FreelogContext;
     resourceService: IResourceService;
     outsideApiService: IOutsideApiService;
     resourceVersionService: IResourceVersionService;

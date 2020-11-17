@@ -1,6 +1,7 @@
-import { SubjectInfo, ContractInfo, IOutsideApiService, BasePolicyInfo } from '../../interface';
+import { BasePolicyInfo, ContractInfo, IOutsideApiService, SubjectInfo } from '../../interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class OutsideApiService implements IOutsideApiService {
-    ctx: any;
+    ctx: FreelogContext;
     /**
      * 获取文件流
      * @param fileSha1

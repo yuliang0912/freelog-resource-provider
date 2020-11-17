@@ -16,9 +16,7 @@ export const development = {
 export default () => {
     const config: any = {};
 
-    config.middleware = [
-        'errorHandler', 'localUserIdentity'
-    ];
+    config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler', 'localIdentityInfoHandler'];
 
     config.mongoose = {
         url: 'mongodb://127.0.0.1:27017/resource-beta'

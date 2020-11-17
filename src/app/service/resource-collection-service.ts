@@ -1,14 +1,15 @@
 import {provide, inject} from 'midway';
 import {isString, flatten} from 'lodash';
-import {CollectionResourceInfo, ICollectionService, PageResult} from '../../interface';
+import {CollectionResourceInfo, ICollectionService} from '../../interface';
+import {IMongodbOperation, PageResult, FreelogContext} from "egg-freelog-base";
 
 @provide('resourceCollectionService')
 export class ResourceCollectionService implements ICollectionService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
-    resourceCollectionProvider;
+    resourceCollectionProvider: IMongodbOperation<CollectionResourceInfo>;
 
     async collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo> {
         return this.resourceCollectionProvider.findOneAndUpdate({
@@ -20,7 +21,7 @@ export class ResourceCollectionService implements ICollectionService {
 
     async isCollected(resourceIds: string[]): Promise<Array<{ resourceId: string, isCollected: boolean }>> {
         const condition = {
-            userId: this.ctx.request.userId, resourceId: {$in: resourceIds}
+            userId: this.ctx.userId, resourceId: {$in: resourceIds}
         };
         const collectedResourceSet = await this.resourceCollectionProvider.find(condition, 'resourceId')
             .then(list => new Set(list.map(x => x.resourceId)));
@@ -44,7 +45,7 @@ export class ResourceCollectionService implements ICollectionService {
     }
 
     async findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>> {
-        const condition: any = {userId: this.ctx.request.userId};
+        const condition: any = {userId: this.ctx.userId};
         if (resourceType) {
             condition.resourceType = resourceType;
         }
@@ -103,12 +104,12 @@ export class ResourceCollectionService implements ICollectionService {
 
         const [totalItemInfo] = await this.resourceCollectionProvider.aggregate(countAggregatePipelines);
         const {totalItem = 0} = totalItemInfo || {};
-        const result = {page, pageSize, totalItem, dataList: []};
+        const result: PageResult<CollectionResourceInfo> = {page, pageSize, totalItem, dataList: []};
         if (totalItem <= (page - 1) * pageSize) {
             return result;
         }
 
-        result.dataList = await this.resourceCollectionProvider.aggregate(resultAggregatePipelines).map(model => {
+        result.dataList = await this.resourceCollectionProvider.aggregate(resultAggregatePipelines).then(list => list.map(model => {
             const {resourceId, createDate, resourceInfos = []} = model;
             const resourceInfo: any = resourceInfos.length ? resourceInfos[0] : {};
             const {resourceName, resourceType, userId, username, coverImages, latestVersion, resourceVersions, updateDate, status} = resourceInfo;
@@ -120,7 +121,7 @@ export class ResourceCollectionService implements ICollectionService {
                 resourceStatus: status,
                 resourceUpdateDate: updateDate,
             };
-        });
+        }));
         return result;
     }
 }

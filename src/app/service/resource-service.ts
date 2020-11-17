@@ -1,6 +1,6 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
-import {ApplicationError} from 'egg-freelog-base';
+import {ApplicationError, FreelogContext, IMongodbOperation, PageResult} from "egg-freelog-base";
 import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions,
@@ -12,7 +12,6 @@ import {
     ResourceVersionInfo,
     UpdateResourceOptions,
     IResourceVersionService,
-    PageResult,
     ResourceAuthTree,
     BaseResourceVersion,
     ResourceDependencyTree,
@@ -26,13 +25,11 @@ import * as semver from 'semver';
 export class ResourceService implements IResourceService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
-    resourceProvider;
+    resourceProvider: IMongodbOperation<ResourceInfo>;
     @inject()
     resourcePropertyGenerator;
-    @inject()
-    resourcePolicyCompiler;
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()

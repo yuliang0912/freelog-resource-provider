@@ -1,12 +1,12 @@
 import * as semver from 'semver';
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import {IJsonSchemaValidate} from '../../interface';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
+// @ts-ignore
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
 
 @scope('Singleton')
 @provide('resourceVersionDependencyValidator')
-export class ResourceVersionDependencyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+export class ResourceVersionDependencyValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
     resourceIdSet = new Set();
 
@@ -17,7 +17,7 @@ export class ResourceVersionDependencyValidator extends freelogCommonJsonSchema 
      */
     validate(operations: object[]): ValidatorResult {
         this.resourceIdSet.clear();
-        return super.validate(operations, super.getSchema('/resourceDependencySchema'));
+        return super.validate(operations, this.schemas['/resourceDependencySchema']);
     }
 
     /**

@@ -1,17 +1,24 @@
 import * as semver from 'semver';
-import {ContractStatusEnum} from '../../enum';
 import {differenceWith, isEmpty, isString} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
-import {InternalClient, LoginUser, ArgumentError} from 'egg-freelog-base';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {SubjectAuthCodeEnum, SubjectAuthResult} from "../../auth-interface";
+import {SubjectAuthResult} from "../../auth-interface";
 import {IOutsideApiService, IResourceAuthService, IResourceService, IResourceVersionService} from '../../interface';
-import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
+import {
+    ArgumentError,
+    IdentityTypeEnum,
+    visitorIdentityValidator,
+    CommonRegex,
+    FreelogContext,
+    ContractStatusEnum,
+    SubjectAuthCodeEnum
+} from 'egg-freelog-base';
 
 @provide()
 @controller('/v2/auths/resource') // 统一URL v2/auths/:subjectType
 export class ResourceAuthController {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     resourceService: IResourceService;
     @inject()
@@ -21,10 +28,11 @@ export class ResourceAuthController {
     @inject()
     resourceVersionService: IResourceVersionService;
 
-    @visitorIdentity(InternalClient | LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     @get('/batchAuth/result')
-    async resourceVersionBatchAuth(ctx) {
+    async resourceVersionBatchAuth() {
 
+        const {ctx} = this;
         const resourceVersionIds = ctx.checkQuery('resourceVersionIds').exist().isSplitMd5().toSplitArray().len(1, 500).value;
         const authType = ctx.checkQuery('authType').optional().in(['testAuth', 'auth']).default('auth').value;
         ctx.validateParams();
@@ -41,8 +49,9 @@ export class ResourceAuthController {
     }
 
     @get('/:subjectId/result')
-    async resourceAuth(ctx) {
+    async resourceAuth() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
         const licenseeId = ctx.checkQuery('licenseeId').optional().value;
         const isIncludeUpstreamAuth = ctx.checkQuery('isIncludeUpstreamAuth').optional().toInt().in([0, 1]).default(1).value;
@@ -81,14 +90,15 @@ export class ResourceAuthController {
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
 
         ctx.body = fileStreamInfo.fileStream;
-        ctx.set('content-length', fileStreamInfo.fileSize);
+        ctx.set('content-length', fileStreamInfo.fileSize.toString());
         ctx.attachment(fileStreamInfo.fileName);
     }
 
     @get('/:subjectId/upstreamAuth/result')
-    @visitorIdentity(LoginUser)
-    async resourceUpstreamAuth(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async resourceUpstreamAuth() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
         const version = ctx.checkBody('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
@@ -115,12 +125,13 @@ export class ResourceAuthController {
 
     // 由于无法确定当前用户与乙方之间的关联,所以关系层面由请求方标的物服务校验,并保证数据真实性.
     // 合同授权接口属于内部接口,不对外提供.后续如果考虑实现身份授权链的验证,则可以开放外部调用
-    @visitorIdentity(InternalClient | LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     @get('/:subjectId/contractAuth/(fileStream|result)')
-    async subjectContractAuth(ctx) {
+    async subjectContractAuth() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
-        const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        const contractIds = ctx.checkQuery('contractIds').exist().isSplitCommonRegex.mongoObjectId().toSplitArray().len(1, 100).value;
         const version = ctx.checkBody('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
@@ -155,14 +166,15 @@ export class ResourceAuthController {
 
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
         ctx.body = fileStreamInfo.fileStream;
-        ctx.set('content-length', fileStreamInfo.fileSize);
+        ctx.set('content-length', fileStreamInfo.fileSize.toString());
         ctx.attachment(fileStreamInfo.fileName);
     }
 
-    @visitorIdentity(InternalClient | LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     @get('/:subjectId/relationTreeAuth')
-    async resourceRelationTreeAuthResult(ctx) {
+    async resourceRelationTreeAuthResult() {
 
+        const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('subjectId').exist().decodeURIComponent().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value;
@@ -170,17 +182,16 @@ export class ResourceAuthController {
         ctx.validateParams();
 
         let resourceInfo = null;
-        if (mongoObjectId.test(resourceIdOrName)) {
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName);
-        } else if (fullResourceName.test(resourceIdOrName)) {
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName);
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'), data: {resourceIdOrName}
-        });
+        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
+
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -196,9 +207,7 @@ export class ResourceAuthController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, {
-            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
-        });
+        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
 
         await this.resourceAuthService.resourceRelationTreeAuth(versionInfo).then(ctx.success);
     }

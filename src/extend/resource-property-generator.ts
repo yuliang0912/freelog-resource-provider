@@ -1,6 +1,6 @@
 import {clean} from 'semver';
 import {scope, provide} from 'midway';
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper';
+import {CryptoHelper} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide('resourcePropertyGenerator')
@@ -13,7 +13,7 @@ export class ResourcePropertyGenerator {
      * @returns {string}
      */
     generateResourceVersionId(resourceId: string, version: string): string {
-        return md5(`${resourceId}-${clean(version)}`);
+        return CryptoHelper.md5(`${resourceId}-${clean(version)}`);
     }
 
     /**
@@ -22,6 +22,6 @@ export class ResourcePropertyGenerator {
      * @returns {string}
      */
     generateResourceUniqueKey(resourceName: string): string {
-        return md5(`${resourceName.toLowerCase()}}`);
+        return CryptoHelper.md5(`${resourceName.toLowerCase()}}`);
     }
 }

@@ -1,7 +1,8 @@
-import { CollectionResourceInfo, ICollectionService, PageResult } from '../../interface';
+import { CollectionResourceInfo, ICollectionService } from '../../interface';
+import { IMongodbOperation, PageResult, FreelogContext } from "egg-freelog-base";
 export declare class ResourceCollectionService implements ICollectionService {
-    ctx: any;
-    resourceCollectionProvider: any;
+    ctx: FreelogContext;
+    resourceCollectionProvider: IMongodbOperation<CollectionResourceInfo>;
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;
     isCollected(resourceIds: string[]): Promise<Array<{
         resourceId: string;

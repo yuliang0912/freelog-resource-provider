@@ -3,9 +3,9 @@ import {
     ContractInfo, IResourceService, IResourceAuthService,
     ResourceVersionInfo, IOutsideApiService, ResourceAuthTree, ResourceInfo
 } from '../../interface';
-import {SubjectTypeEnum} from "../../enum";
 import {chain, isArray, isEmpty, first} from 'lodash';
-import {SubjectAuthResult, SubjectAuthCodeEnum} from "../../auth-interface";
+import {SubjectAuthResult} from "../../auth-interface";
+import {SubjectAuthCodeEnum, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide()
 export class ResourceAuthService implements IResourceAuthService {

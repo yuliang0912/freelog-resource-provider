@@ -1,15 +1,19 @@
 import * as semver from 'semver';
 import {isEmpty} from 'lodash';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
-import {LoginUser, InternalClient, ArgumentError, ApplicationError} from 'egg-freelog-base';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {IJsonSchemaValidate, IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
+import {
+    IdentityTypeEnum, visitorIdentityValidator,
+    FreelogContext, ArgumentError, ApplicationError, IJsonSchemaValidate
+} from 'egg-freelog-base';
+import {IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
 
 @provide()
 @priority(1)
 @controller('/v2/resources')
 export class ResourceVersionController {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     resourceService: IResourceService;
     @inject()
@@ -28,7 +32,7 @@ export class ResourceVersionController {
     batchSignSubjectValidator: IJsonSchemaValidate;
 
     @get('/:resourceId/versions')
-    @visitorIdentity(LoginUser | InternalClient)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async index(ctx) {
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -53,7 +57,7 @@ export class ResourceVersionController {
     }
 
     @get('/:resourceId/versions/drafts')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async resourceVersionDraft(ctx) {
 
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
@@ -66,7 +70,7 @@ export class ResourceVersionController {
     }
 
     @post('/:resourceId/versions')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async create(ctx) {
         const fileSha1 = ctx.checkBody('fileSha1').exist().isSha1().toLowercase().value;
         const filename = ctx.checkBody('filename').exist().type('string').len(1, 200).value;
@@ -142,7 +146,7 @@ export class ResourceVersionController {
 
     // 根据fileSha1查询所加入的资源以及具体版本信息,例如用户存储对象需要查询所加入的资源
     @get('/files/:fileSha1/versions')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async versionsBySha1(ctx) {
         const fileSha1 = ctx.checkParams('fileSha1').exist().isSha1().toLowercase().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -155,7 +159,7 @@ export class ResourceVersionController {
     }
 
     @post('/:resourceId/versions/drafts')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async createOrUpdateResourceVersionDraft(ctx) {
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const draftData = ctx.checkBody('draftData').exist().isObject().value;
@@ -168,7 +172,7 @@ export class ResourceVersionController {
         await this.resourceVersionService.saveOrUpdateResourceVersionDraft(resourceInfo, draftData).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/:resourceId/versions/cycleDependencyCheck')
     async validateResourceVersionDependencies(ctx) {
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
@@ -188,7 +192,7 @@ export class ResourceVersionController {
     }
 
     @get('/:resourceId/versions/:version')
-    @visitorIdentity(LoginUser | InternalClient)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async show(ctx) {
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
@@ -199,7 +203,7 @@ export class ResourceVersionController {
     }
 
     @get('/:resourceId/versions/:version/download')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async download(ctx) {
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
@@ -216,7 +220,7 @@ export class ResourceVersionController {
     }
 
     @get('/versions/isCanBeCreate')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async fileIsCanBeCreate(ctx) {
         const fileSha1 = ctx.checkQuery('fileSha1').exist().isSha1().toLowercase().value;
         ctx.validateParams();
@@ -244,7 +248,7 @@ export class ResourceVersionController {
     }
 
     @put('/:resourceId/versions/:version')
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async update(ctx) {
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;

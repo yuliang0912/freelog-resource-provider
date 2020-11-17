@@ -1,11 +1,11 @@
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import {IJsonSchemaValidate} from '../../interface';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
+// @ts-ignore
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
 
 @scope('Singleton')
 @provide('resourceUpcastValidator')
-export class ResourceUpcastValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+export class ResourceUpcastValidator extends CommonJsonSchema implements IJsonSchemaValidate {
 
     /**
      * 解决依赖资源格式校验
@@ -13,7 +13,7 @@ export class ResourceUpcastValidator extends freelogCommonJsonSchema implements 
      * @returns {ValidatorResult}
      */
     validate(operations: object[]): ValidatorResult {
-        return super.validate(operations, super.getSchema('/upcastResourceSchema'));
+        return super.validate(operations, this.schemas['/upcastResourceSchema']);
     }
 
     /**

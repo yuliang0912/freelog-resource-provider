@@ -118,7 +118,9 @@ module.exports = {
 
     'subject-policy-name-duplicate-failed': '策略名称存在重复',
 
-    'subject-policy-repeatability-validate-failed': '资源策略校验失败,存在重复的策略'
+    'subject-policy-repeatability-validate-failed': '资源策略校验失败,存在重复的策略',
+
+    'name is already existing': '资源名已经存在'
 }
 
 

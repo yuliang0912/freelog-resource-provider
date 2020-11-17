@@ -1,9 +1,10 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
+import {MongodbOperation} from 'egg-freelog-base'
+import {ResourceVersionInfo} from "../../interface";
 
 @provide()
 @scope('Singleton')
-export default class ResourceVersionProvider extends MongoBaseOperation {
+export default class ResourceVersionProvider extends MongodbOperation<ResourceVersionInfo> {
     constructor(@inject('model.ResourceVersion') model) {
         super(model);
     }

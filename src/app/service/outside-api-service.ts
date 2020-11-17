@@ -1,22 +1,20 @@
-import {uniq, chunk, flatten} from 'lodash';
-import {provide, inject} from 'midway';
-import {IdentityType, SubjectTypeEnum} from '../../enum';
-import {SubjectInfo, ContractInfo, IOutsideApiService, BasePolicyInfo} from '../../interface';
+import {chunk, flatten, uniq} from 'lodash';
+import {inject, provide} from 'midway';
+import {BasePolicyInfo, ContractInfo, IOutsideApiService, SubjectInfo} from '../../interface';
+import {FreelogContext, ContractLicenseeIdentityTypeEnum, CurlResFormatEnum, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
 
     /**
      * 获取文件流
      * @param fileSha1
      */
     async getFileStream(fileSha1: string): Promise<any> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, {
-            dataType: 'original'
-        });
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.OriginalData);
     }
 
     /**
@@ -37,7 +35,7 @@ export class OutsideApiService implements IOutsideApiService {
     async batchSignResourceContracts(licenseeResourceId, subjects: SubjectInfo[]): Promise<ContractInfo[]> {
         const postBody = {
             subjectType: SubjectTypeEnum.Resource,
-            licenseeIdentityType: IdentityType.Resource,
+            licenseeIdentityType: ContractLicenseeIdentityTypeEnum.Resource,
             licenseeId: licenseeResourceId, subjects
         };
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/batchSign`, {

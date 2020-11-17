@@ -5,7 +5,7 @@ import {
     IResourceVersionService, ResourceInfo, ResourceVersionInfo,
     UpdateResourceVersionOptions, IOutsideApiService, SubjectInfo
 } from '../../interface';
-import {ArgumentError, ApplicationError} from 'egg-freelog-base';
+import {ArgumentError, ApplicationError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {
     isEmpty, isUndefined, isArray,
     uniqBy, chain, differenceBy, difference,
@@ -17,11 +17,11 @@ import {
 export class ResourceVersionService implements IResourceVersionService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     resourceService;
     @inject()
-    resourceVersionProvider;
+    resourceVersionProvider: IMongodbOperation<ResourceVersionInfo>;
     @inject()
     resourcePropertyGenerator;
     @inject()

@@ -1,13 +1,5 @@
-import {ValidatorResult} from 'jsonschema';
-import {IdentityType, SubjectTypeEnum, ContractStatusEnum} from './enum';
 import {SubjectAuthResult} from "./auth-interface";
-
-export interface PageResult<T> {
-    page: number;
-    pageSize: number;
-    totalItem: number;
-    dataList: T[];
-}
+import {ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, ContractStatusEnum, PageResult} from "egg-freelog-base";
 
 export interface operationPolicyInfo {
     policyId?: string;
@@ -92,7 +84,7 @@ export interface ContractInfo {
     licenseeName: string;
     licenseeOwnerId: number;
     licenseeOwnerName: string;
-    licenseeIdentityType: IdentityType;
+    licenseeIdentityType: ContractLicenseeIdentityTypeEnum;
 
     // 标的物相关信息
     subjectId: string;
@@ -202,13 +194,6 @@ export interface ResourceAuthTree {
     versionRange: string;
     fileSha1?: string;
     children: ResourceAuthTree[][];
-}
-
-/**
- * 针对object做校验的基础接口
- */
-export interface IJsonSchemaValidate {
-    validate(instance: object[] | object, ...args): ValidatorResult;
 }
 
 export interface IOutsideApiService {

@@ -1,7 +1,6 @@
-import { ValidatorResult } from 'jsonschema';
-import { IJsonSchemaValidate } from '../../interface';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
-export declare class ResolveDependencyResourceValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+import { IJsonSchemaValidate, CommonJsonSchema } from 'egg-freelog-base';
+import { ValidatorResult } from "jsonschema";
+export declare class ResolveDependencyResourceValidator extends CommonJsonSchema implements IJsonSchemaValidate {
     /**
      * 解决依赖资源格式校验
      * @param {object[]} operations 解决依赖资源数据

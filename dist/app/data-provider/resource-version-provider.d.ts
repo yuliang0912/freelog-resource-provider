@@ -1,4 +1,5 @@
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
-export default class ResourceVersionProvider extends MongoBaseOperation {
+import { MongodbOperation } from 'egg-freelog-base';
+import { ResourceVersionInfo } from "../../interface";
+export default class ResourceVersionProvider extends MongodbOperation<ResourceVersionInfo> {
     constructor(model: any);
 }

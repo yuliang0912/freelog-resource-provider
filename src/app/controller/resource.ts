@@ -1,17 +1,19 @@
 import * as semver from 'semver';
-import {controller, inject, get, post, put, provide} from 'midway';
-import {LoginUser, InternalClient, ArgumentError} from 'egg-freelog-base';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {isString, first, isUndefined, includes, pick, uniqBy, isEmpty} from 'lodash';
-import {mongoObjectId, fullResourceName} from 'egg-freelog-base/app/extend/helper/common_regex';
-import {IJsonSchemaValidate, IResourceService, IResourceVersionService} from '../../interface';
+import {controller, get, inject, post, provide, put} from 'midway';
+import {
+    ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext, IJsonSchemaValidate
+} from 'egg-freelog-base';
+import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy} from 'lodash';
+import {IResourceService, IResourceVersionService} from '../../interface';
+
+const validator = require('validator')
 
 @provide()
 @controller('/v2/resources')
 export class ResourceController {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     resourceService: IResourceService;
     @inject()
@@ -20,8 +22,9 @@ export class ResourceController {
     resourceVersionService: IResourceVersionService;
 
     @get('/')
-    async index(ctx) {
+    async index() {
 
+        const {ctx} = this;
         const page = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
         const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value;
@@ -36,7 +39,7 @@ export class ResourceController {
 
         const condition: any = {};
         if (isSelf) {
-            ctx.validateVisitorIdentity(LoginUser);
+            ctx.validateVisitorIdentity(IdentityTypeEnum.LoginUser);
             condition.userId = ctx.userId;
         }
         if (resourceType) {
@@ -60,12 +63,13 @@ export class ResourceController {
         if (isLoadLatestVersionInfo) {
             pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
         }
+
         return ctx.success(pageResult);
     }
 
     @post('/')
-    @visitorIdentity(LoginUser)
-    async create(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async create(ctx: FreelogContext) {
 
         const name = ctx.checkBody('name').exist().isResourceName().value;
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
@@ -75,16 +79,16 @@ export class ResourceController {
         const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).default([]).value; // 单个标签长度也限制为20,未实现
         ctx.validateParams();
 
-        if (coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (coverImages.some(x => !validator.isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
         this._policySchemaValidate(policies, 'addPolicy');
 
-        const {userId, username} = ctx.userInfo;
-        await this.resourceService.findOneByResourceName(`${username}/${name}`, 'resourceName').then(resourceName => {
-            if (resourceName) {
-                throw new ArgumentError('name is already existing');
+        const {userId, username} = ctx.identityInfo.userInfo;
+        await this.resourceService.findOneByResourceName(`${username}/${name}`, 'resourceName').then(data => {
+            if (isString(data?.resourceName)) {
+                throw new ArgumentError(ctx.gettext('name is already existing'));
             }
         });
 
@@ -95,8 +99,9 @@ export class ResourceController {
     }
 
     @get('/list')
-    async list(ctx) {
+    async list() {
 
+        const {ctx} = this;
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().value;
         const resourceNames = ctx.checkQuery('resourceNames').optional().decodeURIComponent().toSplitArray().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
@@ -122,9 +127,10 @@ export class ResourceController {
     }
 
     @put('/:resourceId')
-    @visitorIdentity(LoginUser)
-    async update(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async update() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const updatePolicies = ctx.checkBody('updatePolicies').optional().isArray().value;
         const addPolicies = ctx.checkBody('addPolicies').optional().isArray().value;
@@ -136,7 +142,7 @@ export class ResourceController {
         if ([updatePolicies, addPolicies, intro, coverImages, tags].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
-        if (!isEmpty(coverImages) && coverImages.some(x => !ctx.app.validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (!isEmpty(coverImages) && coverImages.some(x => !validator.isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
@@ -154,9 +160,10 @@ export class ResourceController {
     }
 
     @get('/:resourceIdOrName/dependencyTree')
-    @visitorIdentity(LoginUser | InternalClient)
-    async dependencyTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async dependencyTree() {
 
+        const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
@@ -166,17 +173,16 @@ export class ResourceController {
         ctx.validateParams();
 
         let resourceInfo = null;
-        if (mongoObjectId.test(resourceIdOrName)) {
+
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName);
-        } else if (fullResourceName.test(resourceIdOrName)) {
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName);
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'), data: {resourceIdOrName}
-        });
+        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -192,9 +198,7 @@ export class ResourceController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, {
-            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
-        });
+        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
 
         await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, {
             isContainRootNode, maxDeep, omitFields
@@ -202,9 +206,10 @@ export class ResourceController {
     }
 
     @get('/:resourceIdOrName/authTree')
-    @visitorIdentity(LoginUser | InternalClient)
-    async authTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async authTree() {
 
+        const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         // const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
@@ -214,17 +219,15 @@ export class ResourceController {
         ctx.validateParams();
 
         let resourceInfo = null;
-        if (mongoObjectId.test(resourceIdOrName)) {
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName);
-        } else if (fullResourceName.test(resourceIdOrName)) {
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName);
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'), data: {resourceIdOrName}
-        });
+        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -240,17 +243,16 @@ export class ResourceController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, {
-            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
-        });
+        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
 
         await this.resourceService.getResourceAuthTree(versionInfo).then(ctx.success);
     }
 
     @get('/:resourceIdOrName/relationTree')
-    @visitorIdentity(LoginUser | InternalClient)
-    async relationTree(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async relationTree() {
 
+        const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const version = ctx.checkQuery('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const versionRange = ctx.checkQuery('versionRange').optional().is(semver.validRange, ctx.gettext('params-format-validate-failed', 'versionRange')).value;
@@ -258,17 +260,15 @@ export class ResourceController {
         ctx.validateParams();
 
         let resourceInfo = null;
-        if (mongoObjectId.test(resourceIdOrName)) {
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName);
-        } else if (fullResourceName.test(resourceIdOrName)) {
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName);
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, {
-            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'), data: {resourceIdOrName}
-        });
+        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -284,16 +284,15 @@ export class ResourceController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, {
-            msg: ctx.gettext('params-validate-failed', 'version'), data: {version}
-        });
+        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
 
         await this.resourceService.getRelationTree(versionInfo).then(ctx.success);
     }
 
     @get('/:resourceIdOrName')
-    async show(ctx) {
+    async show() {
 
+        const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
@@ -301,9 +300,9 @@ export class ResourceController {
         ctx.validateParams();
 
         let resourceInfo = null;
-        if (mongoObjectId.test(resourceIdOrName)) {
+        if (CommonRegex.mongoObjectId.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findByResourceId(resourceIdOrName, projection.join(' '));
-        } else if (fullResourceName.test(resourceIdOrName)) {
+        } else if (CommonRegex.fullResourceName.test(resourceIdOrName)) {
             resourceInfo = await this.resourceService.findOneByResourceName(resourceIdOrName, projection.join(' '));
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
@@ -319,9 +318,10 @@ export class ResourceController {
     }
 
     @get('/:resourceId/contracts/:contractId/coverageVersions')
-    @visitorIdentity(LoginUser)
-    async contractCoverageVersions(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async contractCoverageVersions() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const contractId = ctx.checkParams('contractId').exist().isContractId().value;
         ctx.validateParams();
@@ -332,9 +332,10 @@ export class ResourceController {
     }
 
     @get('/:resourceId/contracts/coverageVersions')
-    @visitorIdentity(LoginUser)
-    async contractsCoverageVersions(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async contractsCoverageVersions() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 200).value;
         ctx.validateParams();
@@ -348,9 +349,7 @@ export class ResourceController {
             for (const resolveResource of resourceVersion.resolveResources) {
                 for (const contract of resolveResource.contracts) {
                     const list = contractMap.get(contract.contractId);
-                    if (list) {
-                        list.push(pick(resourceVersion, ['version', 'versionId']));
-                    }
+                    list?.push(pick(resourceVersion, ['version', 'versionId']));
                 }
             }
         }
@@ -364,9 +363,10 @@ export class ResourceController {
 
     // 同一个资源下所有版本解决的子依赖(含上抛)列表以及对应的解决方式
     @get('/:resourceId/resolveResources')
-    @visitorIdentity(LoginUser)
-    async allResolveResources(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async allResolveResources() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         ctx.validateParams();
 
