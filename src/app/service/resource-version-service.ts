@@ -83,8 +83,8 @@ export class ResourceVersionService implements IResourceVersionService {
 
     /**
      * 更新资源版本
-     * @param {ResourceVersionInfo} versionInfo
-     * @returns {Promise<void>}
+     * @param versionInfo
+     * @param options
      */
     async updateResourceVersion(versionInfo: ResourceVersionInfo, options: UpdateResourceVersionOptions): Promise<ResourceVersionInfo> {
         const model: any = {};
@@ -126,9 +126,8 @@ export class ResourceVersionService implements IResourceVersionService {
 
     /**
      * 保存资源草稿
-     * @param {ResourceInfo} resourceInfo
-     * @param {CreateResourceVersionOptions} options
-     * @returns {Promise<any>}
+     * @param resourceInfo
+     * @param draftData
      */
     async saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object) {
 
@@ -155,8 +154,7 @@ export class ResourceVersionService implements IResourceVersionService {
 
     /**
      * 获取资源文件流
-     * @param resourceId
-     * @param version
+     * @param versionInfo
      */
     async getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }> {
 
@@ -285,14 +283,12 @@ export class ResourceVersionService implements IResourceVersionService {
     }
 
     /**
-     * 检查依赖项是否符合标准
+     * * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态
      * 2.依赖的资源与主资源之间不能存在循环引用.
      * 3.资源的依赖树深度不能超过固定阈值(20)
-     * @param ctx
+     * @param resourceId
      * @param dependencies
-     * @returns {Promise<any>}
-     * @private
      */
     async validateDependencies(resourceId, dependencies): Promise<object[]> {
 
@@ -342,9 +338,7 @@ export class ResourceVersionService implements IResourceVersionService {
      * 循坏依赖检查
      * @param resourceId
      * @param dependencies
-     * @param {number} deep
-     * @returns {Promise<{ret: boolean; deep?: number}>}
-     * @private
+     * @param deep
      */
     async cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{ ret: boolean, deep?: number }> {
 
@@ -377,10 +371,8 @@ export class ResourceVersionService implements IResourceVersionService {
      * 验证上抛和需要解决的资源
      * @param dependencies
      * @param resolveResources
-     * @param baseUpcastReleases
-     * @param {boolean} isCheckBaseUpcast
-     * @returns {Promise<{resolveResources: any; upcastResources: object[]}>}
-     * @private
+     * @param baseUpcastResources
+     * @param isCheckBaseUpcast
      */
     async _validateUpcastAndResolveResource(dependencies, resolveResources, baseUpcastResources, isCheckBaseUpcast = false) {
 

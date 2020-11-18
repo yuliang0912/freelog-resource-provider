@@ -36,7 +36,10 @@ export class ResourceCollectionController {
         ctx.validateParams();
 
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceId'), {resourceId});
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceId'),
+            data: {resourceId}
+        });
 
         const collectionInfo = {
             resourceId,

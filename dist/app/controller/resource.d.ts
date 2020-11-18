@@ -19,7 +19,7 @@ export declare class ResourceController {
     /**
      * 策略格式校验
      * @param policies
-     * @private
+     * @param mode
      */
     _policySchemaValidate(policies: any[], mode: 'addPolicy' | 'updatePolicy'): void;
 }

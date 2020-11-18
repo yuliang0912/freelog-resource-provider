@@ -1,11 +1,10 @@
-import * as semver from 'semver';
 import {isEmpty} from 'lodash';
+import * as semver from 'semver';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
-import {
-    IdentityTypeEnum, visitorIdentityValidator,
-    FreelogContext, ArgumentError, ApplicationError, IJsonSchemaValidate
-} from 'egg-freelog-base';
 import {IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
+import {
+    IdentityTypeEnum, visitorIdentityValidator, FreelogContext, ArgumentError, ApplicationError, IJsonSchemaValidate
+} from 'egg-freelog-base';
 
 @provide()
 @priority(1)
@@ -19,11 +18,11 @@ export class ResourceVersionController {
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()
-    resourceVersionService: IResourceVersionService;
-    @inject()
     customPropertyValidator: IJsonSchemaValidate;
     @inject()
     resourceUpcastValidator: IJsonSchemaValidate;
+    @inject()
+    resourceVersionService: IResourceVersionService;
     @inject()
     resolveDependencyOrUpcastValidator: IJsonSchemaValidate;
     @inject()
@@ -33,7 +32,8 @@ export class ResourceVersionController {
 
     @get('/:resourceId/versions')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
-    async index(ctx) {
+    async index() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
@@ -41,7 +41,8 @@ export class ResourceVersionController {
     }
 
     @get('/versions/detail')
-    async detail(ctx) {
+    async detail() {
+        const {ctx} = this;
         const versionId = ctx.checkQuery('versionId').isMd5().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
@@ -49,7 +50,8 @@ export class ResourceVersionController {
     }
 
     @get('/versions/list')
-    async list(ctx) {
+    async list() {
+        const {ctx} = this;
         const versionIds = ctx.checkQuery('versionIds').exist().toSplitArray().len(1, 100).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
@@ -58,8 +60,9 @@ export class ResourceVersionController {
 
     @get('/:resourceId/versions/drafts')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async resourceVersionDraft(ctx) {
+    async resourceVersionDraft() {
 
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         ctx.validateParams();
 
@@ -71,7 +74,9 @@ export class ResourceVersionController {
 
     @post('/:resourceId/versions')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async create(ctx) {
+    async create() {
+
+        const {ctx} = this;
         const fileSha1 = ctx.checkBody('fileSha1').exist().isSha1().toLowercase().value;
         const filename = ctx.checkBody('filename').exist().type('string').len(1, 200).value;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
@@ -147,20 +152,22 @@ export class ResourceVersionController {
     // 根据fileSha1查询所加入的资源以及具体版本信息,例如用户存储对象需要查询所加入的资源
     @get('/files/:fileSha1/versions')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async versionsBySha1(ctx) {
+    async versionsBySha1() {
+        const {ctx} = this;
         const fileSha1 = ctx.checkParams('fileSha1').exist().isSha1().toLowercase().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         await this.resourceVersionService.find({
             fileSha1,
-            userId: ctx.request.userId
+            userId: ctx.userId
         }, projection.join(' ')).then(ctx.success);
     }
 
     @post('/:resourceId/versions/drafts')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async createOrUpdateResourceVersionDraft(ctx) {
+    async createOrUpdateResourceVersionDraft() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const draftData = ctx.checkBody('draftData').exist().isObject().value;
         ctx.validateParams();
@@ -174,7 +181,8 @@ export class ResourceVersionController {
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/:resourceId/versions/cycleDependencyCheck')
-    async validateResourceVersionDependencies(ctx) {
+    async validateResourceVersionDependencies() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const dependencies = ctx.checkBody('dependencies').exist().isArray().len(1).value;
         ctx.validateParams();
@@ -193,7 +201,8 @@ export class ResourceVersionController {
 
     @get('/:resourceId/versions/:version')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
-    async show(ctx) {
+    async show() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -204,7 +213,8 @@ export class ResourceVersionController {
 
     @get('/:resourceId/versions/:version/download')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async download(ctx) {
+    async download() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
@@ -215,13 +225,14 @@ export class ResourceVersionController {
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
 
         ctx.body = fileStreamInfo.fileStream;
-        ctx.set('content-length', fileStreamInfo.fileSize);
+        ctx.set('content-length', fileStreamInfo.fileSize.toString());
         ctx.attachment(fileStreamInfo.fileName);
     }
 
     @get('/versions/isCanBeCreate')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async fileIsCanBeCreate(ctx) {
+    async fileIsCanBeCreate() {
+        const {ctx} = this;
         const fileSha1 = ctx.checkQuery('fileSha1').exist().isSha1().toLowercase().value;
         ctx.validateParams();
 
@@ -229,7 +240,8 @@ export class ResourceVersionController {
     }
 
     @put('/:resourceId/versions/batchSetContracts')
-    async batchSignAndSetContractToVersion(ctx) {
+    async batchSignAndSetContractToVersion() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const subjects = ctx.checkBody('subjects').exist().isArray().value;
         ctx.validateParams();
@@ -249,7 +261,8 @@ export class ResourceVersionController {
 
     @put('/:resourceId/versions/:version')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async update(ctx) {
+    async update() {
+        const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
         const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         const resolveResources = ctx.checkBody('resolveResources').optional().isArray().value;

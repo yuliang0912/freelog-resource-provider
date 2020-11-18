@@ -179,6 +179,7 @@ export class ResourceService implements IResourceService {
     /**
      * 获取关系树(资源=>资源的依赖=>依赖的上抛,最多三层)
      * @param versionInfo
+     * @param dependencyTree
      */
     async getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]> {
 
@@ -440,9 +441,7 @@ export class ResourceService implements IResourceService {
 
     /**
      * 从依赖树中获取所有相关的版本信息
-     * @param {any[]} dependencyTree
-     * @returns {Promise<ResourceVersionInfo[]>}
-     * @private
+     * @param dependencyTree
      */
     async _getAllVersionInfoFormDependencyTree(dependencyTree: any[]): Promise<ResourceVersionInfo[]> {
 

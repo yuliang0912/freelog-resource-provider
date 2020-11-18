@@ -1,5 +1,5 @@
-import {chunk, flatten, uniq} from 'lodash';
 import {inject, provide} from 'midway';
+import {chunk, flatten, uniq} from 'lodash';
 import {BasePolicyInfo, ContractInfo, IOutsideApiService, SubjectInfo} from '../../interface';
 import {FreelogContext, ContractLicenseeIdentityTypeEnum, CurlResFormatEnum, SubjectTypeEnum} from 'egg-freelog-base';
 

@@ -16,15 +16,14 @@ export declare class ResourceVersionService implements IResourceVersionService {
     createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;
     /**
      * 更新资源版本
-     * @param {ResourceVersionInfo} versionInfo
-     * @returns {Promise<void>}
+     * @param versionInfo
+     * @param options
      */
     updateResourceVersion(versionInfo: ResourceVersionInfo, options: UpdateResourceVersionOptions): Promise<ResourceVersionInfo>;
     /**
      * 保存资源草稿
-     * @param {ResourceInfo} resourceInfo
-     * @param {CreateResourceVersionOptions} options
-     * @returns {Promise<any>}
+     * @param resourceInfo
+     * @param draftData
      */
     saveOrUpdateResourceVersionDraft(resourceInfo: ResourceInfo, draftData: object): Promise<any>;
     /**
@@ -35,8 +34,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
     getResourceVersionDraft(resourceId: string): Promise<any>;
     /**
      * 获取资源文件流
-     * @param resourceId
-     * @param version
+     * @param versionInfo
      */
     getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{
         fileSha1: string;
@@ -59,23 +57,19 @@ export declare class ResourceVersionService implements IResourceVersionService {
      */
     batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]): Promise<boolean>;
     /**
-     * 检查依赖项是否符合标准
+     * * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态
      * 2.依赖的资源与主资源之间不能存在循环引用.
      * 3.资源的依赖树深度不能超过固定阈值(20)
-     * @param ctx
+     * @param resourceId
      * @param dependencies
-     * @returns {Promise<any>}
-     * @private
      */
     validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;
     /**
      * 循坏依赖检查
      * @param resourceId
      * @param dependencies
-     * @param {number} deep
-     * @returns {Promise<{ret: boolean; deep?: number}>}
-     * @private
+     * @param deep
      */
     cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{
         ret: boolean;
@@ -85,10 +79,8 @@ export declare class ResourceVersionService implements IResourceVersionService {
      * 验证上抛和需要解决的资源
      * @param dependencies
      * @param resolveResources
-     * @param baseUpcastReleases
-     * @param {boolean} isCheckBaseUpcast
-     * @returns {Promise<{resolveResources: any; upcastResources: object[]}>}
-     * @private
+     * @param baseUpcastResources
+     * @param isCheckBaseUpcast
      */
     _validateUpcastAndResolveResource(dependencies: any, resolveResources: any, baseUpcastResources: any, isCheckBaseUpcast?: boolean): Promise<{
         resolveResources: any;

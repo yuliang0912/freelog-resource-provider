@@ -150,6 +150,7 @@ export class ResourceController {
         this._policySchemaValidate(updatePolicies, 'updatePolicy');
 
         const resourceInfo = await this.resourceService.findOne({_id: resourceId});
+
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
         const updateResourceOptions = {
@@ -182,7 +183,10 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'),
+            data: {resourceIdOrName}
+        });
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -198,7 +202,10 @@ export class ResourceController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
+        ctx.entityNullObjectCheck(versionInfo, {
+            msg: ctx.gettext('params-validate-failed', 'version'),
+            data: {version}
+        });
 
         await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, {
             isContainRootNode, maxDeep, omitFields
@@ -227,7 +234,10 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'),
+            data: {resourceIdOrName}
+        });
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -243,7 +253,10 @@ export class ResourceController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
+        ctx.entityNullObjectCheck(versionInfo, {
+            msg: ctx.gettext('params-validate-failed', 'version'),
+            data: {version}
+        });
 
         await this.resourceService.getResourceAuthTree(versionInfo).then(ctx.success);
     }
@@ -268,7 +281,10 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'),
+            data: {resourceIdOrName}
+        });
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
         }
@@ -284,7 +300,10 @@ export class ResourceController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
+        ctx.entityNullObjectCheck(versionInfo, {
+            msg: ctx.gettext('params-validate-failed', 'version'),
+            data: {version}
+        });
 
         await this.resourceService.getRelationTree(versionInfo).then(ctx.success);
     }
@@ -391,7 +410,7 @@ export class ResourceController {
     /**
      * 策略格式校验
      * @param policies
-     * @private
+     * @param mode
      */
     _policySchemaValidate(policies: any[], mode: 'addPolicy' | 'updatePolicy') {
         const policyValidateResult = this.resourcePolicyValidator.validate(policies || [], mode);

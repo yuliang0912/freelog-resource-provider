@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {
     "ali-oss": "^6.11.2",
-    "egg-freelog-base": "^3.0.13",
+    "egg-freelog-base": "^3.0.15",
     "egg-scripts": "^2.10.0",
     "jsonschema": "^1.4.0",
     "midway": "^1.20.3",

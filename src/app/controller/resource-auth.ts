@@ -190,7 +190,10 @@ export class ResourceAuthController {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
 
-        ctx.entityNullObjectCheck(resourceInfo, ctx.gettext('params-validate-failed', 'resourceIdOrName'), {resourceIdOrName});
+        ctx.entityNullObjectCheck(resourceInfo, {
+            msg: ctx.gettext('params-validate-failed', 'resourceIdOrName'),
+            data: {resourceIdOrName}
+        });
 
         if (isEmpty(resourceInfo.resourceVersions)) {
             return ctx.success([]);
@@ -207,7 +210,10 @@ export class ResourceAuthController {
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
-        ctx.entityNullObjectCheck(versionInfo, ctx.gettext('params-validate-failed', 'version'), {version});
+        ctx.entityNullObjectCheck(versionInfo, {
+            msg: ctx.gettext('params-validate-failed', 'version'),
+            data: {version}
+        });
 
         await this.resourceAuthService.resourceRelationTreeAuth(versionInfo).then(ctx.success);
     }
