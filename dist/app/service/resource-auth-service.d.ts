@@ -16,6 +16,7 @@ export declare class ResourceAuthService implements IResourceAuthService {
     /**
      * 资源批量授权,不调用授权树,直接对比合约状态
      * @param resourceVersions
+     * @param authType
      */
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'auth' | 'testAuth'): Promise<any[]>;
     /**
@@ -41,7 +42,8 @@ export declare class ResourceAuthService implements IResourceAuthService {
     /**
      * 从授权树中递归获取所有的合同ID
      * @param resourceAuthTree
-     * @private
+     * @param startDeep
+     * @param endDeep
      */
     _getContractIdFromResourceAuthTree(resourceAuthTree: ResourceAuthTree[][], startDeep?: number, endDeep?: number): string[];
 }

@@ -1,10 +1,14 @@
 import {omit} from 'lodash';
-import {scope, provide} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {scope, provide, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.ResourceCollection')
-export class ResourceCollectionModel extends MongooseModelBase implements IMongooseModelBase {
+export class ResourceCollectionModel extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
 

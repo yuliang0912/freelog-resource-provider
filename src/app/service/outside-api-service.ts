@@ -27,10 +27,9 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
-     * 批量签约(已经签过不会重签)
-     * @param nodeId
-     * @param {SubjectInfo[]} subjects
-     * @returns {Promise<ContractInfo[]>}
+     * 批量签约(已经签过不会重签,合约服务会自动过滤)
+     * @param licenseeResourceId
+     * @param subjects
      */
     async batchSignResourceContracts(licenseeResourceId, subjects: SubjectInfo[]): Promise<ContractInfo[]> {
         const postBody = {
@@ -44,8 +43,8 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
-     * 创建策略
-     * @param policyText
+     * 批量创建策略
+     * @param policyTexts
      */
     async createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]> {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}`, {

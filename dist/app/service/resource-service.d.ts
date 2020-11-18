@@ -40,6 +40,7 @@ export declare class ResourceService implements IResourceService {
     /**
      * 获取资源关系树
      * @param versionInfo
+     * @param dependencyTree
      */
     getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
     /**
@@ -101,8 +102,7 @@ export declare class ResourceService implements IResourceService {
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
     /**
      * 策略校验
-     * @param policyIds
-     * @private
+     * @param policies
      */
     _validateAndCreateSubjectPolicies(policies: operationPolicyInfo[]): Promise<PolicyInfo[]>;
     /**
@@ -119,15 +119,13 @@ export declare class ResourceService implements IResourceService {
      * 从依赖树中获取所有相关的版本信息
      * @param dependencyTree
      */
-    _getAllVersionInfoFormDependencyTree(dependencyTree: any[]): Promise<ResourceVersionInfo[]>;
     /**
      * 从依赖树中获取指定的所有发行版本(查找多重上抛)
      * 例如深度2的树节点上抛了A-1.0,深度3节点也上抛了A-1.1.
      * 然后由深度为1的节点解决了A.授权树需要找到1.0和1.1,然后分别计算所有分支
      * @param dependencies
-     * @param resource
+     * @param resourceId
      * @param _list
-     * @private
      */
     _findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list?: ResourceDependencyTree[]): ResourceDependencyTree[];
     /**
@@ -155,9 +153,8 @@ export declare class ResourceService implements IResourceService {
      * 获取资源状态
      * 1: 必须具备有效的策略
      * 2: 必须包含一个有效的版本
-     * @param {ResourceInfo} resourceInfo 资源信息
-     * @returns {number} 资源状态
-     * @private
+     * @param resourceVersions
+     * @param policies
      */
     static _getResourceStatus(resourceVersions: object[], policies: PolicyInfo[]): number;
 }

@@ -1,11 +1,15 @@
 import {omit, isUndefined, isArray, isEmpty} from 'lodash';
-import {scope, provide} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {scope, provide, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.ResourceVersion')
-export class ResourceVersionModel extends MongooseModelBase implements IMongooseModelBase {
+export class ResourceVersionModel extends MongooseModelBase {
 
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
+    
     buildMongooseModel() {
 
         // 自定义属性描述器主要面向继承者,例如展品需要对资源中的自定义属性进行编辑

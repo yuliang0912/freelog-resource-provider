@@ -84,8 +84,8 @@ export class ResourceCollectionService implements ICollectionService {
             $limit: pageSize
         }];
 
-        let countAggregatePipelines: any[] = [];
-        let resultAggregatePipelines: any[] = [];
+        let countAggregatePipelines: any[];
+        let resultAggregatePipelines: any[];
         if ([0, 1].includes(resourceStatus)) {
             countAggregatePipelines = flatten([
                 collectionMatchAggregates, joinResourceAggregates, resourceMatchAggregates, countAggregates

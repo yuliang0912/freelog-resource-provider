@@ -1,5 +1,5 @@
-import { IJsonSchemaValidate, CommonJsonSchema } from 'egg-freelog-base';
 import { ValidatorResult } from "jsonschema";
+import { IJsonSchemaValidate, CommonJsonSchema } from 'egg-freelog-base';
 export declare class ResolveDependencyResourceValidator extends CommonJsonSchema implements IJsonSchemaValidate {
     /**
      * 解决依赖资源格式校验

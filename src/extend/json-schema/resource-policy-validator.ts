@@ -1,6 +1,5 @@
-import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-// @ts-ignore
+import {provide, init, scope} from 'midway';
 import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
 
 @scope('Singleton')
@@ -9,9 +8,8 @@ export class ResourcePolicyValidator extends CommonJsonSchema implements IJsonSc
 
     /**
      * 策略格式校验
-     * @param {object[]} operations 策略信息
-     * @param {boolean} isUpdateMode 是否更新模式
-     * @returns {ValidatorResult}
+     * @param operations
+     * @param args
      */
     validate(operations: object[], ...args): ValidatorResult {
         const schemaId = args[0] === 'addPolicy' ? '/addPolicySchema' : '/updatePolicySchema';

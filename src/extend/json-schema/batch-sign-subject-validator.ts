@@ -1,7 +1,5 @@
-import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-
-// @ts-ignore
+import {provide, init, scope} from 'midway';
 import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
 
 

@@ -1,8 +1,7 @@
-import {provide, init, scope} from 'midway';
-
-// @ts-ignore
-import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
 import {ValidatorResult} from "jsonschema";
+import {provide, init, scope} from 'midway';
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
+
 
 @scope('Singleton')
 @provide('resolveDependencyOrUpcastValidator')

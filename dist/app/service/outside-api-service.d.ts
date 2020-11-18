@@ -14,15 +14,14 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<any>;
     /**
-     * 批量签约(已经签过不会重签)
-     * @param nodeId
-     * @param {SubjectInfo[]} subjects
-     * @returns {Promise<ContractInfo[]>}
+     * 批量签约(已经签过不会重签,合约服务会自动过滤)
+     * @param licenseeResourceId
+     * @param subjects
      */
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     /**
-     * 创建策略
-     * @param policyText
+     * 批量创建策略
+     * @param policyTexts
      */
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
     /**
