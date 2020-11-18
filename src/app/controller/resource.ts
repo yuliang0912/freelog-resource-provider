@@ -1,12 +1,11 @@
 import * as semver from 'semver';
+import {isURL} from 'validator';
 import {controller, get, inject, post, provide, put} from 'midway';
+import {IResourceService, IResourceVersionService} from '../../interface';
+import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy} from 'lodash';
 import {
     ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext, IJsonSchemaValidate
 } from 'egg-freelog-base';
-import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy} from 'lodash';
-import {IResourceService, IResourceVersionService} from '../../interface';
-
-const validator = require('validator')
 
 @provide()
 @controller('/v2/resources')
@@ -79,7 +78,7 @@ export class ResourceController {
         const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).default([]).value; // 单个标签长度也限制为20,未实现
         ctx.validateParams();
 
-        if (coverImages.some(x => !validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (coverImages.some(x => !isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 
@@ -142,7 +141,7 @@ export class ResourceController {
         if ([updatePolicies, addPolicies, intro, coverImages, tags].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
-        if (!isEmpty(coverImages) && coverImages.some(x => !validator.isURL(x.toString(), {protocols: ['https']}))) {
+        if (!isEmpty(coverImages) && coverImages.some(x => !isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
 

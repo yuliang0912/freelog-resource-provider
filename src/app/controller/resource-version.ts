@@ -85,7 +85,7 @@ export class ResourceVersionController {
         const description = ctx.checkBody('description').optional().type('string').default('').value;
         const dependencies = ctx.checkBody('dependencies').optional().isArray().default([]).value;
         const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().default([]).value;
-        //  资源的第一个版本才需要此参数,其他版本此参数将被忽略
+        // 资源的第一个版本才需要此参数,其他版本此参数将被忽略
         const baseUpcastResources = ctx.checkBody('baseUpcastResources').optional().isArray().default([]).value;
         ctx.validateParams();
 
