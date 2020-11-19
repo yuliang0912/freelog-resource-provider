@@ -73,7 +73,7 @@ export class OutsideApiService implements IOutsideApiService {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
         const tasks = chunk(uniq(contractIds), 100).map(contractIdChunk => {
             return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/list?contractIds=${contractIds.toString()}&${optionParams.join('&')}`);
-        })
+        });
 
         return Promise.all(tasks).then(results => flatten(results));
     }

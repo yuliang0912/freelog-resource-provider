@@ -73,7 +73,7 @@ export class ResourceController {
         const name = ctx.checkBody('name').exist().isResourceName().value;
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
-        const intro = ctx.checkBody('intro').optional().type('string').default('').len(0, 1000).value;
+        const intro = ctx.checkBody('intro').optional().default('').len(0, 1000).value;
         const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).default([]).value;
         const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).default([]).value; // 单个标签长度也限制为20,未实现
         ctx.validateParams();

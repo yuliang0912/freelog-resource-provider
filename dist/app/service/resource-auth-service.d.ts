@@ -6,6 +6,7 @@ export declare class ResourceAuthService implements IResourceAuthService {
     /**
      * 资源授权
      * @param versionInfo
+     * @param isIncludeUpstreamAuth
      */
     resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult>;
     /**

@@ -18,6 +18,7 @@ export class ResourceAuthService implements IResourceAuthService {
     /**
      * 资源授权
      * @param versionInfo
+     * @param isIncludeUpstreamAuth
      */
     async resourceAuth(versionInfo: ResourceVersionInfo, isIncludeUpstreamAuth: boolean): Promise<SubjectAuthResult> {
 

@@ -131,7 +131,7 @@ export class ResourceAuthController {
 
         const {ctx} = this;
         const resourceId = ctx.checkParams('subjectId').isResourceId().value;
-        const contractIds = ctx.checkQuery('contractIds').exist().isSplitCommonRegex.mongoObjectId().toSplitArray().len(1, 100).value;
+        const contractIds = ctx.checkQuery('contractIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         const version = ctx.checkBody('version').optional().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
         ctx.validateParams();
 
