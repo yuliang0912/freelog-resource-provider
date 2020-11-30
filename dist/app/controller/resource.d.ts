@@ -7,6 +7,7 @@ export declare class ResourceController {
     resourceVersionService: IResourceVersionService;
     index(): Promise<FreelogContext>;
     create(ctx: FreelogContext): Promise<void>;
+    createdCount(): Promise<void>;
     list(): Promise<void>;
     update(): Promise<void>;
     dependencyTree(): Promise<FreelogContext>;

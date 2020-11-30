@@ -245,6 +245,8 @@ export interface IResourceService {
     fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
 
     fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+
+    findUserCreatedResourceCounts(userIds: number[]);
 }
 
 export interface IResourceVersionService {

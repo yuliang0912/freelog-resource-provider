@@ -63,6 +63,7 @@ export declare class ResourceService implements IResourceService {
      * @returns {Promise<ResourceInfo>}
      */
     findOneByResourceName(resourceName: string, ...args: any[]): Promise<ResourceInfo>;
+    findUserCreatedResourceCounts(userIds: number[]): Promise<any>;
     /**
      * 根据条件查找单个资源
      * @param {object} condition 查询条件

@@ -281,6 +281,20 @@ export class ResourceService implements IResourceService {
         return this.resourceProvider.findOne({uniqueKey}, ...args);
     }
 
+    async findUserCreatedResourceCounts(userIds: number[]) {
+        return this.resourceProvider.aggregate([
+            {
+                $match: {userId: {$in: userIds}}
+            },
+            {
+                $group: {_id: "$userId", count: {"$sum": 1}}
+            },
+            {
+                $project: {_id: 0, userId: "$_id", count: "$count"}
+            }
+        ])
+    }
+
     /**
      * 根据条件查找单个资源
      * @param {object} condition 查询条件

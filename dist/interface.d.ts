@@ -191,6 +191,7 @@ export interface IResourceService {
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
     fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
     fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    findUserCreatedResourceCounts(userIds: number[]): any;
 }
 export interface IResourceVersionService {
     createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;

@@ -54,7 +54,7 @@ export class ResourceVersionCustomPropertyValidator extends CommonJsonSchema imp
                         uniqueItems: true,
                         maxItems: 30,
                         items: {
-                            type: 'string', minLength: 1, maxLength: 15, required: true,
+                            type: 'string', minLength: 1, maxLength: 500, required: true,
                         }
                     }
                 }

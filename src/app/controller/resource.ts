@@ -97,6 +97,20 @@ export class ResourceController {
         await this.resourceService.createResource(model).then(ctx.success);
     }
 
+    @get('/count')
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    async createdCount() {
+        const {ctx} = this;
+        const userIds = ctx.checkQuery('userIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const list = await this.resourceService.findUserCreatedResourceCounts(userIds.map(x => parseInt(x)));
+        ctx.success(userIds.map(userId => {
+            const record = list.find(x => x.userId.toString() === userId);
+            return {userId: parseInt(userId), createdResourceCount: record?.count ?? 0}
+        }))
+    }
+
     @get('/list')
     async list() {
 
