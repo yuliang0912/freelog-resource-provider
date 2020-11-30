@@ -24,8 +24,9 @@ export class ResourceController {
     async index() {
 
         const {ctx} = this;
-        const page = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
@@ -55,7 +56,7 @@ export class ResourceController {
             condition._id = {$lt: startResourceId};
         }
 
-        const pageResult = await this.resourceService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+        const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {createDate: -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }

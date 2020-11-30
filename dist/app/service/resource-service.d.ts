@@ -78,16 +78,7 @@ export declare class ResourceService implements IResourceService {
      * @returns {Promise<ResourceInfo[]>}
      */
     find(condition: object, ...args: any[]): Promise<ResourceInfo[]>;
-    /**
-     * 分页查找资源
-     * @param {object} condition
-     * @param {number} page
-     * @param {number} pageSize
-     * @param {string[]} projection
-     * @param {object} orderBy
-     * @returns {Promise<ResourceInfo[]>}
-     */
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceInfo>>;
     /**
      * 按条件统计资源数量
      * @param {object} condition

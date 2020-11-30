@@ -5,11 +5,11 @@
   "private": true,
   "dependencies": {
     "ali-oss": "^6.11.2",
-    "egg-freelog-base": "^3.0.21",
+    "egg-freelog-base": "^3.0.25",
     "egg-scripts": "^2.10.0",
     "jsonschema": "^1.4.0",
     "midway": "^1.20.3",
-    "mongoose": "^5.10.11",
+    "mongoose": "^5.10.18",
     "probe-image-size": "^5.0.0",
     "semver": "^7.3.2",
     "util": "^0.12.3",
@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.17.44",
+    "@types/node": "^10.17.47",
     "cross-env": "^6.0.0",
     "egg-ci": "^1.18.0",
     "midway-bin": "^1.20.3",

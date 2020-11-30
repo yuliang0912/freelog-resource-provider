@@ -236,7 +236,7 @@ export interface IResourceService {
 
     find(condition: object, ...args): Promise<ResourceInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceInfo>>;
 
     count(condition: object): Promise<number>;
 
@@ -290,7 +290,7 @@ export interface ICollectionService {
 
     count(condition: object): Promise<number>;
 
-    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>>;
+    findIntervalList(resourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>>;
 }
 
 export interface IResourceAuthService {

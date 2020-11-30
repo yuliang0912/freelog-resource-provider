@@ -17,14 +17,14 @@ export class ResourceCollectionController {
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async index() {
         const {ctx} = this;
-        const page = ctx.checkQuery('page').default(1).gt(0).toInt().value;
-        const pageSize = ctx.checkQuery('pageSize').default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const resourceStatus = ctx.checkQuery('resourceStatus').optional().toInt().in([0, 1, 2]).value;
         ctx.validateParams();
 
-        await this.resourceCollectionService.findPageList(resourceType, keywords, resourceStatus, page, pageSize).then(ctx.success);
+        await this.resourceCollectionService.findIntervalList(resourceType, keywords, resourceStatus, skip, limit).then(ctx.success);
     }
 
     @post('/')

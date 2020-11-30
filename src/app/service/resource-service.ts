@@ -315,22 +315,8 @@ export class ResourceService implements IResourceService {
         return this.resourceProvider.find(condition, ...args);
     }
 
-    /**
-     * 分页查找资源
-     * @param {object} condition
-     * @param {number} page
-     * @param {number} pageSize
-     * @param {string[]} projection
-     * @param {object} orderBy
-     * @returns {Promise<ResourceInfo[]>}
-     */
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>> {
-        let dataList = [];
-        const totalItem = await this.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.resourceProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
-        }
-        return {page, pageSize, totalItem, dataList};
+    async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceInfo>> {
+        return this.resourceProvider.findIntervalList(condition, skip, limit, projection?.toString(), sort);
     }
 
     /**

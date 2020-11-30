@@ -44,7 +44,7 @@ export class ResourceCollectionService implements ICollectionService {
         return this.resourceCollectionProvider.count(condition);
     }
 
-    async findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>> {
+    async findIntervalList(resourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>> {
         const condition: any = {userId: this.ctx.userId};
         if (resourceType) {
             condition.resourceType = resourceType;
@@ -79,9 +79,9 @@ export class ResourceCollectionService implements ICollectionService {
             }];
         const countAggregates: any[] = [{$count: 'totalItem'}];
         const pageAggregates: any[] = [{
-            $skip: (page - 1) * pageSize
+            $skip: skip
         }, {
-            $limit: pageSize
+            $limit: limit
         }];
 
         let countAggregatePipelines: any[];
@@ -104,8 +104,8 @@ export class ResourceCollectionService implements ICollectionService {
 
         const [totalItemInfo] = await this.resourceCollectionProvider.aggregate(countAggregatePipelines);
         const {totalItem = 0} = totalItemInfo || {};
-        const result: PageResult<CollectionResourceInfo> = {page, pageSize, totalItem, dataList: []};
-        if (totalItem <= (page - 1) * pageSize) {
+        const result: PageResult<CollectionResourceInfo> = {skip, limit, totalItem, dataList: []};
+        if (totalItem <= skip) {
             return result;
         }
 

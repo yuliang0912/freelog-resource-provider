@@ -186,7 +186,7 @@ export interface IResourceService {
     getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceInfo>;
     find(condition: object, ...args: any[]): Promise<ResourceInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ResourceInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceInfo>>;
     count(condition: object): Promise<number>;
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
     fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
@@ -225,7 +225,7 @@ export interface ICollectionService {
     findOne(condition: object, ...args: any[]): Promise<CollectionResourceInfo>;
     deleteOne(condition: object): Promise<boolean>;
     count(condition: object): Promise<number>;
-    findPageList(resourceType: string, keywords: string, resourceStatus: number, page: number, pageSize: number): Promise<PageResult<CollectionResourceInfo>>;
+    findIntervalList(resourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>>;
 }
 export interface IResourceAuthService {
     contractAuth(subjectId: any, contracts: ContractInfo[], authType: 'auth' | 'testAuth'): SubjectAuthResult;
