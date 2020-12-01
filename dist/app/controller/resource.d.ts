@@ -5,7 +5,7 @@ export declare class ResourceController {
     resourceService: IResourceService;
     resourcePolicyValidator: IJsonSchemaValidate;
     resourceVersionService: IResourceVersionService;
-    index(): Promise<FreelogContext>;
+    index(): Promise<void>;
     create(ctx: FreelogContext): Promise<void>;
     createdCount(): Promise<void>;
     list(): Promise<void>;

@@ -52,22 +52,17 @@ export class ResourceController {
             const searchRegExp = new RegExp(keywords, 'i');
             condition.$or = [{resourceName: searchRegExp}, {resourceType: searchRegExp}];
         }
-
-        const totalItem = await this.resourceService.count(condition);
-
         if (!isUndefined(startResourceId)) {
-            condition._id = {$lt: startResourceId};
+            condition._id = {$lte: startResourceId};
         }
-        let dataList = await this.resourceService.find(condition, projection.join(' '), {
-            skip, limit, sort: sort ?? {createDate: -1}
-        })
+        const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {createDate: -1});
         if (isLoadPolicyInfo) {
-            dataList = await this.resourceService.fillResourcePolicyInfo(dataList);
+            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }
         if (isLoadLatestVersionInfo) {
-            dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);
+            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
         }
-        return ctx.success({skip, limit, totalItem, dataList});
+        ctx.success(pageResult);
     }
 
     @post('/')
