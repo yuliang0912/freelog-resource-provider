@@ -8,9 +8,9 @@ import {
 import {ArgumentError, ApplicationError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {
     isEmpty, isUndefined, isArray,
-    uniqBy, chain, differenceBy, difference,
+    uniqBy, chain, differenceBy,
     assign, pick, isString,
-    differenceWith, intersectionWith
+    differenceWith, intersectionWith, intersection
 } from 'lodash';
 
 @provide('resourceVersionService')
@@ -450,7 +450,7 @@ export class ResourceVersionService implements IResourceVersionService {
     _checkCustomPropertyDescriptors(systemProperty: object, customPropertyDescriptors: any[]) {
         const systemPropertyKeys = Object.keys(systemProperty ?? {});
         const customPropertyKeys = customPropertyDescriptors?.map(x => x.key);
-        const repetitiveKeys = difference(customPropertyKeys, systemPropertyKeys);
+        const repetitiveKeys = intersection(systemPropertyKeys, customPropertyKeys);
         if (!isEmpty(repetitiveKeys)) {
             throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'customPropertyDescriptors'), {repetitiveKeys})
         }
