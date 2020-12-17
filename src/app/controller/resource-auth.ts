@@ -14,7 +14,7 @@ import {
 } from 'egg-freelog-base';
 
 @provide()
-@controller('/v2/auths/resource') // 统一URL v2/auths/:subjectType
+@controller('/v2/auths/resources') // 统一URL v2/auths/:subjectType
 export class ResourceAuthController {
 
     @inject()
