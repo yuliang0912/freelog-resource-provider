@@ -176,7 +176,7 @@ export class ResourceVersionService implements IResourceVersionService {
             fileSize: versionInfo.systemProperty.fileSize,
             fileStream: stream.data
         }
-    }
+                                    }
 
     /**
      * 检查文件是否可以被创建成资源的版本
