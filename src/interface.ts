@@ -157,7 +157,9 @@ export interface ResourceVersionInfo extends BaseResourceVersion {
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];
     resolveResources?: ResolveResource[];
-    systemProperty?: any;
+    systemProperty?: {
+        [key: string]: string & number;
+    };
     customPropertyDescriptors?: object[];
     status?: number;
 }
@@ -269,7 +271,7 @@ export interface IResourceVersionService {
 
     batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]);
 
-    getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }>;
+    getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, contentType: string, fileStream: any }>;
 
     validateDependencies(resourceId, dependencies): Promise<object[]>;
 

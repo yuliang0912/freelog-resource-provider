@@ -53,7 +53,7 @@ export class ResourceVersionService implements IResourceVersionService {
             description: options.description,
             resolveResources,
             upcastResources: upcastResources as BaseResourceInfo[],
-            systemProperty: options.systemProperty,
+            systemProperty: options.systemProperty as any,
             customPropertyDescriptors: options.customPropertyDescriptors,
             versionId: this.resourcePropertyGenerator.generateResourceVersionId(resourceInfo.resourceId, options.version)
         };
@@ -156,7 +156,7 @@ export class ResourceVersionService implements IResourceVersionService {
      * 获取资源文件流
      * @param versionInfo
      */
-    async getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, fileStream: any }> {
+    async getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, contentType: string, fileStream: any }> {
 
         const stream = await this.outsideApiService.getFileStream(versionInfo.fileSha1);
         if ((stream.res.headers['content-type'] ?? '').includes('application/json')) {
@@ -172,11 +172,12 @@ export class ResourceVersionService implements IResourceVersionService {
         }
         return {
             fileSha1: versionInfo.fileSha1,
+            contentType: versionInfo.systemProperty?.mime ?? 'application/octet-stream',
             fileName: `${versionInfo.resourceName}_${versionInfo.version}${extName}`,
             fileSize: versionInfo.systemProperty.fileSize,
             fileStream: stream.data
         }
-                                    }
+    }
 
     /**
      * 检查文件是否可以被创建成资源的版本

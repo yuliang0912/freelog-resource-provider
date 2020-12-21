@@ -9,6 +9,7 @@
     "egg-scripts": "^2.10.0",
     "jsonschema": "^1.4.0",
     "midway": "^1.20.3",
+    "mime": "^2.4.7",
     "mongoose": "^5.10.18",
     "probe-image-size": "^5.0.0",
     "semver": "^7.3.2",

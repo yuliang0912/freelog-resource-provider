@@ -130,7 +130,9 @@ export interface ResourceVersionInfo extends BaseResourceVersion {
     dependencies: BaseResourceInfo[];
     upcastResources?: BaseResourceInfo[];
     resolveResources?: ResolveResource[];
-    systemProperty?: any;
+    systemProperty?: {
+        [key: string]: string & number;
+    };
     customPropertyDescriptors?: object[];
     status?: number;
 }
@@ -207,6 +209,7 @@ export interface IResourceVersionService {
         fileSha1: string;
         fileName: string;
         fileSize: number;
+        contentType: string;
         fileStream: any;
     }>;
     validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;

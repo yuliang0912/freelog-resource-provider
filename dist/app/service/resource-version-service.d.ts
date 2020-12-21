@@ -40,6 +40,7 @@ export declare class ResourceVersionService implements IResourceVersionService {
         fileSha1: string;
         fileName: string;
         fileSize: number;
+        contentType: string;
         fileStream: any;
     }>;
     /**

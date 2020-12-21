@@ -3,8 +3,14 @@ import * as semver from 'semver';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
 import {IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
 import {
-    IdentityTypeEnum, visitorIdentityValidator, FreelogContext, ArgumentError, ApplicationError, IJsonSchemaValidate
+    IdentityTypeEnum,
+    visitorIdentityValidator,
+    FreelogContext,
+    ArgumentError,
+    ApplicationError,
+    IJsonSchemaValidate
 } from 'egg-freelog-base';
+import {ResourcePropertyGenerator} from '../../extend/resource-property-generator';
 
 @provide()
 @priority(1)
@@ -29,6 +35,8 @@ export class ResourceVersionController {
     resourceVersionDependencyValidator: IJsonSchemaValidate;
     @inject()
     batchSignSubjectValidator: IJsonSchemaValidate;
+    @inject()
+    resourcePropertyGenerator: ResourcePropertyGenerator;
 
     @get('/:resourceId/versions')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
@@ -140,6 +148,8 @@ export class ResourceVersionController {
             throw new ArgumentError(ctx.gettext('resource-version-must-be-greater-than-latest-version'));
         }
 
+        Object.assign(fileSystemProperty, {mime: this.resourcePropertyGenerator.getResourceMimeType(filename)});
+
         const versionInfo = {
             version: semver.clean(version), fileSha1, filename, description,
             resolveResources, dependencies, customPropertyDescriptors, baseUpcastResources,
@@ -226,6 +236,25 @@ export class ResourceVersionController {
 
         ctx.body = fileStreamInfo.fileStream;
         ctx.set('content-length', fileStreamInfo.fileSize.toString());
+        ctx.attachment(fileStreamInfo.fileName);
+    }
+
+    @get('/versions/:versionId/internalClientDownload')
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    async internalClientDownload() {
+        const {ctx} = this;
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 filename resourceName version systemProperty');
+        ctx.entityNullObjectCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
+
+        const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
+
+        ctx.body = fileStreamInfo.fileStream;
+        ctx.set('content-length', fileStreamInfo.fileSize.toString());
+        ctx.set('content-type', fileStreamInfo.contentType);
         ctx.attachment(fileStreamInfo.fileName);
     }
 
