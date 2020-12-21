@@ -14,7 +14,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @param fileSha1
      */
     async getFileStream(fileSha1: string): Promise<any> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.OriginalData);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.Original);
     }
 
     /**
