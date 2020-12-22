@@ -12,6 +12,7 @@ import {
     assign, pick, isString,
     differenceWith, intersectionWith, intersection
 } from 'lodash';
+import {ResourcePropertyGenerator} from '../../extend/resource-property-generator';
 
 @provide('resourceVersionService')
 export class ResourceVersionService implements IResourceVersionService {
@@ -23,7 +24,7 @@ export class ResourceVersionService implements IResourceVersionService {
     @inject()
     resourceVersionProvider: IMongodbOperation<ResourceVersionInfo>;
     @inject()
-    resourcePropertyGenerator;
+    resourcePropertyGenerator: ResourcePropertyGenerator;
     @inject()
     resourceVersionDraftProvider;
     @inject()
@@ -170,9 +171,10 @@ export class ResourceVersionService implements IResourceVersionService {
         if (isString(versionInfo.filename)) {
             extName = versionInfo.filename.substr(versionInfo.filename.lastIndexOf('.'));
         }
+
         return {
             fileSha1: versionInfo.fileSha1,
-            contentType: versionInfo.systemProperty?.mime ?? 'application/octet-stream',
+            contentType: versionInfo.systemProperty?.mime ?? this.resourcePropertyGenerator.getResourceMimeType(versionInfo.filename),
             fileName: `${versionInfo.resourceName}_${versionInfo.version}${extName}`,
             fileSize: versionInfo.systemProperty.fileSize,
             fileStream: stream.data

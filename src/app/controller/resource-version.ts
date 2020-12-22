@@ -3,12 +3,8 @@ import * as semver from 'semver';
 import {controller, get, put, post, inject, provide, priority} from 'midway';
 import {IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
 import {
-    IdentityTypeEnum,
-    visitorIdentityValidator,
-    FreelogContext,
-    ArgumentError,
-    ApplicationError,
-    IJsonSchemaValidate
+    IdentityTypeEnum, visitorIdentityValidator, FreelogContext,
+    ArgumentError, ApplicationError, IJsonSchemaValidate
 } from 'egg-freelog-base';
 import {ResourcePropertyGenerator} from '../../extend/resource-property-generator';
 
@@ -240,22 +236,22 @@ export class ResourceVersionController {
     }
 
     @get('/versions/:versionId/internalClientDownload')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)  // IdentityTypeEnum.InternalClient
     async internalClientDownload() {
         const {ctx} = this;
-        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
-        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        const versionId = ctx.checkParams('versionId').isMd5().value;
         ctx.validateParams();
 
-        const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 filename resourceName version systemProperty');
-        ctx.entityNullObjectCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
+        const resourceVersionInfo = await this.resourceVersionService.findOne({versionId}, 'userId fileSha1 filename resourceName version systemProperty');
+        ctx.entityNullObjectCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'versionId')});
 
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
 
         ctx.body = fileStreamInfo.fileStream;
-        ctx.set('content-length', fileStreamInfo.fileSize.toString());
-        ctx.set('content-type', fileStreamInfo.contentType);
         ctx.attachment(fileStreamInfo.fileName);
+        ctx.set('content-length', fileStreamInfo.fileSize.toString());
+        // 此代码需要放到ctx.attachment后面.否则就是midway自动根据附件后缀名给你设置mime了.程序变的无法控制
+        ctx.set('content-type', fileStreamInfo.contentType);
     }
 
     @get('/versions/isCanBeCreate')

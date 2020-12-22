@@ -1,10 +1,11 @@
 import { CreateResourceVersionOptions, IResourceVersionService, ResourceInfo, ResourceVersionInfo, UpdateResourceVersionOptions, IOutsideApiService } from '../../interface';
 import { FreelogContext, IMongodbOperation } from 'egg-freelog-base';
+import { ResourcePropertyGenerator } from '../../extend/resource-property-generator';
 export declare class ResourceVersionService implements IResourceVersionService {
     ctx: FreelogContext;
     resourceService: any;
     resourceVersionProvider: IMongodbOperation<ResourceVersionInfo>;
-    resourcePropertyGenerator: any;
+    resourcePropertyGenerator: ResourcePropertyGenerator;
     resourceVersionDraftProvider: any;
     outsideApiService: IOutsideApiService;
     /**
