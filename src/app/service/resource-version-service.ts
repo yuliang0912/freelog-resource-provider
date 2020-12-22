@@ -5,7 +5,13 @@ import {
     IResourceVersionService, ResourceInfo, ResourceVersionInfo,
     UpdateResourceVersionOptions, IOutsideApiService, SubjectInfo
 } from '../../interface';
-import {ArgumentError, ApplicationError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
+import {
+    ArgumentError,
+    ApplicationError,
+    FreelogContext,
+    IMongodbOperation,
+    BreakOffError
+} from 'egg-freelog-base';
 import {
     isEmpty, isUndefined, isArray,
     uniqBy, chain, differenceBy,
@@ -160,11 +166,10 @@ export class ResourceVersionService implements IResourceVersionService {
     async getResourceFileStream(versionInfo: ResourceVersionInfo): Promise<{ fileSha1: string, fileName: string, fileSize: number, contentType: string, fileStream: any }> {
 
         const stream = await this.outsideApiService.getFileStream(versionInfo.fileSha1);
-        if ((stream.res.headers['content-type'] ?? '').includes('application/json')) {
-            throw new ApplicationError('文件读取失败', {msg: JSON.parse(stream.data.toString())?.msg});
-        }
         if (!stream.res.statusCode.toString().startsWith('2')) {
-            throw new ApplicationError('文件读取失败');
+            this.ctx.status = stream.res.statusCode;
+            this.ctx.body = stream.data.toString();
+            throw new BreakOffError();
         }
 
         let extName = '';
@@ -272,8 +277,7 @@ export class ResourceVersionService implements IResourceVersionService {
             })
             if (resourceVersionInfo.resolveResources.some(x => isEmpty(x.contracts))) {
                 cancelFailedPolicies.push({
-                    version: version,
-                    subjectInfos: subjectInfos.filter(x => x.operation === 0)
+                    version, subjectInfos: subjectInfos.filter(x => x.operation === 0)
                 });
             } else {
                 tasks.push(this.resourceVersionProvider.updateOne({
