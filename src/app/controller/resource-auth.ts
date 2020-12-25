@@ -28,6 +28,17 @@ export class ResourceAuthController {
     @inject()
     resourceVersionService: IResourceVersionService;
 
+    /**
+     * 展品服务的色块
+     */
+    @get('/serviceStates')
+    async serviceStates() {
+        this.ctx.success([
+            {name: 'active', type: 'authorization', value: 1},
+            {name: 'testActive', type: 'testAuthorization', value: 2}
+        ])
+    }
+
     @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     @get('/batchAuth/result')
     async resourceVersionBatchAuth() {

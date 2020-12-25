@@ -6,6 +6,10 @@ export declare class ResourceAuthController {
     outsideApiService: IOutsideApiService;
     resourceAuthService: IResourceAuthService;
     resourceVersionService: IResourceVersionService;
+    /**
+     * 展品服务的色块
+     */
+    serviceStates(): Promise<void>;
     resourceVersionBatchAuth(): Promise<void>;
     resourceAuth(): Promise<FreelogContext>;
     resourceUpstreamAuth(): Promise<FreelogContext>;
