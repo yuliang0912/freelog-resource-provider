@@ -420,6 +420,25 @@ export class ResourceController {
     }
 
     /**
+     * 根据sha1查询资料列表
+     */
+    @get('/files/:fileSha1')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async resourceBySha1() {
+        const {ctx} = this;
+        const fileSha1 = ctx.checkParams('fileSha1').exist().isSha1().toLowercase().value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        const resources = await this.resourceVersionService.find({fileSha1}, 'resourceId');
+        const resourceIds = resources.map(t => t.resourceId);
+        if (!resourceIds.length) {
+            return ctx.success([]);
+        }
+        await this.resourceService.find({_id: {$in: resourceIds}}, projection).then(ctx.success)
+    }
+
+    /**
      * 策略格式校验
      * @param policies
      * @param mode

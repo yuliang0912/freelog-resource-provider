@@ -18,6 +18,10 @@ export declare class ResourceController {
     contractsCoverageVersions(): Promise<void>;
     allResolveResources(): Promise<void>;
     /**
+     * 根据sha1查询资料列表
+     */
+    resourceBySha1(): Promise<FreelogContext>;
+    /**
      * 策略格式校验
      * @param policies
      * @param mode
