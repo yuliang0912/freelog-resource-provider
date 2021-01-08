@@ -8,7 +8,7 @@ WORKDIR /data/freelog-resource-provider
 
 COPY . /data/freelog-resource-provider
 
-RUN npm install
+RUN npm install --production
 
 ENV NODE_ENV prod
 ENV EGG_SERVER_ENV prod

@@ -48,7 +48,7 @@ let ResourceController = class ResourceController {
         if (!lodash_1.isUndefined(startResourceId)) {
             condition._id = { $lte: startResourceId };
         }
-        const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? { createDate: -1 });
+        const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? { updateDate: -1 });
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }
@@ -123,7 +123,7 @@ let ResourceController = class ResourceController {
         const addPolicies = ctx.checkBody('addPolicies').optional().isArray().value;
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 1000).value;
         const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).value;
-        const tags = ctx.checkBody('tags').optional().isArray().len(1, 20).value;
+        const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).value;
         ctx.validateParams();
         if ([updatePolicies, addPolicies, intro, coverImages, tags].every(lodash_1.isUndefined)) {
             throw new egg_freelog_base_1.ArgumentError(ctx.gettext('params-required-validate-failed'));
