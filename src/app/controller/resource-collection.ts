@@ -19,8 +19,8 @@ export class ResourceCollectionController {
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
-        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value;
-        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
+        const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const resourceStatus = ctx.checkQuery('resourceStatus').optional().toInt().in([0, 1, 2]).value;
         ctx.validateParams();
