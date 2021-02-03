@@ -28,6 +28,7 @@ export class ResourceController {
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -42,8 +43,10 @@ export class ResourceController {
             ctx.validateVisitorIdentity(IdentityTypeEnum.LoginUser);
             condition.userId = ctx.userId;
         }
-        if (resourceType) {
+        if (isString(resourceType)) { // resourceType 与 omitResourceType互斥
             condition.resourceType = new RegExp(`^${resourceType}$`, 'i');
+        } else if (isString(omitResourceType)) {
+            condition.resourceType = {$ne: omitResourceType};
         }
         if (includes([0, 1], status)) {
             condition.status = status;

@@ -292,7 +292,7 @@ export interface ICollectionService {
 
     count(condition: object): Promise<number>;
 
-    findIntervalList(resourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>>;
+    findIntervalList(resourceType: string, omitResourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>>;
 }
 
 export interface IResourceAuthService {

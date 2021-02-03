@@ -12,5 +12,5 @@ export declare class ResourceCollectionService implements ICollectionService {
     findOne(condition: object, ...args: any[]): Promise<CollectionResourceInfo>;
     deleteOne(condition: object): Promise<boolean>;
     count(condition: object): Promise<number>;
-    findIntervalList(resourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>>;
+    findIntervalList(resourceType: string, omitResourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>>;
 }

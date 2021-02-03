@@ -20,11 +20,12 @@ export class ResourceCollectionController {
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().default('').toLow().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const resourceStatus = ctx.checkQuery('resourceStatus').optional().toInt().in([0, 1, 2]).value;
         ctx.validateParams();
 
-        await this.resourceCollectionService.findIntervalList(resourceType, keywords, resourceStatus, skip, limit).then(ctx.success);
+        await this.resourceCollectionService.findIntervalList(resourceType, omitResourceType, keywords, resourceStatus, skip, limit).then(ctx.success);
     }
 
     @post('/')

@@ -44,10 +44,12 @@ export class ResourceCollectionService implements ICollectionService {
         return this.resourceCollectionProvider.count(condition);
     }
 
-    async findIntervalList(resourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>> {
+    async findIntervalList(resourceType: string, omitResourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>> {
         const condition: any = {userId: this.ctx.userId};
-        if (resourceType) {
-            condition.resourceType = resourceType;
+        if (isString(resourceType)) { // resourceType 与 omitResourceType互斥
+            condition.resourceType = new RegExp(`^${resourceType}$`, 'i');
+        } else if (isString(omitResourceType)) {
+            condition.resourceType = {$ne: omitResourceType};
         }
         if (isString(keywords) && keywords.length > 0) {
             const searchRegExp = new RegExp(keywords, 'i');

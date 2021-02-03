@@ -9,7 +9,7 @@ export class ResourceVersionModel extends MongooseModelBase {
     constructor(@plugin('mongoose') mongoose) {
         super(mongoose);
     }
-    
+
     buildMongooseModel() {
 
         // 自定义属性描述器主要面向继承者,例如展品需要对资源中的自定义属性进行编辑
