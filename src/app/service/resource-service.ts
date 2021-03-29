@@ -163,6 +163,7 @@ export class ResourceService implements IResourceService {
                 return {
                     resourceId: resolveResource.resourceId,
                     resourceName: resolveResource.resourceName,
+                    resourceType: x.resourceType,
                     versionId: x.versionId,
                     version: x.version,
                     versionRange: x.versionRange,

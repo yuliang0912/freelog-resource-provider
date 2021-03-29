@@ -30,7 +30,7 @@ export default () => {
     // };
 
     config.localIdentity = {
-        userId: 50021,
+        userId: 50021, //50028
         username: 'yuliang'
     };
 

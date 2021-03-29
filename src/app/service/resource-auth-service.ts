@@ -44,7 +44,8 @@ export class ResourceAuthService implements IResourceAuthService {
         if (!isEmpty(resourceUpstreamAuthFailedDependencies)) {
             return authResult.setErrorMsg('资源上游合约授权未通过')
                 .setData({resourceUpstreamAuthFailedDependencies})
-                .setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized).setErrorMsg('资源上游合约授权未通过');
+                .setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized)
+                .setErrorMsg('资源上游合约授权未通过');
         }
 
         return authResult;

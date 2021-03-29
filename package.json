@@ -4,21 +4,21 @@
   "description": "飞致网络资源服务",
   "private": true,
   "dependencies": {
-    "ali-oss": "^6.13.1",
-    "egg-freelog-base": "^3.1.1",
+    "ali-oss": "^6.15.0",
+    "egg-freelog-base": "^3.1.4",
     "egg-scripts": "^2.10.0",
     "jsonschema": "^1.4.0",
     "midway": "^1.20.3",
-    "mime": "^2.4.7",
-    "mongoose": "^5.11.10",
+    "mime": "^2.5.2",
+    "mongoose": "^5.12.2",
     "probe-image-size": "^5.0.0",
-    "semver": "^7.3.4",
+    "semver": "^7.3.5",
     "util": "^0.12.3",
     "validator": "^13.5.2"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.17.50",
+    "@types/node": "^10.17.56",
     "cross-env": "^6.0.0",
     "egg-ci": "^1.18.0",
     "midway-bin": "^1.20.3",
@@ -27,7 +27,7 @@
     "tslib": "^1.14.1",
     "tslint": "^5.11.0",
     "tslint-midway-contrib": "^1.20.1",
-    "typescript": "^3.9.7"
+    "typescript": "^3.9.9"
   },
   "engines": {
     "node": ">=10.16.0"
