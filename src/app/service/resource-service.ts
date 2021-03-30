@@ -206,7 +206,7 @@ export class ResourceService implements IResourceService {
                         return {
                             resourceId: upcastResource.resourceId,
                             resourceName: upcastResource.resourceName,
-                            resolveVersions: first(resolveVersions).resourceType,
+                            resourceType: first(resolveVersions).resourceType,
                             versions: resolveVersions.map(x => x.version),
                             versionIds: resolveVersions.map(x => x.versionId)
                         }
