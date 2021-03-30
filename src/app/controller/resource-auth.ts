@@ -226,6 +226,6 @@ export class ResourceAuthController {
             data: {version}
         });
 
-        await this.resourceAuthService.resourceRelationTreeAuth(versionInfo).then(ctx.success);
+        await this.resourceAuthService.resourceRelationTreeAuth(resourceInfo, versionInfo).then(ctx.success);
     }
 }

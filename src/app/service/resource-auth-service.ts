@@ -115,12 +115,12 @@ export class ResourceAuthService implements IResourceAuthService {
 
     /**
      * 资源关系树授权
+     * @param resourceInfo
      * @param versionInfo
      */
-    async resourceRelationTreeAuth(versionInfo: ResourceVersionInfo) {
-
+    async resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo) {
         const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
-        const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
+        // const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
         const dependencyTree = await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, options);
         const resourceRelationTree = await this.resourceService.getRelationTree(versionInfo, dependencyTree);
         const resourceRelationAuthTree = await this.resourceService.getRelationAuthTree(versionInfo, dependencyTree);

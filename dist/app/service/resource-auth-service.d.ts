@@ -1,4 +1,4 @@
-import { ContractInfo, IResourceService, IResourceAuthService, ResourceVersionInfo, IOutsideApiService, ResourceAuthTree } from '../../interface';
+import { ContractInfo, IResourceService, IResourceAuthService, ResourceVersionInfo, IOutsideApiService, ResourceAuthTree, ResourceInfo } from '../../interface';
 import { SubjectAuthResult } from "../../auth-interface";
 export declare class ResourceAuthService implements IResourceAuthService {
     resourceService: IResourceService;
@@ -22,9 +22,10 @@ export declare class ResourceAuthService implements IResourceAuthService {
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'auth' | 'testAuth'): Promise<any[]>;
     /**
      * 资源关系树授权
+     * @param resourceInfo
      * @param versionInfo
      */
-    resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;
+    resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<any[]>;
     /**
      * 合同授权
      * @param subjectId

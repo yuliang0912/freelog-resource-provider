@@ -187,15 +187,18 @@ export class ResourceService implements IResourceService {
         if (!dependencyTree) {
             dependencyTree = await this.getResourceDependencyTree({} as ResourceInfo, versionInfo, {isContainRootNode: true});
         }
+
         return [{
             resourceId: versionInfo.resourceId,
             resourceName: versionInfo.resourceName,
+            resourceType: versionInfo.resourceType,
             versions: [versionInfo.version],
             versionIds: [versionInfo.versionId],
             children: first(dependencyTree).dependencies?.map(dependency => {
                 return {
                     resourceId: dependency.resourceId,
                     resourceName: dependency.resourceName,
+                    resourceType: dependency.resourceType,
                     versions: [dependency.version],
                     versionIds: [dependency.versionId],
                     children: dependency.baseUpcastResources.map(upcastResource => {

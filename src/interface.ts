@@ -305,5 +305,5 @@ export interface IResourceAuthService {
 
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'testAuth' | 'auth'): Promise<any[]>;
 
-    resourceRelationTreeAuth(versionInfo: ResourceVersionInfo): Promise<any[]>;
+    resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<any[]>;
 }
