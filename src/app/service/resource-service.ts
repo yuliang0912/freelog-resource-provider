@@ -192,6 +192,7 @@ export class ResourceService implements IResourceService {
             resourceId: versionInfo.resourceId,
             resourceName: versionInfo.resourceName,
             resourceType: versionInfo.resourceType,
+            versionRanges: [],
             versions: [versionInfo.version],
             versionIds: [versionInfo.versionId],
             children: first(dependencyTree).dependencies?.map(dependency => {
@@ -199,6 +200,7 @@ export class ResourceService implements IResourceService {
                     resourceId: dependency.resourceId,
                     resourceName: dependency.resourceName,
                     resourceType: dependency.resourceType,
+                    versionRanges: [dependency.versionRange],
                     versions: [dependency.version],
                     versionIds: [dependency.versionId],
                     children: dependency.baseUpcastResources.map(upcastResource => {
@@ -207,8 +209,10 @@ export class ResourceService implements IResourceService {
                             resourceId: upcastResource.resourceId,
                             resourceName: upcastResource.resourceName,
                             resourceType: first(resolveVersions).resourceType,
+                            versionRanges: resolveVersions.map(x => x.versionRange),
                             versions: resolveVersions.map(x => x.version),
-                            versionIds: resolveVersions.map(x => x.versionId)
+                            versionIds: resolveVersions.map(x => x.versionId),
+                            children: []
                         }
                     })
                 }

@@ -134,11 +134,14 @@ export class ResourceAuthService implements IResourceAuthService {
 
         const rootResource = first(resourceRelationTree);
         rootResource['authFailedResources'] = [];
-        for (const item of rootResource.children) {
-            const authTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === item.resourceId));
-            item['authFailedResources'] = this._getAuthFailedResourceFromAuthTree(authTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
+        for (const dependResource of rootResource.children) {
+            const dependResourceAuthTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === dependResource.resourceId));
+            dependResource['authFailedResources'] = this._getAuthFailedResourceFromAuthTree(dependResourceAuthTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
+            for (const upcastResource of dependResource.children) {
+                const upcastResourceAuthTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === upcastResource.resourceId));
+                upcastResource['authFailedResources'] = this._getAuthFailedResourceFromAuthTree(upcastResourceAuthTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
+            }
         }
-
         return resourceRelationTree;
     }
 
