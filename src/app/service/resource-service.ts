@@ -188,6 +188,14 @@ export class ResourceService implements IResourceService {
             dependencyTree = await this.getResourceDependencyTree({} as ResourceInfo, versionInfo, {isContainRootNode: true});
         }
 
+        const resourceTypeMap = new Map<string, string>();
+        const resourceIds = first(dependencyTree).dependencies?.map(dependency => dependency.baseUpcastResources.map(x => x.resourceId)).flat();
+        if (resourceIds.length) {
+            await this.resourceProvider.find({_id: {$in: resourceIds}}, '_id resourceType').then(list => {
+                list.forEach(x => resourceTypeMap.set(x.resourceId, x.resourceType));
+            })
+        }
+
         return [{
             resourceId: versionInfo.resourceId,
             resourceName: versionInfo.resourceName,
@@ -208,7 +216,7 @@ export class ResourceService implements IResourceService {
                         return {
                             resourceId: upcastResource.resourceId,
                             resourceName: upcastResource.resourceName,
-                            resourceType: first(resolveVersions).resourceType,
+                            resourceType: resourceTypeMap.get(upcastResource.resourceId),
                             versionRanges: resolveVersions.map(x => x.versionRange),
                             versions: resolveVersions.map(x => x.version),
                             versionIds: resolveVersions.map(x => x.versionId),
