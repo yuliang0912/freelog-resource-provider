@@ -174,7 +174,7 @@ export class ResourceService implements IResourceService {
             });
         });
 
-        return recursionAuthTree(first(dependencyTree));
+        return recursionAuthTree(first(dependencyTree)).filter(x => x.length);
     }
 
     /**
