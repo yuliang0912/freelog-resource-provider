@@ -1,6 +1,6 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
-import {ApplicationError, FreelogContext, IMongodbOperation, PageResult} from "egg-freelog-base";
+import {ApplicationError, FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
 import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions,
@@ -170,7 +170,7 @@ export class ResourceService implements IResourceService {
                     fileSha1: x.fileSha1,
                     contracts: resolveResource.contracts,
                     children: recursionAuthTree(x)
-                }
+                };
             });
         });
 
@@ -193,7 +193,7 @@ export class ResourceService implements IResourceService {
         if (resourceIds.length) {
             await this.resourceProvider.find({_id: {$in: resourceIds}}, '_id resourceType').then(list => {
                 list.forEach(x => resourceTypeMap.set(x.resourceId, x.resourceType));
-            })
+            });
         }
 
         return [{
@@ -221,9 +221,9 @@ export class ResourceService implements IResourceService {
                             versions: resolveVersions.map(x => x.version),
                             versionIds: resolveVersions.map(x => x.versionId),
                             children: []
-                        }
+                        };
                     })
-                }
+                };
             })
         }];
     }
@@ -247,7 +247,7 @@ export class ResourceService implements IResourceService {
                 resourceId: upcastResource.resourceId,
                 resourceName: upcastResource.resourceName,
                 contracts: null
-            })
+            });
         }
 
         const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree): ResourceAuthTree[][] => dependencyTreeNode.resolveResources.map(resolveResource => {
@@ -304,12 +304,12 @@ export class ResourceService implements IResourceService {
                 $match: {userId: {$in: userIds}}
             },
             {
-                $group: {_id: "$userId", count: {"$sum": 1}}
+                $group: {_id: '$userId', count: {'$sum': 1}}
             },
             {
-                $project: {_id: 0, userId: "$_id", count: "$count"}
+                $project: {_id: 0, userId: '$_id', count: '$count'}
             }
-        ])
+        ]);
     }
 
     /**
@@ -360,7 +360,7 @@ export class ResourceService implements IResourceService {
             $addToSet: {resourceVersions: versionInfo},
             latestVersion: latestVersionInfo.version,
             status: ResourceService._getResourceStatus([versionInfo], resourceInfo.policies)
-        }
+        };
         if (isEmpty(resourceInfo.resourceVersions)) {
             modifyModel.baseUpcastResources = versionInfo.upcastResources;
         }
@@ -398,7 +398,7 @@ export class ResourceService implements IResourceService {
                 fsmDescriptionInfo: policyInfo.fsmDescriptionInfo,
                 policyName: policies[i].policyName,
                 status: policies[i].status ?? 1,
-            })
+            });
         }
         return result;
     }
@@ -531,7 +531,7 @@ export class ResourceService implements IResourceService {
 
         const versionInfoMap = await this.resourceVersionService.find({versionId: {$in: versionIds}}).then(list => {
             return new Map(list.map(x => [x.versionId, x]));
-        })
+        });
         return resources.map((item: any) => {
             const resourceLatestVersionId = item.latestVersionId;
             const resourceInfo = item.toObject ? item.toObject() : item;
@@ -562,7 +562,7 @@ export class ResourceService implements IResourceService {
                 const {policyText, fsmDescriptionInfo} = policyMap.get(policyInfo.policyId) ?? {};
                 policyInfo.policyText = policyText;
                 policyInfo.fsmDescriptionInfo = fsmDescriptionInfo;
-            })
+            });
             return resourceInfo;
         });
     }

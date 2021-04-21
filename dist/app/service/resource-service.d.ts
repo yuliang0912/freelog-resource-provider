@@ -1,4 +1,4 @@
-import { FreelogContext, IMongodbOperation, PageResult } from "egg-freelog-base";
+import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
 import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, ResourceAuthTree, ResourceDependencyTree, BaseResourceInfo, operationPolicyInfo } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: FreelogContext;

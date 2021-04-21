@@ -59,15 +59,6 @@ export declare class ResourceVersionService implements IResourceVersionService {
      */
     batchSetPolicyToVersions(resourceInfo: ResourceInfo, subjects: any[]): Promise<boolean>;
     /**
-     * * 检查依赖项是否符合标准
-     * 1:依赖的资源不能重复,并且是上架状态
-     * 2.依赖的资源与主资源之间不能存在循环引用.
-     * 3.资源的依赖树深度不能超过固定阈值(20)
-     * @param resourceId
-     * @param dependencies
-     */
-    validateDependencies(resourceId: any, dependencies: any): Promise<object[]>;
-    /**
      * 循坏依赖检查
      * @param resourceId
      * @param dependencies
@@ -77,6 +68,16 @@ export declare class ResourceVersionService implements IResourceVersionService {
         ret: boolean;
         deep?: number;
     }>;
+    /**
+     * * 检查依赖项是否符合标准
+     * 1:依赖的资源不能重复,并且是上架状态
+     * 2.依赖的资源与主资源之间不能存在循环引用.
+     * 3.资源的依赖树深度不能超过固定阈值(20)
+     * @param resourceId
+     * @param dependencies
+     * @param resolveResourceIds
+     */
+    _validateDependencies(resourceId: any, dependencies: any, resolveResourceIds: any): Promise<object[]>;
     /**
      * 验证上抛和需要解决的资源
      * @param dependencies

@@ -1,3 +1,4 @@
+/// <reference types="lodash" />
 import { MongooseModelBase } from 'egg-freelog-base/database/mongoose-model-base';
 export declare class ResourceInfoModel extends MongooseModelBase {
     constructor(mongoose: any);
@@ -7,6 +8,6 @@ export declare class ResourceInfoModel extends MongooseModelBase {
         virtuals: boolean;
         transform(doc: any, ret: any): {
             resourceId: any;
-        } & Pick<any, string | number | symbol>;
+        } & import("lodash").Omit<any, "_id" | "id" | "uniqueKey">;
     };
 }

@@ -44,9 +44,9 @@ export class ResourceVersionService implements IResourceVersionService {
      */
     async createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo> {
 
-        await this.validateDependencies(resourceInfo.resourceId, options.dependencies);
+        const dependencies = await this._validateDependencies(resourceInfo.resourceId, options.dependencies, options?.resolveResources.map(x => x.resourceId));
         const isFirstVersion = isEmpty(resourceInfo.resourceVersions);
-        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(options.dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
+        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
 
         const model: ResourceVersionInfo = {
             version: options.version,
@@ -183,7 +183,7 @@ export class ResourceVersionService implements IResourceVersionService {
             fileName: `${versionInfo.resourceName}_${versionInfo.version}${extName}`,
             fileSize: versionInfo.systemProperty.fileSize,
             fileStream: stream.data
-        }
+        };
     }
 
     /**
@@ -273,8 +273,8 @@ export class ResourceVersionService implements IResourceVersionService {
                     } else {
                         resolveResource.contracts.push({policyId, contractId});
                     }
-                })
-            })
+                });
+            });
             if (resourceVersionInfo.resolveResources.some(x => isEmpty(x.contracts))) {
                 cancelFailedPolicies.push({
                     version, subjectInfos: subjectInfos.filter(x => x.operation === 0)
@@ -287,58 +287,6 @@ export class ResourceVersionService implements IResourceVersionService {
         }
 
         return Promise.all(tasks).then(list => Boolean(list.length && list.every(x => x.ok)));
-    }
-
-    /**
-     * * 检查依赖项是否符合标准
-     * 1:依赖的资源不能重复,并且是上架状态
-     * 2.依赖的资源与主资源之间不能存在循环引用.
-     * 3.资源的依赖树深度不能超过固定阈值(20)
-     * @param resourceId
-     * @param dependencies
-     */
-    async validateDependencies(resourceId, dependencies): Promise<object[]> {
-
-        if (isEmpty(dependencies)) {
-            return dependencies;
-        }
-
-        if (dependencies.length !== uniqBy(dependencies, 'resourceId').length) {
-            throw new ArgumentError(this.ctx.gettext('resource-depend-release-invalid'), {dependencies});
-        }
-
-        const cycleDependCheckResult = await this.cycleDependCheck(resourceId, dependencies || [], 1);
-        if (cycleDependCheckResult.ret) {
-            throw new ApplicationError(this.ctx.gettext('release-circular-dependency-error'), {
-                resourceId, deep: cycleDependCheckResult.deep
-            });
-        }
-
-        const dependResourceMap = await this.resourceService.find({_id: {$in: dependencies.map(x => x.resourceId)}})
-            .then(list => new Map(list.map(x => [x.resourceId, x])));
-
-        const invalidDependencies = [];
-        const invalidResourceVersionRanges = [];
-        dependencies.forEach(dependency => {
-            const resourceInfo = dependResourceMap.get(dependency.resourceId);
-            if (!resourceInfo || resourceInfo.status !== 1) {
-                invalidDependencies.push(dependency);
-                return;
-            }
-            if (!resourceInfo.resourceVersions.some(x => semver.satisfies(x['version'], dependency.versionRange))) {
-                invalidResourceVersionRanges.push(dependency);
-            }
-            dependency.resourceName = resourceInfo.resourceName;
-        });
-
-        if (invalidDependencies.length) {
-            throw new ArgumentError(this.ctx.gettext('resource-depend-release-invalid'), {invalidDependencies});
-        }
-        if (invalidResourceVersionRanges.length) {
-            throw new ArgumentError(this.ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidResourceVersionRanges});
-        }
-
-        return dependencies;
     }
 
     /**
@@ -372,6 +320,61 @@ export class ResourceVersionService implements IResourceVersionService {
         const dependSubResources = chain(dependVersionInfos).map(m => m.dependencies).flattenDeep().value();
 
         return this.cycleDependCheck(resourceId, dependSubResources, deep + 1);
+    }
+
+    /**
+     * * 检查依赖项是否符合标准
+     * 1:依赖的资源不能重复,并且是上架状态
+     * 2.依赖的资源与主资源之间不能存在循环引用.
+     * 3.资源的依赖树深度不能超过固定阈值(20)
+     * @param resourceId
+     * @param dependencies
+     * @param resolveResourceIds
+     */
+    async _validateDependencies(resourceId, dependencies, resolveResourceIds): Promise<object[]> {
+
+        if (isEmpty(dependencies)) {
+            return dependencies;
+        }
+
+        if (dependencies.length !== uniqBy(dependencies, 'resourceId').length) {
+            throw new ArgumentError(this.ctx.gettext('resource-depend-release-invalid'), {dependencies});
+        }
+
+        const cycleDependCheckResult = await this.cycleDependCheck(resourceId, dependencies || [], 1);
+        if (cycleDependCheckResult.ret) {
+            throw new ApplicationError(this.ctx.gettext('release-circular-dependency-error'), {
+                resourceId, deep: cycleDependCheckResult.deep
+            });
+        }
+
+        const dependResourceMap = await this.resourceService.find({_id: {$in: dependencies.map(x => x.resourceId)}})
+            .then(list => new Map(list.map(x => [x.resourceId, x])));
+
+        const invalidDependencies = [];
+        const invalidResourceVersionRanges = [];
+        dependencies.forEach(dependency => {
+            const resourceInfo = dependResourceMap.get(dependency.resourceId);
+            if (!resourceInfo || (resourceInfo.status !== 1 && !resolveResourceIds.includes(resourceInfo.resourceId))) {
+                invalidDependencies.push(dependency);
+                return;
+            }
+            if (!resourceInfo.resourceVersions.some(x => semver.satisfies(x['version'], dependency.versionRange))) {
+                invalidResourceVersionRanges.push(dependency);
+            }
+            dependency.resourceName = resourceInfo.resourceName;
+            dependency.baseUpcastResources = resourceInfo.baseUpcastResources;
+            dependency.resourceVersions = resourceInfo.resourceVersions;
+        });
+
+        if (invalidDependencies.length) {
+            throw new ArgumentError(this.ctx.gettext('resource-depend-release-invalid'), {invalidDependencies});
+        }
+        if (invalidResourceVersionRanges.length) {
+            throw new ArgumentError(this.ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidResourceVersionRanges});
+        }
+
+        return dependencies;
     }
 
     /**
@@ -432,13 +435,7 @@ export class ResourceVersionService implements IResourceVersionService {
             return {upcastResources, backlogResources, allUntreatedResources};
         }
 
-        const dependResources = await this.resourceService.find({_id: {$in: dependencies.map(x => x.resourceId)}});
-        const invalidResources = dependResources.filter(x => x.status !== 1);
-        if (invalidResources.length) {
-            throw new ApplicationError(this.ctx.gettext('resource-depend-release-invalid'), {invalidResources});
-        }
-
-        allUntreatedResources = chain(dependResources).map(x => x.baseUpcastResources)
+        allUntreatedResources = chain(dependencies).map(x => x.baseUpcastResources)
             .flattenDeep().concat(dependencies).uniqBy('resourceId').map(x => pick(x, ['resourceId', 'resourceName'])).value();
 
         // 真实需要解决的和需要上抛的(实际后续版本真实上抛可能会比基础上抛少,考虑以后授权可能会用到)
@@ -459,7 +456,7 @@ export class ResourceVersionService implements IResourceVersionService {
         const customPropertyKeys = customPropertyDescriptors?.map(x => x.key);
         const repetitiveKeys = intersection(systemPropertyKeys, customPropertyKeys);
         if (!isEmpty(repetitiveKeys)) {
-            throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'customPropertyDescriptors'), {repetitiveKeys})
+            throw new ApplicationError(this.ctx.gettext('params-validate-failed', 'customPropertyDescriptors'), {repetitiveKeys});
         }
     }
 }
