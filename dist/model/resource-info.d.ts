@@ -8,6 +8,6 @@ export declare class ResourceInfoModel extends MongooseModelBase {
         virtuals: boolean;
         transform(doc: any, ret: any): {
             resourceId: any;
-        } & import("lodash").Omit<any, "_id" | "id" | "uniqueKey">;
+        } & import("lodash").Omit<any, "_id" | "uniqueKey" | "id">;
     };
 }

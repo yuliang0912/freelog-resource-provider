@@ -109,8 +109,8 @@ export class ResourceController {
         const list = await this.resourceService.findUserCreatedResourceCounts(userIds.map(x => parseInt(x)));
         ctx.success(userIds.map(userId => {
             const record = list.find(x => x.userId.toString() === userId);
-            return {userId: parseInt(userId), createdResourceCount: record?.count ?? 0}
-        }))
+            return {userId: parseInt(userId), createdResourceCount: record?.count ?? 0};
+        }));
     }
 
     @get('/list')
@@ -210,10 +210,10 @@ export class ResourceController {
         if (isString(version)) {
             resourceVersion = version;
         } else if (isString(versionRange)) {
-            resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange)
+            resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange);
         }
         if (!resourceVersion) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'))
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'));
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
@@ -261,10 +261,10 @@ export class ResourceController {
         if (isString(version)) {
             resourceVersion = version;
         } else if (isString(versionRange)) {
-            resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange)
+            resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange);
         }
         if (!resourceVersion) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'))
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'));
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
@@ -311,7 +311,7 @@ export class ResourceController {
             resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange);
         }
         if (!resourceVersion) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'))
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'));
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);
@@ -433,12 +433,19 @@ export class ResourceController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const resources = await this.resourceVersionService.find({fileSha1}, 'resourceId');
-        const resourceIds = resources.map(t => t.resourceId);
+        const resourceVersions = await this.resourceVersionService.find({fileSha1}, 'resourceId versionId');
+        const resourceIds = resourceVersions.map(t => t.resourceId);
         if (!resourceIds.length) {
             return ctx.success([]);
         }
-        await this.resourceService.find({_id: {$in: resourceIds}}, projection).then(ctx.success)
+        const resourceVersionIdSet = new Set(resourceVersions.map(x => x.versionId));
+        const resources = await this.resourceService.find({_id: {$in: resourceIds}}, projection);
+        for (const resourceInfo of resources) {
+            if (resourceInfo.resourceVersions) {
+                resourceInfo.resourceVersions = resourceInfo.resourceVersions.filter(x => resourceVersionIdSet.has(x.versionId));
+            }
+        }
+        ctx.success(resources);
     }
 
     /**
