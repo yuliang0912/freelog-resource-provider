@@ -102,3 +102,6 @@ export class ResourceCollectionController {
         await this.resourceCollectionService.count({resourceId}).then(ctx.success);
     }
 }
+
+
+// db.createUser({ user:"aliyun_test_user", pwd:"QzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk=",roles:[{ role:"dbOwner",db:"test-nodes" },{ role:"dbOwner",db:"test-contracts" },{ role:"dbOwner",db:"test-resources" },{ role:"dbOwner",db:"test-events" },{ role:"dbOwner",db:"test-api-gateway" },{ role:"dbOwner",db:"test-storages" }] })
