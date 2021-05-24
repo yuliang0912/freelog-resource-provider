@@ -32,6 +32,11 @@ export declare class ResourceService implements IResourceService {
      */
     getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[][]>;
     /**
+     * 依赖树转换成授权树
+     * @param dependencyTree
+     */
+    getResourceAuthTreeFromDependencyTree(dependencyTree: ResourceDependencyTree[]): ResourceAuthTree[][];
+    /**
      * 获取关系树(资源=>资源的依赖=>依赖的上抛,最多三层)
      * @param versionInfo
      * @param dependencyTree
@@ -119,7 +124,7 @@ export declare class ResourceService implements IResourceService {
      * @param resourceId
      * @param _list
      */
-    _findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list?: ResourceDependencyTree[]): ResourceDependencyTree[];
+    findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list?: ResourceDependencyTree[]): ResourceDependencyTree[];
     /**
      * 获取最匹配的semver版本
      * @param resourceVersions

@@ -1,5 +1,5 @@
-import { SubjectAuthResult } from "./auth-interface";
-import { ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, ContractStatusEnum, PageResult } from "egg-freelog-base";
+import { SubjectAuthResult } from './auth-interface';
+import { ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, ContractStatusEnum, PageResult } from 'egg-freelog-base';
 export interface operationPolicyInfo {
     policyId?: string;
     policyText?: string;
@@ -180,6 +180,7 @@ export interface IResourceService {
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
     updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
     getResourceDependencyTree(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo, options: GetResourceDependencyOrAuthTreeOptions): Promise<ResourceDependencyTree[]>;
+    getResourceAuthTreeFromDependencyTree(dependencyTree: ResourceDependencyTree[]): ResourceAuthTree[][];
     getResourceAuthTree(versionInfo: ResourceVersionInfo): Promise<ResourceAuthTree[][]>;
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     findOneByResourceName(resourceName: string, ...args: any[]): Promise<ResourceInfo>;
@@ -194,6 +195,15 @@ export interface IResourceService {
     fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
     fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
     findUserCreatedResourceCounts(userIds: number[]): any;
+    /**
+     * 从依赖树中获取指定的所有发行版本(查找多重上抛)
+     * 例如深度2的树节点上抛了A-1.0,深度3节点也上抛了A-1.1.
+     * 然后由深度为1的节点解决了A.授权树需要找到1.0和1.1,然后分别计算所有分支
+     * @param dependencies
+     * @param resourceId
+     * @param _list
+     */
+    findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list?: ResourceDependencyTree[]): ResourceDependencyTree[];
 }
 export interface IResourceVersionService {
     createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;

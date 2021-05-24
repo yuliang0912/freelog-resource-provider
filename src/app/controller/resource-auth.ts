@@ -1,7 +1,7 @@
 import * as semver from 'semver';
 import {differenceWith, isEmpty, isString} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
-import {SubjectAuthResult} from "../../auth-interface";
+import {SubjectAuthResult} from '../../auth-interface';
 import {IOutsideApiService, IResourceAuthService, IResourceService, IResourceVersionService} from '../../interface';
 import {
     ArgumentError,
@@ -36,7 +36,7 @@ export class ResourceAuthController {
         this.ctx.success([
             {name: 'active', type: 'authorization', value: 1},
             {name: 'testActive', type: 'testAuthorization', value: 2}
-        ])
+        ]);
     }
 
     @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
@@ -51,7 +51,7 @@ export class ResourceAuthController {
         const resourceVersions = await this.resourceVersionService.find({versionId: {$in: resourceVersionIds}},
             'resourceId resourceName version versionId resolveResources');
 
-        const validVersionIds = differenceWith(resourceVersionIds, resourceVersions, (x: string, y) => x === y.versionId)
+        const validVersionIds = differenceWith(resourceVersionIds, resourceVersions, (x: string, y) => x === y.versionId);
         if (!isEmpty(validVersionIds)) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'resourceVersionIds'), {validVersionIds});
         }
@@ -181,7 +181,7 @@ export class ResourceAuthController {
         ctx.attachment(fileStreamInfo.fileName);
     }
 
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/:subjectId/relationTreeAuth')
     async resourceRelationTreeAuthResult() {
 
@@ -217,7 +217,7 @@ export class ResourceAuthController {
             resourceVersion = semver.maxSatisfying(resourceInfo.resourceVersions.map(x => x.version), versionRange);
         }
         if (!resourceVersion) {
-            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'))
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'versionRange'));
         }
 
         const versionInfo = await this.resourceVersionService.findOneByVersion(resourceInfo.resourceId, resourceVersion);

@@ -1,10 +1,10 @@
 import {inject, provide} from 'midway';
 import {
     ContractInfo, IResourceService, IResourceAuthService,
-    ResourceVersionInfo, IOutsideApiService, ResourceAuthTree, ResourceInfo
+    ResourceVersionInfo, IOutsideApiService, ResourceAuthTree, ResourceInfo, ResourceDependencyTree
 } from '../../interface';
-import {chain, isArray, isEmpty, first} from 'lodash';
-import {SubjectAuthResult} from "../../auth-interface";
+import {chain, isArray, isEmpty, first, uniqBy} from 'lodash';
+import {SubjectAuthResult} from '../../auth-interface';
 import {SubjectAuthCodeEnum, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide()
@@ -108,7 +108,7 @@ export class ResourceAuthService implements IResourceAuthService {
                 const authResult = authResultMap.get(`${resourceVersion.versionId}_${resourceId}`);
                 return {
                     resourceId, resourceName, authResult, contractIds: resolveResource.contracts.map(x => x.contractId)
-                }
+                };
             })
         }));
     }
@@ -118,31 +118,142 @@ export class ResourceAuthService implements IResourceAuthService {
      * @param resourceInfo
      * @param versionInfo
      */
-    async resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo) {
-        const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
-        // const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
-        const dependencyTree = await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, options);
-        const resourceRelationTree = await this.resourceService.getRelationTree(versionInfo, dependencyTree);
-        const resourceRelationAuthTree = await this.resourceService.getRelationAuthTree(versionInfo, dependencyTree);
+    // async resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo) {
+    //     this.test(resourceInfo, versionInfo);
+    //     const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
+    //     // const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
+    //     const dependencyTree = await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, options);
+    //     const resourceRelationTree = await this.resourceService.getRelationTree(versionInfo, dependencyTree);
+    //     const resourceRelationAuthTree = await this.resourceService.getRelationAuthTree(versionInfo, dependencyTree);
+    //
+    //     const allContractIds = this._getContractIdFromResourceAuthTree(resourceRelationAuthTree);
+    //     allContractIds.push(...versionInfo.resolveResources.map(x => x.contracts.map(x => x.contractId)).flat());
+    //
+    //     const contractMap = await this.outsideApiService.getContractByContractIds(allContractIds, {projection: 'subjectId,subjectType,authStatus'}).then(list => {
+    //         return new Map(list.map(x => [x.contractId, x]));
+    //     });
+    //
+    //     const rootResource = first(resourceRelationTree);
+    //     // 只判定资源的依赖的授权结果(包括上游整个授权链)
+    //     for (const dependResource of rootResource.children) {
+    //         const resolveDependResource = versionInfo.resolveResources.find(x => x.resourceId === dependResource.resourceId);
+    //         // 根资源解决依赖(也可以解决直接上抛)
+    //         dependResource['selfAuthContracts'] = resolveDependResource?.contracts ?? [];
+    //         dependResource['selfIsAuth'] = resolveDependResource ? this.contractAuth(dependResource.resourceId, resolveDependResource.contracts.map(x => contractMap.get(x.contractId)), 'auth').isAuth : true;
+    //
+    //         // const dependResourceDependencyTree = first(dependencyTree).dependencies.find(x => x.resourceId === dependResource.resourceId);
+    //
+    //         // 上游资源授权(如果没解决其他资源,则授权通过)
+    //         const dependResourceAuthTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === dependResource.resourceId));
+    //         const authFailedResources = this._getAuthFailedResourceFromAuthTree(dependResourceAuthTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
+    //         dependResource['upstreamIsAuth'] = isEmpty(dependResource.resolveResources) || isEmpty(authFailedResources);
+    //         for (const upcastResource of dependResource.children) {
+    //             const resolveUpcastResource = versionInfo.resolveResources.find(x => x.resourceId === upcastResource.resourceId);
+    //             upcastResource['selfAuthContracts'] = resolveUpcastResource?.contracts ?? [];
+    //             upcastResource['selfIsAuth'] = resolveUpcastResource ? this.contractAuth(dependResource.resourceId, resolveUpcastResource.contracts.map(x => contractMap.get(x.contractId)), 'auth').isAuth : true;
+    //             const upcastResourceAuthTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === upcastResource.resourceId));
+    //             const authFailedResources = this._getAuthFailedResourceFromAuthTree(upcastResourceAuthTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
+    //             upcastResource['upstreamIsAuth'] = isEmpty(upcastResource.resolveResources) || isEmpty(authFailedResources);
+    //         }
+    //     }
+    //     return resourceRelationTree;
+    // }
 
-        const allContractIds = this._getContractIdFromResourceAuthTree(resourceRelationAuthTree);
-        const contractMap = await this.outsideApiService.getContractByContractIds(allContractIds, {
-            projection: 'subjectId,subjectType,authStatus'
-        }).then(list => {
+    /**
+     * 资源关系树
+     * @param resourceInfo
+     * @param versionInfo
+     */
+    async resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo) {
+
+        const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
+        const dependencyTree = await this.resourceService.getResourceDependencyTree(resourceInfo, versionInfo, options).then(first);
+        const flattenResourceDependencyTree = (dependencyTree: ResourceDependencyTree[], list: ResourceDependencyTree[] = []) => {
+            for (const dependencyInfo of dependencyTree) {
+                list.push(dependencyInfo, ...flattenResourceDependencyTree(dependencyInfo.dependencies));
+            }
+            return list;
+        };
+        const authCheck = (dependencyTree: ResourceDependencyTree[]) => {
+            const authFailedResources = [];
+            for (const item of dependencyTree) {
+                const contracts = item.resolveResources.map(x => x.contracts).flat().map(x => contractMap.get(x.contractId));
+                if (!this.contractAuth(item.resourceId, contracts, 'auth').isAuth) {
+                    authFailedResources.push(item);
+                }
+            }
+            return authFailedResources;
+        };
+
+        const flattenList: ResourceDependencyTree[] = flattenResourceDependencyTree([dependencyTree]);
+        const allContractIds = chain(flattenList).map(x => x.resolveResources.map(m => m.contracts)).flattenDeep().map(x => x.contractId).value();
+        const contractMap = await this.outsideApiService.getContractByContractIds(allContractIds, {projection: 'subjectId,subjectType,authStatus'}).then(list => {
             return new Map(list.map(x => [x.contractId, x]));
         });
 
-        const rootResource = first(resourceRelationTree);
-        rootResource['authFailedResources'] = [];
-        for (const dependResource of rootResource.children) {
-            const dependResourceAuthTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === dependResource.resourceId));
-            dependResource['authFailedResources'] = this._getAuthFailedResourceFromAuthTree(dependResourceAuthTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
-            for (const upcastResource of dependResource.children) {
-                const upcastResourceAuthTree = resourceRelationAuthTree.filter(x => x.some(m => m.resourceId === upcastResource.resourceId));
-                upcastResource['authFailedResources'] = this._getAuthFailedResourceFromAuthTree(upcastResourceAuthTree, contractMap, 1, Number.MAX_SAFE_INTEGER);
-            }
+        const resourceTypeMap = new Map<string, string>();
+        const resourceIds = dependencyTree.dependencies?.map(dependency => dependency.baseUpcastResources.map(x => x.resourceId)).flat();
+        if (!isEmpty(resourceIds)) {
+            await this.resourceService.find({_id: {$in: resourceIds}}, '_id resourceType').then(list => {
+                list.forEach(x => resourceTypeMap.set(x.resourceId, x.resourceType));
+            });
         }
-        return resourceRelationTree;
+
+        const relationTree = {
+            resourceId: versionInfo.resourceId,
+            resourceName: versionInfo.resourceName,
+            resourceType: versionInfo.resourceType,
+            versionRanges: [],
+            versions: [versionInfo.version],
+            versionIds: [versionInfo.versionId],
+            children: []
+        };
+
+        for (const dependency of dependencyTree.dependencies) {
+
+            const dependRelationTree: any = {
+                resourceId: dependency.resourceId,
+                resourceName: dependency.resourceName,
+                resourceType: dependency.resourceType,
+                versionRanges: [dependency.versionRange],
+                versions: [dependency.version],
+                versionIds: [dependency.versionId],
+                children: []
+            };
+
+            const subDependencyAuthTree = isEmpty(dependency.resolveResources) ? [] : this.resourceService.findResourceVersionFromDependencyTree(dependencyTree.dependencies, dependency.resourceId);
+            const selfAndUpstreamResolveResources = flattenResourceDependencyTree(subDependencyAuthTree).filter(x => !isEmpty(x.resolveResources));
+            const selfAndUpstreamAuthFailedResources = authCheck(selfAndUpstreamResolveResources);
+            dependRelationTree.downstreamAuthContractIds = versionInfo.resolveResources.find(x => x.resourceId === dependency.resourceId)?.contracts ?? [];
+            dependRelationTree.downstreamIsAuth = isEmpty(dependRelationTree.downstreamAuthContractIds) || this.contractAuth(dependency.resourceId, dependRelationTree.downstreamAuthContractIds.map(x => contractMap.get(x.contractId)), 'auth').isAuth;
+            dependRelationTree.selfAndUpstreamIsAuth = isEmpty(selfAndUpstreamResolveResources) || isEmpty(selfAndUpstreamAuthFailedResources);
+
+            for (const upcast of dependency.baseUpcastResources) {
+
+                const downstreamAuthContractIds = versionInfo.resolveResources.find(x => x.resourceId === upcast.resourceId)?.contracts ?? [];
+                const downstreamIsAuth = isEmpty(downstreamAuthContractIds) || this.contractAuth(upcast.resourceId, downstreamAuthContractIds.map(x => contractMap.get(x.contractId)), 'auth').isAuth;
+                const subUpcastAuthTree = this.resourceService.findResourceVersionFromDependencyTree(dependency.dependencies, upcast.resourceId).filter(x => !isEmpty(x.resolveResources));
+                const selfAndUpstreamResolveResources = flattenResourceDependencyTree(subUpcastAuthTree).filter(x => !isEmpty(x.resolveResources));
+                const selfAndUpstreamAuthFailedResources = authCheck(selfAndUpstreamResolveResources);
+                const selfAndUpstreamIsAuth = isEmpty(selfAndUpstreamResolveResources) || isEmpty(selfAndUpstreamAuthFailedResources);
+
+                const resolveVersions = uniqBy(subUpcastAuthTree, 'versionId');
+                const upcastRelationTree = {
+                    resourceId: upcast.resourceId,
+                    resourceName: upcast.resourceName,
+                    resourceType: resourceTypeMap.get(upcast.resourceId),
+                    versionRanges: resolveVersions.map(x => x.versionRange),
+                    versions: resolveVersions.map(x => x.version),
+                    versionIds: resolveVersions.map(x => x.versionId),
+                    downstreamIsAuth, selfAndUpstreamIsAuth, downstreamAuthContractIds,
+                    children: []
+                };
+                dependRelationTree.children.push(upcastRelationTree);
+            }
+            relationTree.children.push(dependRelationTree);
+        }
+
+        return [relationTree];
     }
 
     /**
@@ -158,7 +269,7 @@ export class ResourceAuthService implements IResourceAuthService {
             return authResult.setAuthCode(SubjectAuthCodeEnum.SubjectContractNotFound);
         }
 
-        const invalidContracts = contracts.filter(x => x.subjectType !== SubjectTypeEnum.Resource || x.subjectId !== subjectId);
+        const invalidContracts = contracts.filter(x => x?.subjectType !== SubjectTypeEnum.Resource || x?.subjectId !== subjectId);
         if (!isEmpty(invalidContracts)) {
             return authResult.setErrorMsg('存在无效的标的物合约')
                 .setData({invalidContracts})
@@ -204,7 +315,7 @@ export class ResourceAuthService implements IResourceAuthService {
                 }
             }
             return authFailedResources;
-        }
+        };
 
         return recursion(authTree, 1, []);
     }

@@ -1,7 +1,7 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError, FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
-import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
+import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain, cloneDeep} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -158,8 +158,16 @@ export class ResourceService implements IResourceService {
         const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
         const dependencyTree = await this.getResourceDependencyTree({} as ResourceInfo, versionInfo, options);
 
+        return this.getResourceAuthTreeFromDependencyTree(dependencyTree);
+    }
+
+    /**
+     * 依赖树转换成授权树
+     * @param dependencyTree
+     */
+    getResourceAuthTreeFromDependencyTree(dependencyTree: ResourceDependencyTree[]): ResourceAuthTree[][] {
         const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree) => dependencyTreeNode.resolveResources.map(resolveResource => {
-            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
+            return this.findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
                 return {
                     resourceId: resolveResource.resourceId,
                     resourceName: resolveResource.resourceName,
@@ -173,7 +181,6 @@ export class ResourceService implements IResourceService {
                 };
             });
         });
-
         return recursionAuthTree(first(dependencyTree)).filter(x => x.length);
     }
 
@@ -203,6 +210,7 @@ export class ResourceService implements IResourceService {
             versionRanges: [],
             versions: [versionInfo.version],
             versionIds: [versionInfo.versionId],
+            resolveResources: versionInfo.resolveResources,
             children: first(dependencyTree).dependencies?.map(dependency => {
                 return {
                     resourceId: dependency.resourceId,
@@ -211,8 +219,9 @@ export class ResourceService implements IResourceService {
                     versionRanges: [dependency.versionRange],
                     versions: [dependency.version],
                     versionIds: [dependency.versionId],
+                    resolveResources: dependency.resolveResources,
                     children: dependency.baseUpcastResources.map(upcastResource => {
-                        const resolveVersions = uniqBy(this._findResourceVersionFromDependencyTree(dependency.dependencies, upcastResource.resourceId), 'versionId');
+                        const resolveVersions = uniqBy(this.findResourceVersionFromDependencyTree(dependency.dependencies, upcastResource.resourceId), 'versionId');
                         return {
                             resourceId: upcastResource.resourceId,
                             resourceName: upcastResource.resourceName,
@@ -240,31 +249,33 @@ export class ResourceService implements IResourceService {
         if (!dependencyTree) {
             dependencyTree = await this.getResourceDependencyTree(resourceInfo, versionInfo, options);
         }
+
         const rootResource = first(dependencyTree);
         rootResource.baseUpcastResources = [];
-        for (const upcastResource of versionInfo.upcastResources) {
+        for (const upcastResource of cloneDeep(versionInfo).upcastResources) {
             rootResource.resolveResources.push({
                 resourceId: upcastResource.resourceId,
                 resourceName: upcastResource.resourceName,
-                contracts: null
+                contracts: []
             });
         }
 
         const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree): ResourceAuthTree[][] => dependencyTreeNode.resolveResources.map(resolveResource => {
-            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
+            return uniqBy(this.findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
                 return {
                     resourceId: resolveResource.resourceId,
                     resourceName: resolveResource.resourceName,
                     versionId: x.versionId,
                     version: x.version,
+                    // resolveResources: x.resolveResources,
                     versionRange: x.versionRange,
                     contracts: resolveResource.contracts,
                     children: recursionAuthTree(x)
                 };
-            });
+            }), x => x.versionId);
         });
 
-        return recursionAuthTree(first(dependencyTree));
+        return recursionAuthTree(rootResource);
     }
 
     /**
@@ -483,7 +494,7 @@ export class ResourceService implements IResourceService {
      * @param resourceId
      * @param _list
      */
-    _findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list: ResourceDependencyTree[] = []): ResourceDependencyTree[] {
+    findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list: ResourceDependencyTree[] = []): ResourceDependencyTree[] {
         return dependencies.reduce((acc, dependencyTreeNode) => {
             if (dependencyTreeNode.resourceId === resourceId) {
                 acc.push(dependencyTreeNode);
@@ -492,7 +503,7 @@ export class ResourceService implements IResourceService {
             if (!dependencyTreeNode.baseUpcastResources.some(x => x.resourceId === resourceId)) {
                 return acc;
             }
-            return this._findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resourceId, acc);
+            return this.findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resourceId, acc);
         }, _list);
     }
 
