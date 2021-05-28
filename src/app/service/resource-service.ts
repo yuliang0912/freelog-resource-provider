@@ -1,7 +1,7 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError, FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
-import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain, cloneDeep} from 'lodash';
+import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -235,47 +235,6 @@ export class ResourceService implements IResourceService {
                 };
             })
         }];
-    }
-
-    /**
-     * 获取资源关系树
-     * @param versionInfo
-     * @param dependencyTree
-     */
-    async getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]> {
-
-        const options = {maxDeep: 999, omitFields: [], isContainRootNode: true};
-        const resourceInfo = {resourceVersions: []} as ResourceInfo; // 减少不必要的数据需求,自行构造一个
-        if (!dependencyTree) {
-            dependencyTree = await this.getResourceDependencyTree(resourceInfo, versionInfo, options);
-        }
-
-        const rootResource = first(dependencyTree);
-        rootResource.baseUpcastResources = [];
-        for (const upcastResource of cloneDeep(versionInfo).upcastResources) {
-            rootResource.resolveResources.push({
-                resourceId: upcastResource.resourceId,
-                resourceName: upcastResource.resourceName,
-                contracts: []
-            });
-        }
-
-        const recursionAuthTree = (dependencyTreeNode: ResourceDependencyTree): ResourceAuthTree[][] => dependencyTreeNode.resolveResources.map(resolveResource => {
-            return uniqBy(this.findResourceVersionFromDependencyTree(dependencyTreeNode.dependencies, resolveResource.resourceId).map(x => {
-                return {
-                    resourceId: resolveResource.resourceId,
-                    resourceName: resolveResource.resourceName,
-                    versionId: x.versionId,
-                    version: x.version,
-                    // resolveResources: x.resolveResources,
-                    versionRange: x.versionRange,
-                    contracts: resolveResource.contracts,
-                    children: recursionAuthTree(x)
-                };
-            }), x => x.versionId);
-        });
-
-        return recursionAuthTree(rootResource);
     }
 
     /**

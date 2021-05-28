@@ -185,7 +185,6 @@ export interface IResourceService {
     findByResourceId(resourceId: string, ...args: any[]): Promise<ResourceInfo>;
     findOneByResourceName(resourceName: string, ...args: any[]): Promise<ResourceInfo>;
     findByResourceNames(resourceNames: string[], ...args: any[]): Promise<ResourceInfo[]>;
-    getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
     getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
     findOne(condition: object, ...args: any[]): Promise<ResourceInfo>;
     find(condition: object, ...args: any[]): Promise<ResourceInfo[]>;

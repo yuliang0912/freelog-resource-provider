@@ -43,12 +43,6 @@ export declare class ResourceService implements IResourceService {
      */
     getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
     /**
-     * 获取资源关系树
-     * @param versionInfo
-     * @param dependencyTree
-     */
-    getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
-    /**
      * 根据资源名批量获取资源
      * @param {string[]} resourceNames 资源名称集
      * @param args

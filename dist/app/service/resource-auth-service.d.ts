@@ -21,11 +21,6 @@ export declare class ResourceAuthService implements IResourceAuthService {
      */
     resourceBatchAuth(resourceVersions: ResourceVersionInfo[], authType: 'auth' | 'testAuth'): Promise<any[]>;
     /**
-     * 资源关系树授权
-     * @param resourceInfo
-     * @param versionInfo
-     */
-    /**
      * 资源关系树
      * @param resourceInfo
      * @param versionInfo

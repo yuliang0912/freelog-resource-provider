@@ -232,8 +232,6 @@ export interface IResourceService {
 
     findByResourceNames(resourceNames: string[], ...args): Promise<ResourceInfo[]>;
 
-    getRelationAuthTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<ResourceAuthTree[][]>;
-
     getRelationTree(versionInfo: ResourceVersionInfo, dependencyTree?: ResourceDependencyTree[]): Promise<any[]>;
 
     findOne(condition: object, ...args): Promise<ResourceInfo>;
