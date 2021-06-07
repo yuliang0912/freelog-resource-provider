@@ -1,6 +1,6 @@
 import {ValidatorResult} from 'jsonschema';
 import {provide, init, scope} from 'midway';
-import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide('resourcePolicyValidator')
@@ -29,7 +29,7 @@ export class ResourcePolicyValidator extends CommonJsonSchema implements IJsonSc
          */
         super.registerCustomFormats('policyName', (input) => {
             input = input.trim();
-            return input.length >= 2 && input.length < 20;
+            return input.length >= 2 && input.length <= 20;
         });
 
         /**
