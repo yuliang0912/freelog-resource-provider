@@ -1,4 +1,4 @@
-import { IResourceService, IResourceVersionService, IOutsideApiService } from '../../interface';
+import { IOutsideApiService, IResourceService, IResourceVersionService } from '../../interface';
 import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
 import { ResourcePropertyGenerator } from '../../extend/resource-property-generator';
 export declare class ResourceVersionController {

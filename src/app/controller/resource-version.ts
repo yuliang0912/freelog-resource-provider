@@ -1,10 +1,14 @@
 import {isEmpty} from 'lodash';
 import * as semver from 'semver';
-import {controller, get, put, post, inject, provide, priority} from 'midway';
-import {IResourceService, IResourceVersionService, IOutsideApiService} from '../../interface';
+import {controller, get, inject, post, priority, provide, put} from 'midway';
+import {IOutsideApiService, IResourceService, IResourceVersionService} from '../../interface';
 import {
-    IdentityTypeEnum, visitorIdentityValidator, FreelogContext,
-    ArgumentError, ApplicationError, IJsonSchemaValidate
+    ApplicationError,
+    ArgumentError,
+    FreelogContext,
+    IdentityTypeEnum,
+    IJsonSchemaValidate,
+    visitorIdentityValidator
 } from 'egg-freelog-base';
 import {ResourcePropertyGenerator} from '../../extend/resource-property-generator';
 
@@ -217,7 +221,7 @@ export class ResourceVersionController {
     }
 
     @get('/:resourceId/versions/:version/download')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async download() {
         const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
@@ -225,7 +229,11 @@ export class ResourceVersionController {
         ctx.validateParams();
 
         const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 filename resourceName version systemProperty');
-        ctx.entityNullValueAndUserAuthorizationCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
+        ctx.entityNullObjectCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
+
+        if (ctx.isLoginUser()) {
+            ctx.entityNullValueAndUserAuthorizationCheck(resourceVersionInfo, {msg: ctx.gettext('user-authorization-failed')});
+        }
 
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
 
