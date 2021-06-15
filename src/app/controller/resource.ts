@@ -56,7 +56,7 @@ export class ResourceController {
             condition.$or = [{resourceName: searchRegExp}, {resourceType: searchRegExp}];
         }
         if (!isUndefined(startResourceId)) {
-            condition._id = {$lte: startResourceId};
+            condition._id = {$lt: startResourceId};
         }
         const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {updateDate: -1});
         if (isLoadPolicyInfo) {

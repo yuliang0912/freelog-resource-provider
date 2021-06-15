@@ -17,7 +17,7 @@ export class OutsideApiService implements IOutsideApiService {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.Original);
     }
 
-    /**
+    /** 
      * 分析与获取文件系统属性
      * @param fileSha1
      * @param resourceType
