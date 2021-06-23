@@ -231,7 +231,7 @@ export class ResourceVersionController {
         const resourceVersionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version, 'userId fileSha1 filename resourceName version systemProperty');
         ctx.entityNullObjectCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
 
-        if (ctx.isLoginUser()) {
+        if (!ctx.isInternalClient()) {
             ctx.entityNullValueAndUserAuthorizationCheck(resourceVersionInfo, {msg: ctx.gettext('user-authorization-failed')});
         }
 

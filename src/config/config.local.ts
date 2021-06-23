@@ -22,10 +22,10 @@ export default () => {
         url: 'mongodb://127.0.0.1:27017/resource-beta'
     };
 
-    // config.gatewayUrl = 'http://api.testfreelog.com';
-    // config.mongoose = {
-    //     url: decodeURIComponent(`mongodb%3A%2F%2Fresource_service%3AQzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk%3D%40dds-wz9ac40fee5c09441604-pub.mongodb.rds.aliyuncs.com%3A3717%2Cdds-wz9ac40fee5c09442584-pub.mongodb.rds.aliyuncs.com%3A3717%2Ftest-resources%3FreplicaSet%3Dmgset-44484047`),
-    // };
+    config.gatewayUrl = 'http://api.testfreelog.com';
+    config.mongoose = {
+        url: decodeURIComponent(`mongodb%3A%2F%2Fresource_service%3AQzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk%3D%40dds-wz9ac40fee5c09441604-pub.mongodb.rds.aliyuncs.com%3A3717%2Cdds-wz9ac40fee5c09442584-pub.mongodb.rds.aliyuncs.com%3A3717%2Ftest-resources%3FreplicaSet%3Dmgset-44484047`),
+    };
 
     config.localIdentity = {
         userId: 50021,
