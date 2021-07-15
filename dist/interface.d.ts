@@ -102,6 +102,7 @@ export interface ResourceInfo {
     username: string;
     resourceVersions: BaseResourceVersion[];
     baseUpcastResources: BaseResourceInfo[];
+    resourceNameAbbreviation?: string;
     intro?: string;
     coverImages?: string[];
     policies?: PolicyInfo[];

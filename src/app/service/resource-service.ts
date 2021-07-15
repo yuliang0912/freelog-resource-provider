@@ -62,6 +62,7 @@ export class ResourceService implements IResourceService {
 
         resourceInfo.status = ResourceService._getResourceStatus(resourceInfo.resourceVersions, resourceInfo.policies);
         resourceInfo.uniqueKey = this.resourcePropertyGenerator.generateResourceUniqueKey(resourceInfo.resourceName);
+        resourceInfo.resourceNameAbbreviation = options.name;
 
         return this.resourceProvider.create(resourceInfo);
     }

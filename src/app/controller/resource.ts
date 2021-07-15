@@ -72,7 +72,7 @@ export class ResourceController {
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async create(ctx: FreelogContext) {
 
-        const name = ctx.checkBody('name').exist().isResourceName().value;
+        const name = ctx.checkBody('name').exist().isResourceName().trim().value;
         const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
         const intro = ctx.checkBody('intro').optional().default('').len(0, 1000).value;
@@ -447,6 +447,16 @@ export class ResourceController {
         }
         ctx.success(resources);
     }
+
+    // @get('/files/aa/rename')
+    // async rename() {
+    //     const resourceInfos = await this.resourceService.find({}, null, {sort: {updateDate: 1}});
+    //     for (const resourceInfo of resourceInfos) {
+    //         resourceInfo.resourceNameAbbreviation = resourceInfo.resourceName.replace(resourceInfo.username + '/', '');
+    //         await this.resourceService['resourceProvider'].updateOne({_id: resourceInfo.resourceId}, resourceInfo);
+    //     }
+    //     this.ctx.success(true);
+    // }
 
     /**
      * 策略格式校验

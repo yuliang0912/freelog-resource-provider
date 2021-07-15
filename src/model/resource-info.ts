@@ -35,6 +35,7 @@ export class ResourceInfoModel extends MongooseModelBase {
             resourceVersions: {type: [ResourceVersionSchema], default: [], required: false},
             userId: {type: Number, required: true},
             username: {type: String, required: true},
+            resourceNameAbbreviation: {type: String, required: true},
             baseUpcastResources: {type: [UpcastResourceSchema], default: [], required: false},
             intro: {type: String, required: false, default: ''},
             coverImages: {type: [String], default: [], required: false},
@@ -63,7 +64,7 @@ export class ResourceInfoModel extends MongooseModelBase {
             getters: true,
             virtuals: true,
             transform(doc, ret) {
-                return assign({resourceId: doc.id}, omit(ret, ['_id', 'id', 'uniqueKey']));
+                return assign({resourceId: doc.id}, omit(ret, ['_id', 'id', 'resourceNameAbbreviation', 'uniqueKey']));
             }
         };
     }
