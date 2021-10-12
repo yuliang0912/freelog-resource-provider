@@ -1,7 +1,9 @@
 import { ResourceInfo } from '../../interface';
 import { PageResult } from 'egg-freelog-base';
 export declare class ElasticSearchService {
+    elasticSearch: any;
     private client;
+    constructorBse(): void;
     /**
      * 搜索关键字建议
      * @param prefix

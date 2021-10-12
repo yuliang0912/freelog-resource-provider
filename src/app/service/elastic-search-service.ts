@@ -1,7 +1,7 @@
 import {Client} from '@elastic/elasticsearch';
 import type {Client as NewTypes} from '@elastic/elasticsearch/api/new';
 import {QueryDslQueryContainer, SearchTotalHits} from '@elastic/elasticsearch/api/types';
-import {provide, scope} from 'midway';
+import {config, init, provide, scope} from 'midway';
 import {ResourceInfo} from '../../interface';
 import {isNumber, isEmpty, isArray, omit, uniq} from 'lodash';
 import {PageResult} from 'egg-freelog-base';
@@ -11,9 +11,14 @@ import * as T from '@elastic/elasticsearch/api/types';
 @provide('elasticSearchService')
 export class ElasticSearchService {
 
-    private client: NewTypes = new Client({
-        node: 'http://119.23.63.19:32519'
-    }) as any;
+    @config('elasticSearch')
+    elasticSearch;
+    private client: NewTypes;
+
+    @init()
+    constructorBse() {
+        this.client = new Client({node: this.elasticSearch.url}) as any;
+    }
 
     /**
      * 搜索关键字建议
