@@ -12,7 +12,7 @@ export default () => {
     };
 
     config.elasticSearch = {
-        url: 'http://172.18.215.229:9200'
+        url: 'http://elasticsearch.common:9200'
     };
 
     config.uploadConfig = {
