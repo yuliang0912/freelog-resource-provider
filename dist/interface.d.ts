@@ -111,6 +111,14 @@ export interface ResourceInfo {
     latestVersion?: string;
     tags?: string[];
 }
+export interface ResourceTagInfo {
+    tagName: string;
+    tagType: 1 | 2;
+    authority: 1 | 2 | 3;
+    resourceRange: string[];
+    resourceRangeType: 1 | 2 | 3;
+    createUserId: number;
+}
 export interface BaseResourceInfo {
     resourceId: string;
     resourceName?: string;
@@ -191,9 +199,32 @@ export interface IResourceService {
     find(condition: object, ...args: any[]): Promise<ResourceInfo[]>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceInfo>>;
     count(condition: object): Promise<number>;
+    /**
+     * 冻结或解封资源
+     * @param resourceInfo
+     * @param remark
+     */
+    freezeOrDeArchiveResource(resourceInfo: ResourceInfo, remark: string): Promise<boolean>;
+    /**
+     * 创建资源版本
+     * @param resourceInfo
+     * @param versionInfo
+     */
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
+    /**
+     * 填充资源策略信息
+     * @param resources
+     */
     fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    /**
+     * 填充资源的最新版本信息
+     * @param resources
+     */
     fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    /**
+     * 查找用户创建的资源数量
+     * @param userIds
+     */
     findUserCreatedResourceCounts(userIds: number[]): any;
     /**
      * 从依赖树中获取指定的所有发行版本(查找多重上抛)
@@ -204,6 +235,38 @@ export interface IResourceService {
      * @param _list
      */
     findResourceVersionFromDependencyTree(dependencies: ResourceDependencyTree[], resourceId: string, _list?: ResourceDependencyTree[]): ResourceDependencyTree[];
+    /**
+     * 创建资源tag
+     * @param model
+     */
+    createResourceTag(model: ResourceTagInfo): Promise<ResourceTagInfo>;
+    /**
+     * 更新资源标签
+     * @param tagId
+     * @param model
+     */
+    updateResourceTag(tagId: string, model: Partial<ResourceTagInfo>): Promise<boolean>;
+    /**
+     * 查找资源标签
+     * @param condition
+     * @param args
+     */
+    findResourceTags(condition: object, ...args: any[]): Promise<ResourceTagInfo[]>;
+    /**
+     * 过滤掉不可用的资源标签
+     * @param resourceType
+     * @param resourceTags
+     */
+    filterResourceTag(resourceType: string, resourceTags: string[]): Promise<string[]>;
+    /**
+     * 分页查找资源标签
+     * @param condition
+     * @param skip
+     * @param limit
+     * @param projection
+     * @param sort
+     */
+    findIntervalResourceTagList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceTagInfo>>;
 }
 export interface IResourceVersionService {
     createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;

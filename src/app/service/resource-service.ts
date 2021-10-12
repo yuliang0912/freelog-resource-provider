@@ -1,7 +1,7 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
-import {ApplicationError, FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
-import {isArray, isUndefined, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
+import {ApplicationError, ArgumentError, FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
+import {isArray, isUndefined, intersectionWith, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -17,7 +17,8 @@ import {
     ResourceDependencyTree,
     BaseResourceInfo,
     operationPolicyInfo,
-    BasePolicyInfo
+    BasePolicyInfo,
+    ResourceTagInfo
 } from '../../interface';
 import * as semver from 'semver';
 
@@ -28,6 +29,10 @@ export class ResourceService implements IResourceService {
     ctx: FreelogContext;
     @inject()
     resourceProvider: IMongodbOperation<ResourceInfo>;
+    @inject()
+    resourceTagProvider: IMongodbOperation<ResourceTagInfo>;
+    @inject()
+    resourceFreezeRecordProvider: IMongodbOperation<any>;
     @inject()
     resourcePropertyGenerator;
     @inject()
@@ -317,6 +322,64 @@ export class ResourceService implements IResourceService {
     }
 
     /**
+     * 冻结或解封资源
+     * @param resourceInfo
+     * @param remark
+     */
+    async freezeOrDeArchiveResource(resourceInfo: ResourceInfo, remark: string): Promise<boolean> {
+
+        // 已经冻结的就是做解封操作.反之亦然
+        const operatorType = [2, 3].includes(resourceInfo.status) ? 2 : 1;
+        const operatorRecordInfo = {
+            operatorUserId: this.ctx.userId,
+            operatorUserName: this.ctx.identityInfo.userInfo.username,
+            type: operatorType, remark: remark ?? ''
+        };
+        // 如果是冻结操作,则修改状态为2或3.反之则修改为0或1
+        const resourceStatus = operatorType === 1 ? (resourceInfo.status === 0 ? 2 : 3) : operatorType === 2 ? (resourceInfo.status === 2 ? 0 : 1) : -1;
+
+        const session = await this.resourceProvider.model.startSession();
+        await session.withTransaction(async () => {
+            await this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, {status: resourceStatus}, {session});
+            await this.resourceFreezeRecordProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, {
+                $push: {records: operatorRecordInfo}
+            }, {session}).then(model => {
+                return model || this.resourceFreezeRecordProvider.create([{
+                    resourceId: resourceInfo.resourceId,
+                    resourceName: resourceInfo.resourceName,
+                    records: [operatorRecordInfo]
+                }], {session});
+            });
+        }).catch(error => {
+            throw error;
+        }).finally(() => {
+            session.endSession();
+        });
+        return true;
+    }
+
+    /**
+     * 查找资源标签
+     * @param condition
+     * @param args
+     */
+    async findResourceTags(condition: object, ...args): Promise<ResourceTagInfo[]> {
+        return this.resourceTagProvider.find(condition, ...args);
+    }
+
+    /**
+     * 分页查找资源标签
+     * @param condition
+     * @param skip
+     * @param limit
+     * @param projection
+     * @param sort
+     */
+    async findIntervalResourceTagList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceTagInfo>> {
+        return this.resourceTagProvider.findIntervalList(condition, skip, limit, projection?.toString(), sort);
+    }
+
+    /**
      * 创建资源版本事件处理
      * @param {ResourceInfo} resourceInfo
      * @param {ResourceVersionInfo} versionInfo
@@ -337,6 +400,46 @@ export class ResourceService implements IResourceService {
         }
 
         return this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, modifyModel).then(data => Boolean(data.ok));
+    }
+
+    /**
+     * 创建资源标签
+     * @param model
+     */
+    async createResourceTag(model: ResourceTagInfo): Promise<ResourceTagInfo> {
+        const tagInfo = await this.resourceTagProvider.findOne({tagName: model.tagName});
+        if (tagInfo) {
+            throw new ArgumentError('tag已经存在,不能重复创建');
+        }
+        return this.resourceTagProvider.create(model);
+    }
+
+    /**
+     * 更新资源标签
+     * @param tagId
+     * @param model
+     */
+    async updateResourceTag(tagId: string, model: ResourceTagInfo): Promise<boolean> {
+        return this.resourceTagProvider.updateOne({_id: tagId}, model).then(t => Boolean(t.ok));
+    }
+
+    /**
+     * 过滤掉不可用的标签
+     * @param resourceType
+     * @param resourceTags
+     */
+    async filterResourceTag(resourceType: string, resourceTags: string[]): Promise<string[]> {
+        const condition = {
+            authority: 1,
+            $or: [{resourceRangeType: 3},
+                {resourceRangeType: 1, resourceRange: resourceType},
+                {
+                    resourceRangeType: 2,
+                    resourceRange: {$ne: resourceType}
+                }]
+        };
+        const usableTags = await this.findResourceTags(condition, 'tagName tagType');
+        return intersectionWith(resourceTags, usableTags, (x, y) => x === y.tagName);
     }
 
     /**

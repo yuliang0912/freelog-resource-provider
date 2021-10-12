@@ -6,3 +6,4 @@ import {provide, scope} from 'midway';
 export class FreelogEvent extends events.EventEmitter {
 
 }
+

@@ -12,8 +12,8 @@ const midway_1 = require("midway");
 let FreelogEvent = class FreelogEvent extends events.EventEmitter {
 };
 FreelogEvent = __decorate([
-    midway_1.scope('Singleton'),
-    midway_1.provide('freelogEvent')
+    (0, midway_1.scope)('Singleton'),
+    (0, midway_1.provide)('freelogEvent')
 ], FreelogEvent);
 exports.FreelogEvent = FreelogEvent;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZnJlZWxvZy1ldmVudC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9ldmVudC1oYW5kbGVyL2ZyZWVsb2ctZXZlbnQudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsaUNBQWlDO0FBQ2pDLG1DQUFzQztBQUl0QyxJQUFhLFlBQVksR0FBekIsTUFBYSxZQUFhLFNBQVEsTUFBTSxDQUFDLFlBQVk7Q0FFcEQsQ0FBQTtBQUZZLFlBQVk7SUFGeEIsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUNsQixnQkFBTyxDQUFDLGNBQWMsQ0FBQztHQUNYLFlBQVksQ0FFeEI7QUFGWSxvQ0FBWSJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZnJlZWxvZy1ldmVudC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9ldmVudC1oYW5kbGVyL2ZyZWVsb2ctZXZlbnQudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUEsaUNBQWlDO0FBQ2pDLG1DQUFzQztBQUl0QyxJQUFhLFlBQVksR0FBekIsTUFBYSxZQUFhLFNBQVEsTUFBTSxDQUFDLFlBQVk7Q0FFcEQsQ0FBQTtBQUZZLFlBQVk7SUFGeEIsSUFBQSxjQUFLLEVBQUMsV0FBVyxDQUFDO0lBQ2xCLElBQUEsZ0JBQU8sRUFBQyxjQUFjLENBQUM7R0FDWCxZQUFZLENBRXhCO0FBRlksb0NBQVkifQ==

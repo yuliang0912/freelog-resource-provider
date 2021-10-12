@@ -5,6 +5,6 @@ export declare class ResourceVersionModel extends MongooseModelBase {
     buildMongooseModel(): any;
     static get toObjectOptions(): {
         getters: boolean;
-        transform(doc: any, ret: any): import("lodash").Omit<any, "_id" | "id">;
+        transform(doc: any, ret: any): import("lodash").Omit<any, "id" | "_id">;
     };
 }

@@ -6,6 +6,7 @@ import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy} from 'lod
 import {
     ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext, IJsonSchemaValidate
 } from 'egg-freelog-base';
+import {ElasticSearchService} from '../service/elastic-search-service';
 
 @provide()
 @controller('/v2/resources')
@@ -19,8 +20,10 @@ export class ResourceController {
     resourcePolicyValidator: IJsonSchemaValidate;
     @inject()
     resourceVersionService: IResourceVersionService;
+    @inject()
+    elasticSearchService: ElasticSearchService;
 
-    @get('/')
+    @get('/_db_search')
     async index() {
 
         const {ctx} = this;
@@ -36,6 +39,8 @@ export class ResourceController {
         const startResourceId = ctx.checkQuery('startResourceId').optional().isResourceId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
+        const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 5).value;
+        // const platformTags = ctx.checkQuery('platformTags').optional().toSplitArray().len(1, 10).value;
         ctx.validateParams();
 
         const condition: any = {};
@@ -58,6 +63,9 @@ export class ResourceController {
         if (!isUndefined(startResourceId)) {
             condition._id = {$lt: startResourceId};
         }
+        if (!isEmpty(tags)) {
+            condition.tags = {$in: tags};
+        }
         const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {updateDate: -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
@@ -66,6 +74,46 @@ export class ResourceController {
             pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
         }
         ctx.success(pageResult);
+    }
+
+    @get('/')
+    async esSearch() {
+
+        const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
+        const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
+        const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
+        const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
+        const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().len(1, 5).value;
+        ctx.validateParams();
+
+        const pageResult = await this.elasticSearchService.search(skip, limit, sort, keywords, isSelf ? ctx.userId : undefined, resourceType, omitResourceType, status, tags, projection);
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
+        }
+        if (isLoadLatestVersionInfo) {
+            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
+        }
+        ctx.success(pageResult);
+    }
+
+    /**
+     * 搜索关键字补全
+     */
+    @get('/keywordSuggest')
+    async keywordSuggest() {
+        const {ctx} = this;
+        const prefix = ctx.checkQuery('prefix').exist().len(2, 70).value;
+        ctx.validateParams();
+
+        await this.elasticSearchService.suggest(prefix).then(ctx.success);
     }
 
     @post('/')
@@ -446,6 +494,41 @@ export class ResourceController {
             }
         }
         ctx.success(resources);
+    }
+
+    /**
+     * 冻结资源
+     */
+    @put('/:resourceId/freeze')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async freezeResource() {
+        const {ctx} = this;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const remark = ctx.checkBody('remark').exist().len(1, 200).value;
+        ctx.validateParams().validateOfficialAuditAccount();
+
+        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
+        if (!resourceInfo || [2, 3].includes(resourceInfo.status)) {
+            throw new ArgumentError('未找到资源或资源已被冻结');
+        }
+        await this.resourceService.freezeOrDeArchiveResource(resourceInfo, remark).then(ctx.success);
+    }
+
+    /**
+     * 解冻资源
+     */
+    @put('/:resourceId/deArchive')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async deArchiveResource() {
+        const {ctx} = this;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        ctx.validateParams().validateOfficialAuditAccount();
+
+        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
+        if (!resourceInfo || [0, 1].includes(resourceInfo.status)) {
+            throw new ArgumentError('未找到资源或资源不是冻结状态');
+        }
+        await this.resourceService.freezeOrDeArchiveResource(resourceInfo, '').then(ctx.success);
     }
 
     // @get('/files/aa/rename')

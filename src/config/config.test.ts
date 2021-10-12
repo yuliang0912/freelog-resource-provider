@@ -11,6 +11,10 @@ export default () => {
         url: `mongodb://resource_service:QzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk=@dds-wz9ac40fee5c09441.mongodb.rds.aliyuncs.com:3717,dds-wz9ac40fee5c09442.mongodb.rds.aliyuncs.com:3717/test-resources?replicaSet=mgset-44484047`,
     };
 
+    config.elasticSearch = {
+        url: 'http://elasticsearch.common:9200'
+    };
+
     config.uploadConfig = {
         aliOss: {
             internal: true,

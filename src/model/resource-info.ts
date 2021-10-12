@@ -42,7 +42,7 @@ export class ResourceInfoModel extends MongooseModelBase {
             tags: {type: [String], required: false, default: []},
             policies: {type: [PolicySchema], default: [], required: false},
             uniqueKey: {type: String, unique: true, required: true}, // 资源名称排他性值,通过resourceName全部转成成小写.然后sha1计算
-            status: {type: Number, default: 0, required: true}, // 0:下架 1:上架
+            status: {type: Number, default: 0, required: true}, // 0:下架 1:上架 2:冻结(下架) 3:冻结(上架)
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

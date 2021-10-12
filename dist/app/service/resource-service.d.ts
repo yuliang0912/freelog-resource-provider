@@ -1,8 +1,10 @@
 import { FreelogContext, IMongodbOperation, PageResult } from 'egg-freelog-base';
-import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, ResourceAuthTree, ResourceDependencyTree, BaseResourceInfo, operationPolicyInfo } from '../../interface';
+import { CreateResourceOptions, GetResourceDependencyOrAuthTreeOptions, IOutsideApiService, IResourceService, PolicyInfo, ResourceInfo, ResourceVersionInfo, UpdateResourceOptions, IResourceVersionService, ResourceAuthTree, ResourceDependencyTree, BaseResourceInfo, operationPolicyInfo, ResourceTagInfo } from '../../interface';
 export declare class ResourceService implements IResourceService {
     ctx: FreelogContext;
     resourceProvider: IMongodbOperation<ResourceInfo>;
+    resourceTagProvider: IMongodbOperation<ResourceTagInfo>;
+    resourceFreezeRecordProvider: IMongodbOperation<any>;
     resourcePropertyGenerator: any;
     outsideApiService: IOutsideApiService;
     resourceVersionService: IResourceVersionService;
@@ -85,12 +87,50 @@ export declare class ResourceService implements IResourceService {
      */
     count(condition: object): Promise<number>;
     /**
+     * 冻结或解封资源
+     * @param resourceInfo
+     * @param remark
+     */
+    freezeOrDeArchiveResource(resourceInfo: ResourceInfo, remark: string): Promise<boolean>;
+    /**
+     * 查找资源标签
+     * @param condition
+     * @param args
+     */
+    findResourceTags(condition: object, ...args: any[]): Promise<ResourceTagInfo[]>;
+    /**
+     * 分页查找资源标签
+     * @param condition
+     * @param skip
+     * @param limit
+     * @param projection
+     * @param sort
+     */
+    findIntervalResourceTagList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceTagInfo>>;
+    /**
      * 创建资源版本事件处理
      * @param {ResourceInfo} resourceInfo
      * @param {ResourceVersionInfo} versionInfo
      * @returns {Promise<boolean>}
      */
     createdResourceVersionHandle(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<boolean>;
+    /**
+     * 创建资源标签
+     * @param model
+     */
+    createResourceTag(model: ResourceTagInfo): Promise<ResourceTagInfo>;
+    /**
+     * 更新资源标签
+     * @param tagId
+     * @param model
+     */
+    updateResourceTag(tagId: string, model: ResourceTagInfo): Promise<boolean>;
+    /**
+     * 过滤掉不可用的标签
+     * @param resourceType
+     * @param resourceTags
+     */
+    filterResourceTag(resourceType: string, resourceTags: string[]): Promise<string[]>;
     /**
      * 策略校验
      * @param policies
