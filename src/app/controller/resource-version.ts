@@ -173,6 +173,22 @@ export class ResourceVersionController {
         }, projection.join(' ')).then(ctx.success);
     }
 
+    // 获取版本属性
+    @get('/:resourceId/versions/:version/property')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async versionProperty() {
+        const {ctx} = this;
+        const resourceId = ctx.checkParams('resourceId').isResourceId().value;
+        const version = ctx.checkParams('version').exist().is(semver.valid, ctx.gettext('params-format-validate-failed', 'version')).value;
+        ctx.validateParams();
+
+        const versionInfo = await this.resourceVersionService.findOneByVersion(resourceId, version);
+        if (!versionInfo) {
+            return ctx.success({});
+        }
+        ctx.success(this.resourceVersionService.calculateResourceVersionProperty(versionInfo));
+    }
+
     @post('/:resourceId/versions/drafts')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async createOrUpdateResourceVersionDraft() {

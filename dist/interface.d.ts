@@ -289,6 +289,7 @@ export interface IResourceVersionService {
         ret: boolean;
         deep?: number;
     }>;
+    calculateResourceVersionProperty(resourceVersionInfo: ResourceVersionInfo): object;
 }
 export interface ICollectionService {
     collectionResource(model: CollectionResourceInfo): Promise<CollectionResourceInfo>;

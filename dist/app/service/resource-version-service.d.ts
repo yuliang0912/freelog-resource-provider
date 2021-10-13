@@ -69,6 +69,12 @@ export declare class ResourceVersionService implements IResourceVersionService {
         deep?: number;
     }>;
     /**
+     * 综合计算获得版本的最终属性
+     * @param resourceVersionInfo
+     * @returns {Promise<void>}
+     */
+    calculateResourceVersionProperty(resourceVersionInfo: ResourceVersionInfo): object;
+    /**
      * * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态
      * 2.依赖的资源与主资源之间不能存在循环引用.

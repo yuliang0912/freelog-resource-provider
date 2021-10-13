@@ -323,6 +323,27 @@ export class ResourceVersionService implements IResourceVersionService {
     }
 
     /**
+     * 综合计算获得版本的最终属性
+     * @param resourceVersionInfo
+     * @returns {Promise<void>}
+     */
+    calculateResourceVersionProperty(resourceVersionInfo: ResourceVersionInfo): object {
+        const resourceCustomReadonlyInfo: any = {};
+        const resourceCustomEditableInfo: any = {};
+        const customPropertyDescriptors = resourceVersionInfo.customPropertyDescriptors as Array<any>;
+
+        customPropertyDescriptors?.forEach(({key, defaultValue, type}) => {
+            if (type === 'readonlyText') {
+                resourceCustomReadonlyInfo[key] = defaultValue;
+            } else {
+                resourceCustomEditableInfo[key] = defaultValue;
+            }
+        });
+        // 属性优先级为: 1.系统属性 2:资源定义的不可编辑的属性 3:资源自定义的可编辑属性
+        return assign(resourceCustomEditableInfo, resourceCustomReadonlyInfo, resourceVersionInfo.systemProperty);
+    }
+
+    /**
      * * 检查依赖项是否符合标准
      * 1:依赖的资源不能重复,并且是上架状态
      * 2.依赖的资源与主资源之间不能存在循环引用.

@@ -357,6 +357,8 @@ export interface IResourceVersionService {
     // validateDependencies(resourceId, dependencies): Promise<object[]>;
 
     cycleDependCheck(resourceId: string, dependencies: any[], deep: number): Promise<{ ret: boolean, deep?: number }>;
+
+    calculateResourceVersionProperty(resourceVersionInfo: ResourceVersionInfo): object;
 }
 
 export interface ICollectionService {
