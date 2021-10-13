@@ -3,7 +3,7 @@ import type {Client as NewTypes} from '@elastic/elasticsearch/api/new';
 import {QueryDslQueryContainer, SearchTotalHits} from '@elastic/elasticsearch/api/types';
 import {config, init, provide, scope} from 'midway';
 import {ResourceInfo} from '../../interface';
-import {isNumber, isEmpty, isArray, omit, uniq} from 'lodash';
+import {isEmpty, isArray, omit, uniq, includes} from 'lodash';
 import {PageResult} from 'egg-freelog-base';
 import * as T from '@elastic/elasticsearch/api/types';
 
@@ -91,7 +91,7 @@ export class ElasticSearchService {
         if (resourceType) {
             musts.push({term: {resourceType: {value: resourceType}}});
         }
-        if (isNumber(status)) {
+        if (includes([0, 1], status)) {
             musts.push({term: {status: {value: status}}});
         }
         if (isArray(tags) && !isEmpty(tags)) {
@@ -115,6 +115,8 @@ export class ElasticSearchService {
                 searchParams.body.sort.push({[key]: ['DESC', 'desc', '-1', -1].includes(value) ? 'desc' : 'asc'});
             }
         }
+
+        console.log(JSON.stringify(searchParams));
 
         const result = await this.client.search<ResourceInfo>(searchParams);
         return {

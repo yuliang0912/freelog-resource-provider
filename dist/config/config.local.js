@@ -26,7 +26,7 @@ exports.default = () => {
         url: 'http://119.23.63.19:32519'
     };
     config.localIdentity = {
-        userId: 50021,
+        userId: 50028,
         username: 'yuliang',
         email: 'support@freelog.com'
     };
