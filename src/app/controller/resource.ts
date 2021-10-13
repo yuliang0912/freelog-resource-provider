@@ -23,7 +23,7 @@ export class ResourceController {
     @inject()
     elasticSearchService: ElasticSearchService;
 
-    @get('/')
+    @get('/_db_search')
     async index() {
 
         const {ctx} = this;
@@ -76,7 +76,7 @@ export class ResourceController {
         ctx.success(pageResult);
     }
 
-    @get('/_db_search')
+    @get('/')
     async esSearch() {
 
         const {ctx} = this;
