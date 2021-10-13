@@ -79,7 +79,8 @@ export class ElasticSearchService {
         if (keywords?.length) {
             musts.push({
                 query_string: {
-                    query: keywords, fields: ['resourceName^1.5', 'resourceType', 'intro^0.7', 'tags']
+                    query: keywords,
+                    fields: ['resourceName^1.5', `resourceNameAbbreviation^1.2`, 'resourceNameAbbreviation.py^0.8', 'resourceType', 'intro^0.7', 'tags']
                 }
             });
         } else {
@@ -115,8 +116,6 @@ export class ElasticSearchService {
                 searchParams.body.sort.push({[key]: ['DESC', 'desc', '-1', -1].includes(value) ? 'desc' : 'asc'});
             }
         }
-
-        console.log(JSON.stringify(searchParams));
 
         const result = await this.client.search<ResourceInfo>(searchParams);
         return {
