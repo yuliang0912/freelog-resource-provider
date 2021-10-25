@@ -9,7 +9,7 @@ export class ResourceVersionDraftModel extends MongooseModelBase {
     constructor(@plugin('mongoose') mongoose) {
         super(mongoose);
     }
-    
+
     buildMongooseModel() {
 
         const ResourceVersionDraftScheme = new this.mongoose.Schema({

@@ -110,7 +110,7 @@ export class ResourceController {
     @get('/keywordSuggest')
     async keywordSuggest() {
         const {ctx} = this;
-        const prefix = ctx.checkQuery('prefix').exist().len(2, 70).value;
+        const prefix = ctx.checkQuery('prefix').exist().len(1, 70).value;
         ctx.validateParams();
 
         await this.elasticSearchService.suggest(prefix).then(ctx.success);
@@ -530,16 +530,6 @@ export class ResourceController {
         }
         await this.resourceService.freezeOrDeArchiveResource(resourceInfo, '').then(ctx.success);
     }
-
-    // @get('/files/aa/rename')
-    // async rename() {
-    //     const resourceInfos = await this.resourceService.find({}, null, {sort: {updateDate: 1}});
-    //     for (const resourceInfo of resourceInfos) {
-    //         resourceInfo.resourceNameAbbreviation = resourceInfo.resourceName.replace(resourceInfo.username + '/', '');
-    //         await this.resourceService['resourceProvider'].updateOne({_id: resourceInfo.resourceId}, resourceInfo);
-    //     }
-    //     this.ctx.success(true);
-    // }
 
     /**
      * 策略格式校验
