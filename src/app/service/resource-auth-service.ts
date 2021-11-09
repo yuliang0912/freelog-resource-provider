@@ -230,7 +230,7 @@ export class ResourceAuthService implements IResourceAuthService {
                 .setAuthCode(SubjectAuthCodeEnum.SubjectContractInvalid);
         }
 
-        const isExistAuthContracts = contracts.some(x => (authType === 'auth' ? x.isAuth : x.isTestAuth));
+        const isExistAuthContracts = contracts.some(x => (authType === 'auth' ? x.isAuth : (x.isAuth || x.isTestAuth)));
         if (!isExistAuthContracts) {
             return authResult.setErrorMsg('合约授权未通过')
                 .setAuthCode(SubjectAuthCodeEnum.SubjectContractUnauthorized);

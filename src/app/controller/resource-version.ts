@@ -254,8 +254,9 @@ export class ResourceVersionController {
         const fileStreamInfo = await this.resourceVersionService.getResourceFileStream(resourceVersionInfo);
 
         ctx.body = fileStreamInfo.fileStream;
-        ctx.set('content-length', fileStreamInfo.fileSize.toString());
         ctx.attachment(fileStreamInfo.fileName);
+        ctx.set('content-length', fileStreamInfo.fileSize.toString());
+        ctx.set('content-type', fileStreamInfo.contentType);
     }
 
     @get('/versions/:versionId/internalClientDownload')
