@@ -25,7 +25,6 @@ export class ElasticSearchService {
      * @param prefix
      */
     async suggest(prefix: string): Promise<string[]> {
-
         const result = await this.client.search({
             index: 'test-resources.resource-infos',
             body: {
@@ -79,7 +78,7 @@ export class ElasticSearchService {
         if (keywords?.length) {
             musts.push({
                 query_string: {
-                    query: keywords,
+                    query: encodeURIComponent(keywords),
                     fields: ['resourceName^1.5', `resourceNameAbbreviation^1.2`, 'resourceNameAbbreviation.py^0.8', 'resourceType', 'intro^0.7', 'tags']
                 }
             });
