@@ -1,6 +1,6 @@
 import {ValidatorResult} from 'jsonschema';
 import {provide, init, scope} from 'midway';
-import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 /**
  * http://json-schema.org/understanding-json-schema/
@@ -41,7 +41,7 @@ export class ResourceVersionCustomPropertyValidator extends CommonJsonSchema imp
                     },
                     defaultValue: {
                         // 考虑到UI文本框输入,目前限定为字符串.后期可能修改为any
-                        type: 'string', required: true, minLength: 1, maxLength: 30
+                        type: 'string', required: true, minLength: 0, maxLength: 30
                     },
                     type: {
                         type: 'string',

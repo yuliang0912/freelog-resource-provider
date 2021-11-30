@@ -333,6 +333,10 @@ export class ResourceVersionController {
             });
         }
 
+        if (customPropertyDescriptors.some(x => x.type !== 'editableText' && x.defaultValue.length < 1)) {
+            throw new ArgumentError('自定义属性格式校验失败,请确保defaultValue有效');
+        }
+
         const resourceVersion = await this.resourceVersionService.findOneByVersion(resourceId, version);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceVersion, {msg: ctx.gettext('params-validate-failed', 'resourceId,version')});
 
