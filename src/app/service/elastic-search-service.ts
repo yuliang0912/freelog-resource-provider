@@ -78,7 +78,7 @@ export class ElasticSearchService {
         if (keywords?.length) {
             musts.push({
                 query_string: {
-                    query: encodeURIComponent(keywords),
+                    query: keywords.replace(/\//g, '//'),
                     fields: ['resourceName^1.5', `resourceNameAbbreviation^1.2`, 'resourceNameAbbreviation.py^0.8', 'resourceType', 'intro^0.7', 'tags']
                 }
             });
