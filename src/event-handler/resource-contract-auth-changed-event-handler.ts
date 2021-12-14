@@ -10,7 +10,7 @@ import {ContractStatusEnum, IMongodbOperation} from 'egg-freelog-base';
 export class ResourceContractAuthChangedEventHandler implements IKafkaSubscribeMessageHandle {
 
     consumerGroupId = 'freelog-resource-service#contract-terminated-event-handler-group';
-    subscribeTopicName = `resource-contract-auth-status-changed-queue`;
+    subscribeTopicName = `resource-contract-auth-status-changed-topic`;
 
     @inject()
     resourceVersionProvider: IMongodbOperation<ResourceVersionInfo>;

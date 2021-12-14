@@ -14,7 +14,7 @@ const midway_1 = require("midway");
 const egg_freelog_base_1 = require("egg-freelog-base");
 let ResourceContractAuthChangedEventHandler = class ResourceContractAuthChangedEventHandler {
     consumerGroupId = 'freelog-resource-service#contract-terminated-event-handler-group';
-    subscribeTopicName = `resource-contract-auth-status-changed-queue`;
+    subscribeTopicName = `resource-contract-auth-status-changed-topic`;
     resourceVersionProvider;
     initial() {
         this.messageHandle = this.messageHandle.bind(this);
