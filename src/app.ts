@@ -1,4 +1,5 @@
 import mongoose from 'egg-freelog-base/database/mongoose';
+import {KafkaClient} from './kafka/client';
 
 export default class AppBootHook {
     private readonly app;
@@ -8,6 +9,13 @@ export default class AppBootHook {
     }
 
     async willReady() {
-        return mongoose(this.app);
+        await mongoose(this.app).then(() => {
+            return this.app.applicationContext.getAsync('kafkaStartup');
+        });
+    }
+
+    async beforeClose() {
+        const kafkaClient: KafkaClient = await this.app.applicationContext.getAsync('kafkaClient');
+        await kafkaClient.disconnect();
     }
 }

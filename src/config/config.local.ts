@@ -33,5 +33,12 @@ export default () => {
         email: 'support@freelog.com'
     };
 
+    config.kafka = {
+        enable: true,
+        clientId: 'freelog-resource-service',
+        logLevel: 1, // logLevel.ERROR,
+        brokers: ['192.168.164.165:9090']
+    };
+
     return config;
 };

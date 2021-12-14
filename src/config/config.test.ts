@@ -22,5 +22,12 @@ export default () => {
         amzS3: {}
     };
 
+    config.kafka = {
+        enable: true,
+        clientId: 'freelog-resource-service',
+        logLevel: 1, // logLevel.ERROR,
+        brokers: ['kafka-svc.common:9093']
+    };
+
     return config;
 };
