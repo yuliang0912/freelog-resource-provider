@@ -30,7 +30,7 @@ export class ResourceContractAuthChangedEventHandler implements IKafkaSubscribeM
             return;
         }
         const resourceVersions = await this.resourceVersionProvider.find({
-            resourceId: message.licenseeId, 'resolveResources.resourceId': message.licensorId
+            resourceId: message.licenseeId, 'resolveResources.resourceId': message.subjectId
         }, 'versionId resolveResources');
 
         const tasks = [];
