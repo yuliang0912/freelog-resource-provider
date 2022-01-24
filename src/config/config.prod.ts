@@ -25,5 +25,9 @@ export default () => {
         brokers: ['192.168.164.165:9090']
     };
 
+    config.elasticSearch = {
+        url: 'http://elasticsearch.common:9200'
+    };
+
     return config;
 };

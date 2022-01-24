@@ -46,5 +46,9 @@ export default (appInfo: EggAppInfo) => {
         privateKey: '9d3761da71ee041e648cafb2e322d968'
     };
 
+    config.elasticSearch = {
+        url: ''
+    };
+
     return config;
 };
