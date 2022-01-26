@@ -24,6 +24,7 @@ export default () => {
     };
 
     config.elasticSearch = {
+        database: 'test-resources',
         url: 'http://119.23.63.19:32519'
     };
 

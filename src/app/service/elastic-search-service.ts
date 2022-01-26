@@ -26,7 +26,7 @@ export class ElasticSearchService {
      */
     async suggest(prefix: string): Promise<string[]> {
         const result = await this.client.search({
-            index: 'test-resources.resource-infos',
+            index: `${this.elasticSearch.database}.resource-infos`,
             body: {
                 suggest: {
                     kw: {
@@ -64,7 +64,7 @@ export class ElasticSearchService {
     async search(skip: number, limit: number, sort: object, keywords: string, userId?: number, resourceType?: string, omitResourceType?: string, status?: number, tags?: string[], projection?: string[]): Promise<PageResult<ResourceInfo>> {
 
         const searchParams: T.SearchRequest = {
-            index: 'test-resources.resource-infos',
+            index: `${this.elasticSearch.database}.resource-infos`,
             body: {
                 query: {
                     bool: {}

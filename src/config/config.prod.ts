@@ -4,7 +4,7 @@ export default () => {
     config.mongoose = {
         url: decodeURIComponent('mongodb%3A%2F%2Fresource_service%3AQzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk%3D%40freelog-prod-private.mongodb.rds.aliyuncs.com%3A3717%2Cfreelog-prod-private-secondary.mongodb.rds.aliyuncs.com%3A3717%2Fprod-resources%3FreplicaSet%3Dmgset-58730021')
     };
-    
+
     config.cluster = {
         listen: {
             port: 7101
@@ -26,6 +26,7 @@ export default () => {
     };
 
     config.elasticSearch = {
+        database: 'prod-resources',
         url: 'http://elasticsearch.common:9200'
     };
 

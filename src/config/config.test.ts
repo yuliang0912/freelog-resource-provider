@@ -12,6 +12,7 @@ export default () => {
     };
 
     config.elasticSearch = {
+        database: 'test-resources',
         url: 'http://elasticsearch.common:9200'
     };
 
