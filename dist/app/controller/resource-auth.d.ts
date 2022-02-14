@@ -11,6 +11,7 @@ export declare class ResourceAuthController {
      */
     serviceStates(): Promise<void>;
     resourceVersionBatchAuth(): Promise<void>;
+    resourceBatchAuth(): Promise<void>;
     resourceAuth(): Promise<FreelogContext>;
     resourceUpstreamAuth(): Promise<FreelogContext>;
     subjectContractAuth(): Promise<FreelogContext>;

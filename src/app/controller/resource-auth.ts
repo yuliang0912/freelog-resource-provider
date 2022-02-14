@@ -1,5 +1,5 @@
 import * as semver from 'semver';
-import {differenceWith, isEmpty, isString} from 'lodash';
+import {differenceWith, isEmpty, isString, last} from 'lodash';
 import {controller, get, inject, provide} from 'midway';
 import {SubjectAuthResult} from '../../auth-interface';
 import {IOutsideApiService, IResourceAuthService, IResourceService, IResourceVersionService} from '../../interface';
@@ -57,6 +57,54 @@ export class ResourceAuthController {
         }
 
         await this.resourceAuthService.resourceBatchAuth(resourceVersions, authType).then(ctx.success);
+    }
+
+    // 资源批量授权
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    @get('/batchAuth/results')
+    async resourceBatchAuth() {
+        const resourceIds = this.ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
+        const versionRanges = this.ctx.checkQuery('versionRanges').optional().toSplitArray().len(1, 100).value;
+        const versions = this.ctx.checkQuery('versions').optional().toSplitArray().len(1, 100).value;
+        this.ctx.validateParams();
+
+        if ((versions && versions.length !== resourceIds.length) || (versionRanges && versionRanges.length !== resourceIds.length)) {
+            throw new ArgumentError('版本个数需要与资源个数相匹配');
+        }
+        const resourceVersionIds = [];
+        const resourceList = await this.resourceService.find({_id: {$in: resourceIds}}, 'resourceVersions');
+        for (let i = 0; i < resourceIds.length; i++) {
+            const resourceInfo = resourceList.find(x => x.resourceId === resourceIds[i]);
+            if (!resourceInfo) {
+                throw new ArgumentError('资源不存在', {resourceId: resourceIds[i]});
+            }
+            const resourceVersions = resourceInfo.resourceVersions;
+            let version = last(resourceVersions).version;
+            if (versions) {
+                version = resourceVersions.find(x => x.version === versions[i]).version;
+            } else if (versionRanges) {
+                version = semver.maxSatisfying(resourceVersions.map(x => x.version), versionRanges[i]);
+            }
+            const resourceVersionInfo = resourceVersions.find(x => x.version === version);
+            if (!resourceVersionInfo) {
+                throw new ArgumentError('资源版本不匹配', {
+                    resourceId: resourceInfo.resourceId, version: versions[i], versionRange: versionRanges[i]
+                });
+            }
+            resourceVersionIds.push(resourceVersionInfo.versionId);
+        }
+
+        const resourceVersionList = await this.resourceVersionService.find({versionId: {$in: resourceVersionIds}});
+        const resourceAuthResults = await this.resourceAuthService.resourceBatchAuth(resourceVersionList, 'auth');
+
+        this.ctx.success(resourceAuthResults.map(x => {
+            return {
+                resourceId: x.resourceId,
+                resourceName: x.resourceName,
+                version: x.version,
+                isAuth: x.resolveResourceAuthResults.every(m => m.authResult.isAuth)
+            };
+        }));
     }
 
     @get('/:subjectId/result')
