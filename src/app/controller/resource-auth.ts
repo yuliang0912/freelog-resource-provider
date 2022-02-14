@@ -81,14 +81,15 @@ export class ResourceAuthController {
             const resourceVersions = resourceInfo.resourceVersions;
             let version = last(resourceVersions).version;
             if (versions) {
-                version = resourceVersions.find(x => x.version === versions[i]).version;
+                version = versions[i];
             } else if (versionRanges) {
                 version = semver.maxSatisfying(resourceVersions.map(x => x.version), versionRanges[i]);
             }
             const resourceVersionInfo = resourceVersions.find(x => x.version === version);
             if (!resourceVersionInfo) {
                 throw new ArgumentError('资源版本不匹配', {
-                    resourceId: resourceInfo.resourceId, version: versions[i], versionRange: versionRanges[i]
+                    resourceId: resourceInfo.resourceId, version,
+                    versionRange: versionRanges ? versionRanges[i] : undefined
                 });
             }
             resourceVersionIds.push(resourceVersionInfo.versionId);
