@@ -84,17 +84,18 @@ export class ResourceAuthService implements IResourceAuthService {
         const authResultMap = new Map<string, SubjectAuthResult>();
         const allContractIds = chain(resourceVersions).map(x => x.resolveResources).flattenDeep().map(x => x.contracts).flattenDeep().map(x => x.contractId).uniq().value();
 
+        const contractMap = new Map<string, ContractInfo>();
         if (!isEmpty(allContractIds)) {
-            const contractMap = await this.outsideApiService.getContractByContractIds(allContractIds, {projection: 'subjectId,subjectType,authStatus'}).then(list => {
-                return new Map(list.map(x => [x.contractId, x]));
+            await this.outsideApiService.getContractByContractIds(allContractIds, {projection: 'subjectId,subjectType,authStatus'}).then(list => {
+                list.forEach(x => contractMap.set(x.contractId, x));
             });
+        }
 
-            for (const resourceVersion of resourceVersions) {
-                for (const resolveResource of resourceVersion.resolveResources) {
-                    const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
-                    const authResult = this.contractAuth(resolveResource.resourceId, contracts, authType);
-                    authResultMap.set(`${resourceVersion.versionId}_${resolveResource.resourceId}`, authResult);
-                }
+        for (const resourceVersion of resourceVersions) {
+            for (const resolveResource of resourceVersion.resolveResources) {
+                const contracts = resolveResource.contracts.map(x => contractMap.get(x.contractId));
+                const authResult = this.contractAuth(resolveResource.resourceId, contracts, authType);
+                authResultMap.set(`${resourceVersion.versionId}_${resolveResource.resourceId}`, authResult);
             }
         }
 
