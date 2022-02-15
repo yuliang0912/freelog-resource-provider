@@ -76,7 +76,7 @@ export class ResourceAuthController {
         for (let i = 0; i < resourceIds.length; i++) {
             const resourceInfo = resourceList.find(x => x.resourceId === resourceIds[i]);
             if (!resourceInfo) {
-                throw new ArgumentError('资源不存在', {resourceId: resourceIds[i]});
+                continue;
             }
             const resourceVersions = resourceInfo.resourceVersions;
             let version = last(resourceVersions).version;
