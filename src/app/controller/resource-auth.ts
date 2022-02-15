@@ -72,13 +72,16 @@ export class ResourceAuthController {
             throw new ArgumentError('版本个数需要与资源个数相匹配');
         }
         const resourceVersionIds = [];
-        const resourceList = await this.resourceService.find({_id: {$in: resourceIds}, status: 1}, 'resourceVersions');
+        const resourceList = await this.resourceService.find({_id: {$in: resourceIds}}, 'resourceVersions');
         for (let i = 0; i < resourceIds.length; i++) {
             const resourceInfo = resourceList.find(x => x.resourceId === resourceIds[i]);
             if (!resourceInfo) {
-                continue;
+                throw new ArgumentError('资源不存在', {resourceId: resourceIds[i]});
             }
             const resourceVersions = resourceInfo.resourceVersions;
+            if (isEmpty(resourceVersions)) {
+                continue;
+            }
             let version = last(resourceVersions).version;
             if (versions) {
                 version = versions[i];
