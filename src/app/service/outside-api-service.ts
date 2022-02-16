@@ -17,7 +17,7 @@ export class OutsideApiService implements IOutsideApiService {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/download`, null, CurlResFormatEnum.Original);
     }
 
-    /** 
+    /**
      * 分析与获取文件系统属性
      * @param fileSha1
      * @param resourceType
@@ -35,6 +35,7 @@ export class OutsideApiService implements IOutsideApiService {
         const postBody = {
             subjectType: SubjectTypeEnum.Resource,
             licenseeIdentityType: ContractLicenseeIdentityTypeEnum.Resource,
+            isWaitInitial: 1,
             licenseeId: licenseeResourceId, subjects
         };
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}/batchSign`, {
@@ -86,6 +87,6 @@ export class OutsideApiService implements IOutsideApiService {
      */
     async getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectId=${subjectId}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Resource}&${optionParams.join('&')}`)
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.contractInfoV2}?identityType=2&subjectId=${subjectId}&licenseeId=${licenseeId}&subjectType=${SubjectTypeEnum.Resource}&${optionParams.join('&')}`);
     }
 }
