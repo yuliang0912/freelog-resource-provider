@@ -634,9 +634,10 @@ export class ResourceService implements IResourceService {
         return resources.map((item: any) => {
             const resourceInfo = item.toObject ? item.toObject() : item;
             resourceInfo.policies.forEach(policyInfo => {
-                const {policyText, fsmDescriptionInfo} = policyMap.get(policyInfo.policyId) ?? {};
+                const {policyText, fsmDescriptionInfo, translateInfo} = policyMap.get(policyInfo.policyId) ?? {};
                 policyInfo.policyText = policyText;
                 policyInfo.fsmDescriptionInfo = fsmDescriptionInfo;
+                policyInfo.translateInfo = translateInfo;
             });
             return resourceInfo;
         });

@@ -112,6 +112,7 @@ export interface BasePolicyInfo {
     policyText: string;
     subjectType?: number;
     fsmDescriptionInfo: object;
+    translateInfo?: object;
 }
 
 export interface PolicyInfo extends BasePolicyInfo {
