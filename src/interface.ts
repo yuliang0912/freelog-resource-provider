@@ -217,7 +217,7 @@ export interface IOutsideApiService {
 
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
 
-    getResourcePolicies(policyIds: string[], projection: string[]): Promise<BasePolicyInfo[]>;
+    getResourcePolicies(policyIds: string[], projection: string[], isTranslate?: boolean): Promise<BasePolicyInfo[]>;
 
     batchSignResourceContracts(licenseeResourceId, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
 
@@ -270,8 +270,9 @@ export interface IResourceService {
     /**
      * 填充资源策略信息
      * @param resources
+     * @param isTranslate
      */
-    fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    fillResourcePolicyInfo(resources: ResourceInfo[], isTranslate?: boolean): Promise<ResourceInfo[]>;
 
     /**
      * 填充资源的最新版本信息

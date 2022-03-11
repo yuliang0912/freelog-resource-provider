@@ -178,8 +178,9 @@ export declare class ResourceService implements IResourceService {
     /**
      * 给资源填充策略详情信息
      * @param resources
+     * @param isTranslate
      */
-    fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    fillResourcePolicyInfo(resources: ResourceInfo[], isTranslate?: boolean): Promise<ResourceInfo[]>;
     /**
      * 获取资源状态
      * 1: 必须具备有效的策略

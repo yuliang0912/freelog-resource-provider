@@ -181,7 +181,7 @@ export interface IOutsideApiService {
     getFileStream(fileSha1: string): Promise<any>;
     getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
-    getResourcePolicies(policyIds: string[], projection: string[]): Promise<BasePolicyInfo[]>;
+    getResourcePolicies(policyIds: string[], projection: string[], isTranslate?: boolean): Promise<BasePolicyInfo[]>;
     batchSignResourceContracts(licenseeResourceId: any, subjects: SubjectInfo[]): Promise<ContractInfo[]>;
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
     getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
@@ -215,8 +215,9 @@ export interface IResourceService {
     /**
      * 填充资源策略信息
      * @param resources
+     * @param isTranslate
      */
-    fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    fillResourcePolicyInfo(resources: ResourceInfo[], isTranslate?: boolean): Promise<ResourceInfo[]>;
     /**
      * 填充资源的最新版本信息
      * @param resources

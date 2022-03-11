@@ -29,7 +29,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param policyIds
      * @param projection
      */
-    getResourcePolicies(policyIds: string[], projection?: string[]): Promise<BasePolicyInfo[]>;
+    getResourcePolicies(policyIds: string[], projection?: string[], isTranslate?: boolean): Promise<BasePolicyInfo[]>;
     /**
      * 获取资源合约
      * @param contractIds

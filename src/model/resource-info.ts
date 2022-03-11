@@ -37,6 +37,7 @@ export class ResourceInfoModel extends MongooseModelBase {
             username: {type: String, required: true},
             resourceNameAbbreviation: {type: String, required: true},
             baseUpcastResources: {type: [UpcastResourceSchema], default: [], required: false},
+            subjectType: {type: String, required: false}, // 用于标记资源与资源组合. 资源与资源组合的标的物类型不同.所用策略暂时先一致.后期会分化.
             intro: {type: String, required: false, default: ''},
             coverImages: {type: [String], default: [], required: false},
             tags: {type: [String], required: false, default: []},

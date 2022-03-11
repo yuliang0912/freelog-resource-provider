@@ -617,8 +617,9 @@ export class ResourceService implements IResourceService {
     /**
      * 给资源填充策略详情信息
      * @param resources
+     * @param isTranslate
      */
-    async fillResourcePolicyInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]> {
+    async fillResourcePolicyInfo(resources: ResourceInfo[], isTranslate?: boolean): Promise<ResourceInfo[]> {
 
         if (!isArray(resources) || isEmpty(resources)) {
             return resources;
@@ -627,7 +628,7 @@ export class ResourceService implements IResourceService {
         if (isEmpty(policyIds)) {
             return resources;
         }
-        const policyMap: Map<string, BasePolicyInfo> = await this.outsideApiService.getResourcePolicies(policyIds, ['policyId', 'policyText', 'fsmDescriptionInfo']).then(list => {
+        const policyMap: Map<string, BasePolicyInfo> = await this.outsideApiService.getResourcePolicies(policyIds, ['policyId', 'policyText', 'fsmDescriptionInfo'], isTranslate).then(list => {
             return new Map(list.map(x => [x.policyId, x]));
         });
         return resources.map((item: any) => {

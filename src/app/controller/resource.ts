@@ -170,6 +170,7 @@ export class ResourceController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         ctx.validateParams();
 
         let dataList = [];
@@ -181,7 +182,7 @@ export class ResourceController {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
         if (isLoadPolicyInfo) {
-            dataList = await this.resourceService.fillResourcePolicyInfo(dataList);
+            dataList = await this.resourceService.fillResourcePolicyInfo(dataList, isTranslate);
         }
         if (isLoadLatestVersionInfo) {
             dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);
@@ -379,6 +380,7 @@ export class ResourceController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         ctx.validateParams();
 
         let resourceInfo = null;
@@ -394,7 +396,7 @@ export class ResourceController {
             resourceInfo = await this.resourceService.fillResourceLatestVersionInfo([resourceInfo]).then(first);
         }
         if (resourceInfo && isLoadPolicyInfo) {
-            resourceInfo = await this.resourceService.fillResourcePolicyInfo([resourceInfo]).then(first);
+            resourceInfo = await this.resourceService.fillResourcePolicyInfo([resourceInfo], isTranslate).then(first);
         }
         ctx.success(resourceInfo);
     }

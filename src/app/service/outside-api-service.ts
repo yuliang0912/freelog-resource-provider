@@ -60,8 +60,8 @@ export class OutsideApiService implements IOutsideApiService {
      * @param policyIds
      * @param projection
      */
-    async getResourcePolicies(policyIds: string[], projection: string[] = []): Promise<BasePolicyInfo[]> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&projection=${projection.toString()}`);
+    async getResourcePolicies(policyIds: string[], projection: string[] = [], isTranslate?: boolean): Promise<BasePolicyInfo[]> {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.policyInfoV2}/list?policyIds=${policyIds.toString()}&subjectType=${SubjectTypeEnum.Resource}&projection=${projection.toString()}&isTranslate=${isTranslate ? 1 : 0}`);
     }
 
     /**
