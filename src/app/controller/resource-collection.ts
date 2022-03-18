@@ -91,6 +91,17 @@ export class ResourceCollectionController {
         }).then(ctx.success);
     }
 
+    @get('/batch/count')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async batchCount() {
+
+        const {ctx} = this;
+        const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        await this.resourceCollectionService.countByResourceIds({resourceId: {$in: resourceIds}}).then(ctx.success);
+    }
+
     @get('/:resourceId/count')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async count() {

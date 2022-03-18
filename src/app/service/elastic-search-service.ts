@@ -1,6 +1,6 @@
 import {Client} from '@elastic/elasticsearch';
 import type {Client as NewTypes} from '@elastic/elasticsearch/api/new';
-import {QueryDslQueryContainer, SearchTotalHits} from '@elastic/elasticsearch/api/types';
+import {QueryDslDateRangeQuery, QueryDslQueryContainer, SearchTotalHits} from '@elastic/elasticsearch/api/types';
 import {config, init, provide, scope} from 'midway';
 import {ResourceInfo} from '../../interface';
 import {isEmpty, isArray, omit, uniq, includes} from 'lodash';
@@ -61,8 +61,9 @@ export class ElasticSearchService {
      * @param status
      * @param tags
      */
-    async search(skip: number, limit: number, sort: object, keywords: string, userId?: number, resourceType?: string, omitResourceType?: string, status?: number, tags?: string[], projection?: string[]): Promise<PageResult<ResourceInfo>> {
+    async search(skip: number, limit: number, sort: object, keywords: string, userId?: number, resourceType?: string, omitResourceType?: string, status?: number, tags?: string[], projection?: string[], beginCreateDate?: Date, endCreateDate?: Date): Promise<PageResult<ResourceInfo>> {
 
+        sort = sort ?? {updateDate: -1};
         const searchParams: T.SearchRequest = {
             index: `${this.elasticSearch.database}.resource-infos`,
             body: {
@@ -82,8 +83,6 @@ export class ElasticSearchService {
                     fields: ['resourceName^1.5', `resourceNameAbbreviation^1.2`, 'resourceNameAbbreviation.py^0.8', 'resourceType', 'intro^0.7', 'tags']
                 }
             });
-        } else {
-            sort = {updateDate: -1};
         }
         if (userId) {
             musts.push({term: {userId: {value: userId}}});
@@ -105,6 +104,20 @@ export class ElasticSearchService {
         }
         if (!isEmpty(mustNots)) {
             searchParams.body.query.bool.must_not = mustNots;
+        }
+        let createDateFilter = {} as QueryDslDateRangeQuery;
+        if (beginCreateDate && endCreateDate) {
+            createDateFilter.gte = beginCreateDate.toISOString();
+            createDateFilter.lte = endCreateDate.toISOString();
+        } else if (beginCreateDate) {
+            createDateFilter.gte = beginCreateDate.toISOString();
+        } else if (endCreateDate) {
+            createDateFilter.lte = endCreateDate.toISOString();
+        }
+        if (Object.keys(createDateFilter).length) {
+            searchParams.body.query.bool.filter = {
+                range: {createDate: createDateFilter}
+            };
         }
         if (!isEmpty(projection ?? [])) {
             searchParams._source = projection;

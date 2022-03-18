@@ -21,5 +21,5 @@ export declare class ElasticSearchService {
      * @param status
      * @param tags
      */
-    search(skip: number, limit: number, sort: object, keywords: string, userId?: number, resourceType?: string, omitResourceType?: string, status?: number, tags?: string[], projection?: string[]): Promise<PageResult<ResourceInfo>>;
+    search(skip: number, limit: number, sort: object, keywords: string, userId?: number, resourceType?: string, omitResourceType?: string, status?: number, tags?: string[], projection?: string[], beginCreateDate?: Date, endCreateDate?: Date): Promise<PageResult<ResourceInfo>>;
 }

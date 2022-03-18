@@ -1,7 +1,7 @@
 import {provide, inject} from 'midway';
 import {isString, flatten} from 'lodash';
 import {CollectionResourceInfo, ICollectionService} from '../../interface';
-import {IMongodbOperation, PageResult, FreelogContext} from "egg-freelog-base";
+import {IMongodbOperation, PageResult, FreelogContext} from 'egg-freelog-base';
 
 @provide('resourceCollectionService')
 export class ResourceCollectionService implements ICollectionService {
@@ -42,6 +42,21 @@ export class ResourceCollectionService implements ICollectionService {
 
     async count(condition: object): Promise<number> {
         return this.resourceCollectionProvider.count(condition);
+    }
+
+    // 批量查询资源收藏次数
+    async countByResourceIds(condition: object): Promise<Array<{ resourceId: number, count: number }>> {
+        return this.resourceCollectionProvider.aggregate([
+            {
+                $match: condition
+            },
+            {
+                $group: {_id: '$resourceId', count: {$sum: 1}}
+            },
+            {
+                $project: {_id: 0, resourceId: '$_id', count: '$count'}
+            }
+        ]);
     }
 
     async findIntervalList(resourceType: string, omitResourceType: string, keywords: string, resourceStatus: number, skip: number, limit: number): Promise<PageResult<CollectionResourceInfo>> {

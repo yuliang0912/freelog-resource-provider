@@ -9,5 +9,6 @@ export declare class ResourceCollectionController {
     isCollected(): Promise<void>;
     show(): Promise<void>;
     destroy(): Promise<void>;
+    batchCount(): Promise<void>;
     count(): Promise<void>;
 }
