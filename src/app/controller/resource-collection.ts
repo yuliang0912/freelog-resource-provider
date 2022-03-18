@@ -99,7 +99,15 @@ export class ResourceCollectionController {
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
-        await this.resourceCollectionService.countByResourceIds({resourceId: {$in: resourceIds}}).then(ctx.success);
+        const list = await this.resourceCollectionService.countByResourceIds({resourceId: {$in: resourceIds}});
+
+        const resourceCountMap = new Map(list.map(x => [x.resourceId, x.count]));
+
+        ctx.success(resourceIds.map(resourceId => {
+            return {
+                resourceId, count: resourceCountMap.get(resourceId) ?? 0
+            };
+        }));
     }
 
     @get('/:resourceId/count')
