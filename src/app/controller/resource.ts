@@ -82,7 +82,7 @@ export class ResourceController {
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
-        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
+        const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
         const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
@@ -92,10 +92,10 @@ export class ResourceController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().len(1, 5).value;
-        const beginCreateDate = ctx.checkQuery('beginCreateDate').ignoreParamWhenEmpty().toDate().value;
+        const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
         const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
         ctx.validateParams();
-        const pageResult = await this.elasticSearchService.search(skip, limit, sort, keywords, isSelf ? ctx.userId : undefined, resourceType, omitResourceType, status, tags, projection, beginCreateDate, endCreateDate);
+        const pageResult = await this.elasticSearchService.search(skip, limit, sort, keywords, isSelf ? ctx.userId : undefined, resourceType, omitResourceType, status, tags, projection, startCreateDate, endCreateDate);
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }

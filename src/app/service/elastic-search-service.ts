@@ -128,7 +128,6 @@ export class ElasticSearchService {
                 searchParams.body.sort.push({[key]: ['DESC', 'desc', '-1', -1].includes(value) ? 'desc' : 'asc'});
             }
         }
-
         const result = await this.client.search<ResourceInfo>(searchParams);
         return {
             totalItem: (result.body.hits.total as SearchTotalHits).value, skip, limit,
