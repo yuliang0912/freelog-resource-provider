@@ -139,6 +139,7 @@ export interface ResourceInfo {
 }
 
 export interface ResourceTagInfo {
+    tagId?: string;
     tagName: string;
     tagType: 1 | 2; // 标签类型: 1.分类标签 2.运营标签
     authority: 1 | 2 | 3; // 权限: 1.公开 2.隐藏(对外不可见,但是标签还存在) 3.管理员可见
@@ -305,10 +306,10 @@ export interface IResourceService {
 
     /**
      * 更新资源标签
-     * @param tagId
+     * @param tagList
      * @param model
      */
-    updateResourceTag(tagId: string, model: Partial<ResourceTagInfo>): Promise<boolean>;
+    batchUpdateResourceTag(tagList: ResourceTagInfo[], model: Partial<ResourceTagInfo>): Promise<boolean>
 
     /**
      * 查找资源标签

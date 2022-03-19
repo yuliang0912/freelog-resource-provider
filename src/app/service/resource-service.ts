@@ -416,11 +416,11 @@ export class ResourceService implements IResourceService {
 
     /**
      * 更新资源标签
-     * @param tagId
+     * @param tagList
      * @param model
      */
-    async updateResourceTag(tagId: string, model: ResourceTagInfo): Promise<boolean> {
-        return this.resourceTagProvider.updateOne({_id: tagId}, model).then(t => Boolean(t.ok));
+    async batchUpdateResourceTag(tagList: ResourceTagInfo[], model: Partial<ResourceTagInfo>): Promise<boolean> {
+        return this.resourceTagProvider.updateMany({_id: {$in: tagList.map(x => x.tagId)}}, model).then(t => Boolean(t.ok));
     }
 
     /**

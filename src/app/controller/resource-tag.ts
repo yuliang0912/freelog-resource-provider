@@ -1,7 +1,7 @@
-import {controller, get, post, inject, priority, provide} from 'midway';
+import {controller, get, post, inject, priority, provide, put} from 'midway';
 import {ArgumentError, CommonRegex, FreelogContext, IdentityTypeEnum, visitorIdentityValidator} from 'egg-freelog-base';
 import {IResourceService, ResourceTagInfo} from '../../interface';
-import {isEmpty, first} from 'lodash';
+import {isEmpty} from 'lodash';
 import {deleteUndefinedFields} from 'egg-freelog-base/lib/freelog-common-func';
 
 @provide()
@@ -13,6 +13,28 @@ export class ResourceTagController {
     ctx: FreelogContext;
     @inject()
     resourceService: IResourceService;
+
+    @get('/admin')
+    async index() {
+
+        const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const tagType = ctx.checkQuery('tagType').optional().toInt().in([1, 2]).value;
+        const authority = ctx.checkQuery('authority').optional().toInt().in([1, 2, 3]).value;
+        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
+        const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
+        ctx.validateParams(); //.validateOfficialAuditAccount();
+
+        const condition = deleteUndefinedFields<Partial<ResourceTagInfo>>({tagType, authority});
+        if (resourceType) {
+            condition.resourceRange = resourceType;
+        }
+        if (keywords?.length) {
+            condition.tagName = new RegExp(`^${keywords}`, 'i') as any;
+        }
+        await this.resourceService.findIntervalResourceTagList(condition, skip, limit, null, {updateDate: -1}).then(ctx.success);
+    }
 
     /**
      * 创建资源tag
@@ -42,21 +64,21 @@ export class ResourceTagController {
     }
 
     /**
-     * 创建资源tag
+     * 批量更新tag
      */
-    @post('/:tagId')
+    @put('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async updateTagInfo() {
+    async batchUpdateTagInfo() {
         const {ctx} = this;
-        const tagId = ctx.checkParams('tagId').exist().isMongoObjectId().value;
+        const tagIds = ctx.checkBody('tagIds').exist().isArray().len(1, 100).value;
         const tagType = ctx.checkBody('tagType').optional().toInt().in([1, 2]).value;
         const resourceRange = ctx.checkBody('resourceRange').optional().isArray().len(0, 200).value;
         const resourceRangeType = ctx.checkBody('resourceRangeType').optional().toInt().in([1, 2, 3]).value;
         const authority = ctx.checkBody('authority').optional().toInt().in([1, 2, 3]).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const tagInfo = await this.resourceService.findResourceTags({_id: tagId}).then(first);
-        if (!tagInfo) {
+        const tagList = await this.resourceService.findResourceTags({_id: {$in: tagIds}});
+        if (!tagList.length) {
             throw new ArgumentError(ctx.gettext('params-validate-failed'));
         }
         const model = deleteUndefinedFields<Partial<ResourceTagInfo>>({
@@ -68,7 +90,7 @@ export class ResourceTagController {
         if (isEmpty(Object.keys(model))) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
-        await this.resourceService.updateResourceTag(tagId, model);
+        await this.resourceService.batchUpdateResourceTag(tagList, model).then(ctx.success);
     }
 
     /**

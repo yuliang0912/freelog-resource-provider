@@ -114,6 +114,7 @@ export interface ResourceInfo {
     tags?: string[];
 }
 export interface ResourceTagInfo {
+    tagId?: string;
     tagName: string;
     tagType: 1 | 2;
     authority: 1 | 2 | 3;
@@ -245,10 +246,10 @@ export interface IResourceService {
     createResourceTag(model: ResourceTagInfo): Promise<ResourceTagInfo>;
     /**
      * 更新资源标签
-     * @param tagId
+     * @param tagList
      * @param model
      */
-    updateResourceTag(tagId: string, model: Partial<ResourceTagInfo>): Promise<boolean>;
+    batchUpdateResourceTag(tagList: ResourceTagInfo[], model: Partial<ResourceTagInfo>): Promise<boolean>;
     /**
      * 查找资源标签
      * @param condition

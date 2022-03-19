@@ -121,10 +121,10 @@ export declare class ResourceService implements IResourceService {
     createResourceTag(model: ResourceTagInfo): Promise<ResourceTagInfo>;
     /**
      * 更新资源标签
-     * @param tagId
+     * @param tagList
      * @param model
      */
-    updateResourceTag(tagId: string, model: ResourceTagInfo): Promise<boolean>;
+    batchUpdateResourceTag(tagList: ResourceTagInfo[], model: Partial<ResourceTagInfo>): Promise<boolean>;
     /**
      * 过滤掉不可用的标签
      * @param resourceType
