@@ -82,11 +82,8 @@ export class ResourceTagController {
             throw new ArgumentError(ctx.gettext('params-validate-failed'));
         }
         const model = deleteUndefinedFields<Partial<ResourceTagInfo>>({
-            tagType, resourceRangeType, authority
+            tagType, resourceRangeType, authority, resourceRange
         });
-        if (!isEmpty(resourceRange ?? [])) {
-            model.resourceRange = resourceRange;
-        }
         if (isEmpty(Object.keys(model))) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
