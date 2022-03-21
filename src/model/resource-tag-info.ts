@@ -18,7 +18,7 @@ export class ResourceTagInfoModel extends MongooseModelBase {
             tagType: {type: Number, required: true}, // 标签类型: 1.分类标签 2.运营标签
             authority: {type: Number, required: true}, // 权限: 1.公开 2.隐藏(对外不可见,但是标签还存在) 3.管理员可见
             resourceRange: {type: [String], default: [], required: false}, // 资源类型使用范围
-            resourceRangeType: {type: Number, enum: [1, 2], required: true}, // 1:包含关系 2:排除关系 3:全部包含,不考虑选的范围
+            resourceRangeType: {type: Number, enum: [1, 2, 3], required: true}, // 1:包含关系 2:排除关系 3:全部包含,不考虑选的范围
             createUserId: {type: Number, required: true},
         }, {
             versionKey: false,

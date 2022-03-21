@@ -656,7 +656,6 @@ export class ResourceService implements IResourceService {
             {$group: {_id: '$tags', count: {'$sum': 1}}},
             {$project: {tag: `$_id`, _id: 0, count: '$count'}},
         ];
-        console.log(JSON.stringify(condition));
         return this.resourceProvider.aggregate(condition);
     }
 
