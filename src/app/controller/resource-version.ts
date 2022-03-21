@@ -260,11 +260,16 @@ export class ResourceVersionController {
     }
 
     @get('/versions/:versionId/internalClientDownload')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)  // IdentityTypeEnum.InternalClient
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)  // IdentityTypeEnum.InternalClient
     async internalClientDownload() {
         const {ctx} = this;
         const versionId = ctx.checkParams('versionId').isMd5().value;
         ctx.validateParams();
+
+        // 如果不是外网直接请求,则需要后台审核账号
+        if (!this.ctx.isInternalClient()) {
+            ctx.validateOfficialAuditAccount();
+        }
 
         const resourceVersionInfo = await this.resourceVersionService.findOne({versionId}, 'userId fileSha1 filename resourceName version systemProperty');
         ctx.entityNullObjectCheck(resourceVersionInfo, {msg: ctx.gettext('params-validate-failed', 'versionId')});
