@@ -19,12 +19,12 @@ export class ResourceTagController {
 
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
-        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(1001).value;
         const tagType = ctx.checkQuery('tagType').optional().toInt().in([1, 2]).value;
         const authority = ctx.checkQuery('authority').optional().toInt().in([1, 2, 3]).value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
-        ctx.validateParams(); //.validateOfficialAuditAccount();
+        ctx.validateParams().validateOfficialAuditAccount();
 
         const condition = deleteUndefinedFields<Partial<ResourceTagInfo>>({tagType, authority});
         if (resourceType) {
@@ -116,6 +116,34 @@ export class ResourceTagController {
         await this.resourceService.findResourceTags(condition, 'tagName tagType').then(ctx.success);
     }
 
+    /**
+     * 标签分类
+     */
+    @get('/statistics')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async tagStatistics() {
+        const {ctx} = this;
+        const tagIds = ctx.checkQuery('tagIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const tagList = await this.resourceService.findResourceTags({_id: {$in: tagIds}});
+        if (!tagList.length) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed'));
+        }
+
+        const tagCountMap = await this.resourceService.tagStatistics(tagList.map(x => x.tagName)).then(list => {
+            console.log(list);
+            return new Map(list.map(x => [x.tag, parseInt(x.count.toString())]));
+        });
+
+        ctx.success(tagList.map(x => {
+            return {
+                tagId: x.tagId,
+                tagName: x.tagName,
+                count: tagCountMap.get(x.tagName) ?? 0
+            };
+        }));
+    }
 }
 
 

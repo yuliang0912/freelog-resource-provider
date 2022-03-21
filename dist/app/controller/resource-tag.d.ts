@@ -16,4 +16,8 @@ export declare class ResourceTagController {
      * 当前资源类型可用的tags
      */
     list(): Promise<void>;
+    /**
+     * 标签分类
+     */
+    tagStatistics(): Promise<void>;
 }

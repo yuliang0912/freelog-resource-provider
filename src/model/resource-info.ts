@@ -53,6 +53,7 @@ export class ResourceInfoModel extends MongooseModelBase {
 
         resourceInfoScheme.index({resourceName: 1}, {unique: true});
         resourceInfoScheme.index({userId: 1, username: 1, resourceType: 1});
+        resourceInfoScheme.index({tags: 1});
         resourceInfoScheme.virtual('resourceId').get(function (this: any) {
             return this.id;
         });

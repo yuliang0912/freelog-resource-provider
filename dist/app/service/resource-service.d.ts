@@ -182,6 +182,14 @@ export declare class ResourceService implements IResourceService {
      */
     fillResourcePolicyInfo(resources: ResourceInfo[], isTranslate?: boolean): Promise<ResourceInfo[]>;
     /**
+     * 统计资源标签数量
+     * @param tags
+     */
+    tagStatistics(tags: string[]): Promise<Array<{
+        tag: string;
+        count: number;
+    }>>;
+    /**
      * 获取资源状态
      * 1: 必须具备有效的策略
      * 2: 必须包含一个有效的版本

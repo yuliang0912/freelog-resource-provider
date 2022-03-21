@@ -263,6 +263,14 @@ export interface IResourceService {
      */
     filterResourceTag(resourceType: string, resourceTags: string[]): Promise<string[]>;
     /**
+     * 统计资源标签数量
+     * @param tags
+     */
+    tagStatistics(tags: string[]): Promise<Array<{
+        tag: string;
+        count: number;
+    }>>;
+    /**
      * 分页查找资源标签
      * @param condition
      * @param skip

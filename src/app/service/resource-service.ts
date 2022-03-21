@@ -643,6 +643,24 @@ export class ResourceService implements IResourceService {
         });
     }
 
+
+    /**
+     * 统计资源标签数量
+     * @param tags
+     */
+    async tagStatistics(tags: string[]): Promise<Array<{ tag: string, count: number }>> {
+        const condition = [
+            {$match: {tags: {$in: tags}}},
+            {$unwind: {path: '$tags'}},
+            {$match: {tags: {$in: tags}}},
+            {$group: {_id: '$tags', count: {'$sum': 1}}},
+            {$project: {tag: `$_id`, _id: 0, count: '$count'}},
+        ];
+        console.log(JSON.stringify(condition));
+        return this.resourceProvider.aggregate(condition);
+    }
+
+
     /**
      * 获取资源状态
      * 1: 必须具备有效的策略
