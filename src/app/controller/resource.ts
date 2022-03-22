@@ -225,6 +225,21 @@ export class ResourceController {
         await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
     }
 
+    /**
+     * 批量设置或移除资源标签
+     */
+    @put('/tags/batchSetOrRemoveResourceTag')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async batchSetOrRemoveResourceTag() {
+        const {ctx} = this;
+        const resourceIds = ctx.checkBody('resourceIds').exist().isArray().len(1, 100).value;
+        const tagNames = ctx.checkBody('tagNames').exist().isArray().len(1, 100).value;
+        const setType = ctx.checkBody('setType').exist().toInt().in([1, 2]).value;
+        ctx.validateParams().validateOfficialAuditAccount();
+
+        await this.resourceService.batchSetOrUnsetResourceTag(resourceIds, tagNames, setType).then(ctx.success);
+    }
+
     @get('/:resourceIdOrName/dependencyTree')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async dependencyTree() {

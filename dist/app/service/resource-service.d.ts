@@ -126,6 +126,13 @@ export declare class ResourceService implements IResourceService {
      */
     batchUpdateResourceTag(tagList: ResourceTagInfo[], model: Partial<ResourceTagInfo>): Promise<boolean>;
     /**
+     * 批量设置或移除标签
+     * @param resourceIds 资源对象
+     * @param tags 操作的表
+     * @param setType 1:设置 2:移除
+     */
+    batchSetOrUnsetResourceTag(resourceIds: string[], tags: string[], setType: 1 | 2): Promise<boolean>;
+    /**
      * 过滤掉不可用的标签
      * @param resourceType
      * @param resourceTags

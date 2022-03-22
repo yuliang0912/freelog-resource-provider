@@ -340,6 +340,14 @@ export interface IResourceService {
      * @param sort
      */
     findIntervalResourceTagList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceTagInfo>>;
+
+    /**
+     * 批量设置或移除标签
+     * @param resourceIds
+     * @param tags
+     * @param setType
+     */
+    batchSetOrUnsetResourceTag(resourceIds: string[], tags: string[], setType: 1 | 2):Promise<boolean>
 }
 
 export interface IResourceVersionService {

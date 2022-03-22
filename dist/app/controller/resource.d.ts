@@ -17,6 +17,10 @@ export declare class ResourceController {
     createdCount(): Promise<void>;
     list(): Promise<void>;
     update(): Promise<void>;
+    /**
+     * 批量设置或移除资源标签
+     */
+    batchSetOrRemoveResourceTag(): Promise<void>;
     dependencyTree(): Promise<FreelogContext>;
     authTree(): Promise<FreelogContext>;
     relationTree(): Promise<FreelogContext>;

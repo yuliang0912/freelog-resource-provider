@@ -423,6 +423,23 @@ export class ResourceService implements IResourceService {
         return this.resourceTagProvider.updateMany({_id: {$in: tagList.map(x => x.tagId)}}, model).then(t => Boolean(t.ok));
     }
 
+
+    /**
+     * 批量设置或移除标签
+     * @param resourceIds 资源对象
+     * @param tags 操作的表
+     * @param setType 1:设置 2:移除
+     */
+    async batchSetOrUnsetResourceTag(resourceIds: string[], tags: string[], setType: 1 | 2): Promise<boolean> {
+        const updateModel = {} as any;
+        if (setType === 1) {
+            updateModel.$addToSet = {tags};
+        } else {
+            updateModel.$pull = {tags: {$in: tags}};
+        }
+        return this.resourceProvider.updateMany({_id: {$in: resourceIds}}, updateModel).then(t => Boolean(t.ok));
+    }
+
     /**
      * 过滤掉不可用的标签
      * @param resourceType
