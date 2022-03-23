@@ -65,7 +65,7 @@ export class ResourceService implements IResourceService {
             resourceInfo.policies = await this._validateAndCreateSubjectPolicies(options.policies);
         }
 
-        resourceInfo.status = ResourceService._getResourceStatus(resourceInfo.resourceVersions, resourceInfo.policies);
+        resourceInfo.status = ResourceService._getResourceStatus(resourceInfo, resourceInfo.resourceVersions, resourceInfo.policies);
         resourceInfo.uniqueKey = this.resourcePropertyGenerator.generateResourceUniqueKey(resourceInfo.resourceName);
         resourceInfo.resourceNameAbbreviation = options.name;
 
@@ -116,7 +116,7 @@ export class ResourceService implements IResourceService {
         }
         if (isArray(options.addPolicies) || isArray(options.updatePolicies)) {
             resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
-            updateInfo.status = ResourceService._getResourceStatus(resourceInfo.resourceVersions, resourceInfo.policies);
+            updateInfo.status = ResourceService._getResourceStatus(resourceInfo, resourceInfo.resourceVersions, resourceInfo.policies);
         }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }
@@ -393,7 +393,7 @@ export class ResourceService implements IResourceService {
         const modifyModel: any = {
             $addToSet: {resourceVersions: versionInfo},
             latestVersion: latestVersionInfo.version,
-            status: ResourceService._getResourceStatus([versionInfo], resourceInfo.policies)
+            status: ResourceService._getResourceStatus(resourceInfo, [versionInfo], resourceInfo.policies)
         };
         if (isEmpty(resourceInfo.resourceVersions)) {
             modifyModel.baseUpcastResources = versionInfo.upcastResources;
@@ -676,6 +676,13 @@ export class ResourceService implements IResourceService {
         return this.resourceProvider.aggregate(condition);
     }
 
+    /**
+     * 批量封禁或解封资源
+     * @param resourceList
+     */
+    async batchFreeOrRecoverResource(resourceList: ResourceInfo[]) {
+
+    }
 
     /**
      * 获取资源状态
@@ -684,7 +691,14 @@ export class ResourceService implements IResourceService {
      * @param resourceVersions
      * @param policies
      */
-    static _getResourceStatus(resourceVersions: object[], policies: PolicyInfo[]): number {
-        return (policies.some(x => x.status === 1) && !isEmpty(resourceVersions)) ? 1 : 0;
+    static _getResourceStatus(resourceInfo: ResourceInfo, resourceVersions: object[], policies: PolicyInfo[]): number {
+        const status = (policies.some(x => x.status === 1) && !isEmpty(resourceVersions)) ? 1 : 0;
+        if ([2, 3].includes(resourceInfo.status) && status === 1) { // 冻结并上架
+            return 3;
+        } else if ([2, 3].includes(resourceInfo.status) && status === 0) { // 冻结并下架
+            return 2;
+        } else {
+            return status;
+        }
     }
 }
