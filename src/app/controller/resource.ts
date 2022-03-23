@@ -524,7 +524,6 @@ export class ResourceController {
         ctx.success(resources);
     }
 
-
     /**
      * 批量冻结或解冻资源
      */
@@ -533,7 +532,7 @@ export class ResourceController {
     async batchFreeOrRecoverResource() {
         const {ctx} = this;
         const resourceIds = ctx.checkBody('resourceIds').exist().isArray().len(1, 100).value;
-        const reason = ctx.checkBody('reason').exist().len(1, 200).value;
+        const reason = ctx.checkBody('reason').optional().len(1, 200).value;
         const remark = ctx.checkBody('remark').optional().len(1, 200).value;
         const operationType = ctx.checkBody('operationType').exist().toInt().in([1, 2]).value;
         ctx.validateParams().validateOfficialAuditAccount();
@@ -550,7 +549,7 @@ export class ResourceController {
         const {ctx} = this;
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
         const recordDesc = ctx.checkBody('remark').optional().default(1).toInt().in([0, 1]).value;
-        const recordLimit = ctx.checkQuery('recordLimit').ignoreParamWhenEmpty().toInt().gt(0).le(100).value;
+        const recordLimit = ctx.checkQuery('recordLimit').ignoreParamWhenEmpty().toInt().default(10).gt(0).le(100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
         await this.resourceService.batchFindFreeOrRecoverRecords(resourceIds, undefined, recordDesc, recordLimit).then(ctx.success);
