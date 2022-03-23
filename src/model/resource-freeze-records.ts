@@ -15,7 +15,8 @@ export class ResourceFreezeRecordModel extends MongooseModelBase {
             operatorUserId: {type: Number, required: true},
             operatorUserName: {type: String, required: true},
             type: {type: Number, enum: [1, 2], required: true}, // 1:冻结 2:解冻
-            remark: {type: String, default: '', required: false}
+            reason: {type: String, default: '', required: false}, // 冻结原因
+            remark: {type: String, default: '', required: false} // 备注
         }, {
             _id: false,
             versionKey: false,

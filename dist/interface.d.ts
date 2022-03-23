@@ -203,12 +203,6 @@ export interface IResourceService {
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ResourceInfo>>;
     count(condition: object): Promise<number>;
     /**
-     * 冻结或解封资源
-     * @param resourceInfo
-     * @param remark
-     */
-    freezeOrDeArchiveResource(resourceInfo: ResourceInfo, remark: string): Promise<boolean>;
-    /**
      * 创建资源版本
      * @param resourceInfo
      * @param versionInfo
@@ -286,6 +280,20 @@ export interface IResourceService {
      * @param setType
      */
     batchSetOrUnsetResourceTag(resourceIds: string[], tags: string[], setType: 1 | 2): Promise<boolean>;
+    /**
+     * 批量冻结/解冻资源
+     * @param resourceList
+     * @param operation
+     */
+    batchFreeOrRecoverResource(resourceIds: string[], operationType: 1 | 2, reason?: string, remark?: string): Promise<boolean>;
+    /**
+     * 批量查询资源冻结与解冻记录
+     * @param resourceIds
+     * @param operationType
+     * @param recordDesc
+     * @param recordLimit
+     */
+    batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordDesc?: 0 | 1, recordLimit?: number): Promise<any[]>;
 }
 export interface IResourceVersionService {
     createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;

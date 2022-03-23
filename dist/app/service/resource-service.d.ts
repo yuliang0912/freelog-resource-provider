@@ -87,11 +87,21 @@ export declare class ResourceService implements IResourceService {
      */
     count(condition: object): Promise<number>;
     /**
-     * 冻结或解封资源
-     * @param resourceInfo
+     * 批量冻结资源
+     * @param resourceIds
+     * @param operationType
+     * @param reason
      * @param remark
      */
-    freezeOrDeArchiveResource(resourceInfo: ResourceInfo, remark: string): Promise<boolean>;
+    batchFreeOrRecoverResource(resourceIds: string[], operationType: 1 | 2, reason?: string, remark?: string): Promise<boolean>;
+    /**
+     * 查询冻结与解冻记录
+     * @param resourceIds
+     * @param operationType
+     * @param recordDesc
+     * @param recordLimit
+     */
+    batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordDesc?: 0 | 1, recordLimit?: number): Promise<any[]>;
     /**
      * 查找资源标签
      * @param condition
@@ -203,5 +213,5 @@ export declare class ResourceService implements IResourceService {
      * @param resourceVersions
      * @param policies
      */
-    static _getResourceStatus(resourceVersions: object[], policies: PolicyInfo[]): number;
+    static _getResourceStatus(resourceInfo: ResourceInfo, resourceVersions: object[], policies: PolicyInfo[]): number;
 }

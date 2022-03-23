@@ -1,7 +1,19 @@
 import {maxSatisfying} from 'semver';
 import {provide, inject} from 'midway';
 import {ApplicationError, ArgumentError, FreelogContext, IMongodbOperation, PageResult} from 'egg-freelog-base';
-import {isArray, isUndefined, intersectionWith, isString, omit, first, isEmpty, pick, uniqBy, chain} from 'lodash';
+import {
+    isArray,
+    isUndefined,
+    intersectionWith,
+    difference,
+    isString,
+    omit,
+    first,
+    isEmpty,
+    pick,
+    uniqBy,
+    chain
+} from 'lodash';
 import {
     CreateResourceOptions,
     GetResourceDependencyOrAuthTreeOptions,
@@ -322,40 +334,58 @@ export class ResourceService implements IResourceService {
     }
 
     /**
-     * 冻结或解封资源
-     * @param resourceInfo
+     * 批量冻结资源
+     * @param resourceIds
+     * @param operationType
+     * @param reason
      * @param remark
      */
-    async freezeOrDeArchiveResource(resourceInfo: ResourceInfo, remark: string): Promise<boolean> {
+    async batchFreeOrRecoverResource(resourceIds: string[], operationType: 1 | 2, reason?: string, remark?: string): Promise<boolean> {
 
-        // 已经冻结的就是做解封操作.反之亦然
-        const operatorType = [2, 3].includes(resourceInfo.status) ? 2 : 1;
+        const session = await this.resourceProvider.model.startSession();
+        await this.resourceProvider.updateMany({_id: resourceIds}, {
+            $bit: {status: operationType === 1 ? {or: 2} : {xor: 2}}
+        }, {session});
         const operatorRecordInfo = {
             operatorUserId: this.ctx.userId,
             operatorUserName: this.ctx.identityInfo.userInfo.username,
-            type: operatorType, remark: remark ?? ''
+            type: operationType, remark: remark ?? '', reason: reason ?? ''
         };
-        // 如果是冻结操作,则修改状态为2或3.反之则修改为0或1
-        const resourceStatus = operatorType === 1 ? (resourceInfo.status === 0 ? 2 : 3) : operatorType === 2 ? (resourceInfo.status === 2 ? 0 : 1) : -1;
-
-        const session = await this.resourceProvider.model.startSession();
-        await session.withTransaction(async () => {
-            await this.resourceProvider.updateOne({_id: resourceInfo.resourceId}, {status: resourceStatus}, {session});
-            await this.resourceFreezeRecordProvider.findOneAndUpdate({resourceId: resourceInfo.resourceId}, {
+        const existingRecordResourceIds = await this.resourceFreezeRecordProvider.find({resourceId: {$in: resourceIds}}, 'resourceId').then(list => {
+            return list.map(x => x.resourceId);
+        });
+        if (existingRecordResourceIds.length) {
+            await this.resourceFreezeRecordProvider.updateMany({resourceId: {$in: existingRecordResourceIds}}, {
                 $push: {records: operatorRecordInfo}
-            }, {session}).then(model => {
-                return model || this.resourceFreezeRecordProvider.create([{
+            }, {session});
+        }
+        const inexistenceRecordResourceIds = difference<string>(resourceIds, existingRecordResourceIds);
+        if (inexistenceRecordResourceIds.length) {
+            const inexistenceRecordResources = await this.resourceProvider.find({_id: {$in: inexistenceRecordResourceIds}}, 'resourceName');
+            await this.resourceFreezeRecordProvider.insertMany(inexistenceRecordResources.map(resourceInfo => {
+                return {
                     resourceId: resourceInfo.resourceId,
                     resourceName: resourceInfo.resourceName,
                     records: [operatorRecordInfo]
-                }], {session});
-            });
-        }).catch(error => {
-            throw error;
-        }).finally(() => {
-            session.endSession();
-        });
+                };
+            }), {session});
+        }
         return true;
+    }
+
+    /**
+     * 查询冻结与解冻记录
+     * @param resourceIds
+     * @param operationType
+     * @param recordDesc
+     * @param recordLimit
+     */
+    async batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordDesc?: 0 | 1, recordLimit?: number) {
+        const condition = {resourceId: {$in: resourceIds}} as any;
+        if (operationType) {
+            condition['records.type'] = operationType;
+        }
+        return this.resourceFreezeRecordProvider.find(condition, {records: {$slice: [recordDesc ? 1 : 0, recordLimit ?? 10]}} as any);
     }
 
     /**
@@ -674,14 +704,6 @@ export class ResourceService implements IResourceService {
             {$project: {tag: `$_id`, _id: 0, count: '$count'}},
         ];
         return this.resourceProvider.aggregate(condition);
-    }
-
-    /**
-     * 批量封禁或解封资源
-     * @param resourceList
-     */
-    async batchFreeOrRecoverResource(resourceList: ResourceInfo[]) {
-
     }
 
     /**

@@ -2,7 +2,7 @@ import * as semver from 'semver';
 import {isURL} from 'validator';
 import {controller, get, inject, post, provide, put} from 'midway';
 import {IResourceService, IResourceVersionService} from '../../interface';
-import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy} from 'lodash';
+import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy, isDate} from 'lodash';
 import {
     ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext, IJsonSchemaValidate
 } from 'egg-freelog-base';
@@ -23,8 +23,11 @@ export class ResourceController {
     @inject()
     elasticSearchService: ElasticSearchService;
 
-    @get('/_db_search')
-    async index() {
+    /**
+     * DB搜索资源列表
+     */
+    @get('/search')
+    async dbSearch() {
 
         const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
@@ -36,11 +39,11 @@ export class ResourceController {
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
-        const startResourceId = ctx.checkQuery('startResourceId').optional().isResourceId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
-        const tags = ctx.checkQuery('tags').optional().toSplitArray().len(1, 5).value;
-        // const platformTags = ctx.checkQuery('platformTags').optional().toSplitArray().len(1, 10).value;
+        const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().len(1, 5).value;
+        const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
+        const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
         ctx.validateParams();
 
         const condition: any = {};
@@ -60,8 +63,12 @@ export class ResourceController {
             const searchRegExp = new RegExp(keywords, 'i');
             condition.$or = [{resourceName: searchRegExp}, {resourceType: searchRegExp}];
         }
-        if (!isUndefined(startResourceId)) {
-            condition._id = {$lt: startResourceId};
+        if (isDate(startCreateDate) && isDate(endCreateDate)) {
+            condition.createDate = {$gte: startCreateDate, $lte: endCreateDate};
+        } else if (isDate(startCreateDate)) {
+            condition.createDate = {$gte: startCreateDate};
+        } else if (isDate(endCreateDate)) {
+            condition.createDate = {$lte: endCreateDate};
         }
         if (!isEmpty(tags)) {
             condition.tags = {$in: tags};
@@ -76,6 +83,9 @@ export class ResourceController {
         ctx.success(pageResult);
     }
 
+    /**
+     * ES搜索资源列表
+     */
     @get('/')
     async esSearch() {
 
@@ -514,39 +524,36 @@ export class ResourceController {
         ctx.success(resources);
     }
 
+
     /**
-     * 冻结资源
+     * 批量冻结或解冻资源
      */
-    @put('/:resourceId/freeze')
+    @put('/freeOrRecover/batch')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async freezeResource() {
+    async batchFreeOrRecoverResource() {
         const {ctx} = this;
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
-        const remark = ctx.checkBody('remark').exist().len(1, 200).value;
+        const resourceIds = ctx.checkBody('resourceIds').exist().isArray().len(1, 100).value;
+        const reason = ctx.checkBody('reason').exist().len(1, 200).value;
+        const remark = ctx.checkBody('remark').optional().len(1, 200).value;
+        const operationType = ctx.checkBody('operationType').exist().toInt().in([1, 2]).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        if (!resourceInfo || [2, 3].includes(resourceInfo.status)) {
-            throw new ArgumentError('未找到资源或资源已被冻结');
-        }
-        await this.resourceService.freezeOrDeArchiveResource(resourceInfo, remark).then(ctx.success);
+        await this.resourceService.batchFreeOrRecoverResource(resourceIds, operationType, reason, remark).then(ctx.success);
     }
 
     /**
-     * 解冻资源
+     * 资源冻结或解冻记录
      */
-    @put('/:resourceId/deArchive')
+    @get('/freeOrRecover/records')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async deArchiveResource() {
+    async freeOrRecoverRecords() {
         const {ctx} = this;
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
+        const recordDesc = ctx.checkBody('remark').optional().default(1).toInt().in([0, 1]).value;
+        const recordLimit = ctx.checkQuery('recordLimit').ignoreParamWhenEmpty().toInt().gt(0).le(100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        const resourceInfo = await this.resourceService.findByResourceId(resourceId);
-        if (!resourceInfo || [0, 1].includes(resourceInfo.status)) {
-            throw new ArgumentError('未找到资源或资源不是冻结状态');
-        }
-        await this.resourceService.freezeOrDeArchiveResource(resourceInfo, '').then(ctx.success);
+        await this.resourceService.batchFindFreeOrRecoverRecords(resourceIds, undefined, recordDesc, recordLimit).then(ctx.success);
     }
 
     /**

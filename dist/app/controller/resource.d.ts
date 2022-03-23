@@ -7,7 +7,13 @@ export declare class ResourceController {
     resourcePolicyValidator: IJsonSchemaValidate;
     resourceVersionService: IResourceVersionService;
     elasticSearchService: ElasticSearchService;
-    index(): Promise<void>;
+    /**
+     * DB搜索资源列表
+     */
+    dbSearch(): Promise<void>;
+    /**
+     * ES搜索资源列表
+     */
     esSearch(): Promise<void>;
     /**
      * 搜索关键字补全
@@ -33,13 +39,13 @@ export declare class ResourceController {
      */
     resourceBySha1(): Promise<FreelogContext>;
     /**
-     * 冻结资源
+     * 批量冻结或解冻资源
      */
-    freezeResource(): Promise<void>;
+    batchFreeOrRecoverResource(): Promise<void>;
     /**
-     * 解冻资源
+     * 资源冻结或解冻记录
      */
-    deArchiveResource(): Promise<void>;
+    freeOrRecoverRecords(): Promise<void>;
     /**
      * 策略格式校验
      * @param policies
