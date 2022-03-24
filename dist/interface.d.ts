@@ -293,7 +293,7 @@ export interface IResourceService {
      * @param recordDesc
      * @param recordLimit
      */
-    batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordDesc?: 0 | 1, recordLimit?: number): Promise<any[]>;
+    batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordLimit?: number): Promise<any[]>;
 }
 export interface IResourceVersionService {
     createResourceVersion(resourceInfo: ResourceInfo, options: CreateResourceVersionOptions): Promise<ResourceVersionInfo>;

@@ -98,10 +98,9 @@ export declare class ResourceService implements IResourceService {
      * 查询冻结与解冻记录
      * @param resourceIds
      * @param operationType
-     * @param recordDesc
      * @param recordLimit
      */
-    batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordDesc?: 0 | 1, recordLimit?: number): Promise<any[]>;
+    batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordLimit?: number): Promise<any[]>;
     /**
      * 查找资源标签
      * @param condition

@@ -377,15 +377,14 @@ export class ResourceService implements IResourceService {
      * 查询冻结与解冻记录
      * @param resourceIds
      * @param operationType
-     * @param recordDesc
      * @param recordLimit
      */
-    async batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordDesc?: 0 | 1, recordLimit?: number) {
+    async batchFindFreeOrRecoverRecords(resourceIds: string[], operationType?: 1 | 2, recordLimit?: number) {
         const condition = {resourceId: {$in: resourceIds}} as any;
         if (operationType) {
             condition['records.type'] = operationType;
         }
-        return this.resourceFreezeRecordProvider.find(condition, {records: {$slice: [recordDesc ? 1 : 0, recordLimit ?? 10]}} as any);
+        return this.resourceFreezeRecordProvider.find(condition, {records: {$slice: recordLimit}} as any);
     }
 
     /**

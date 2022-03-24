@@ -552,7 +552,11 @@ export class ResourceController {
         const recordLimit = ctx.checkQuery('recordLimit').ignoreParamWhenEmpty().toInt().default(10).gt(0).le(100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 
-        await this.resourceService.batchFindFreeOrRecoverRecords(resourceIds, undefined, recordDesc, recordLimit).then(ctx.success);
+        const dataList = await this.resourceService.batchFindFreeOrRecoverRecords(resourceIds, undefined, recordLimit * (recordDesc ? -1 : 1));
+        if (recordDesc) {
+            dataList.forEach(x => x.records.reverse());
+        }
+        ctx.success(dataList);
     }
 
     /**
