@@ -1,6 +1,6 @@
 import {ValidatorResult} from 'jsonschema';
 import {provide, init, scope} from 'midway';
-import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base'
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide('resourceUpcastValidator')

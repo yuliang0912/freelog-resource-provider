@@ -113,9 +113,7 @@ export class ResourceTagController {
         await this.resourceService.findResourceTags(condition, 'tagName tagType').then(ctx.success);
     }
 
-    /**
-     * 标签分类
-     */
+    // 统计标签使用数量
     @get('/statistics')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async tagStatistics() {
@@ -129,7 +127,6 @@ export class ResourceTagController {
         }
 
         const tagCountMap = await this.resourceService.tagStatistics(tagList.map(x => x.tagName)).then(list => {
-            console.log(list);
             return new Map(list.map(x => [x.tag, parseInt(x.count.toString())]));
         });
 

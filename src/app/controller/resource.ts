@@ -235,9 +235,7 @@ export class ResourceController {
         await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
     }
 
-    /**
-     * 批量设置或移除资源标签
-     */
+    // 批量设置或移除资源标签
     @put('/tags/batchSetOrRemoveResourceTag')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async batchSetOrRemoveResourceTag() {
@@ -253,7 +251,6 @@ export class ResourceController {
     @get('/:resourceIdOrName/dependencyTree')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async dependencyTree() {
-
         const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
         const maxDeep = ctx.checkQuery('maxDeep').optional().isInt().toInt().ge(1).le(100).value;
@@ -548,7 +545,7 @@ export class ResourceController {
     async freeOrRecoverRecords() {
         const {ctx} = this;
         const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
-        const recordDesc = ctx.checkBody('remark').optional().default(1).toInt().in([0, 1]).value;
+        const recordDesc = ctx.checkQuery('remark').optional().default(1).toInt().in([0, 1]).value;
         const recordLimit = ctx.checkQuery('recordLimit').ignoreParamWhenEmpty().toInt().default(10).gt(0).le(100).value;
         ctx.validateParams().validateOfficialAuditAccount();
 

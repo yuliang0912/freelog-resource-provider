@@ -22,7 +22,7 @@ export default () => {
         enable: true,
         clientId: 'freelog-resource-service',
         logLevel: 1, // logLevel.ERROR,
-        brokers: ['kafka-0.common:9092', 'kafka-1.common:9092', 'kafka-2.common:9092'],
+        brokers: ['kafka-hs.production:9092'],
         connectionTimeout: 3000,
         retry: {
             initialRetryTime: 5000,
