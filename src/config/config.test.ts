@@ -27,7 +27,7 @@ export default () => {
         enable: true,
         clientId: 'freelog-resource-service',
         logLevel: 1, // logLevel.ERROR,
-        brokers: ['kafka-svc.common:9092']
+        brokers: ['kafka-svc.common:9093']
     };
 
     return config;
