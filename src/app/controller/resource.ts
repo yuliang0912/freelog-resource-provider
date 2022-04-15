@@ -26,7 +26,7 @@ export class ResourceController {
     /**
      * DB搜索资源列表
      */
-    @get('/search')
+    @get('/')
     async dbSearch() {
 
         const {ctx} = this;
@@ -86,7 +86,7 @@ export class ResourceController {
     /**
      * ES搜索资源列表
      */
-    @get('/')
+    @get('/esSearch')
     async esSearch() {
 
         const {ctx} = this;
