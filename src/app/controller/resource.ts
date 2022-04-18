@@ -116,6 +116,66 @@ export class ResourceController {
     }
 
     /**
+     * DB搜索资源列表
+     */
+    @get('/search')
+    async searchForAdmin() {
+
+        const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
+        const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
+        const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
+        const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
+        const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
+        const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().len(1, 5).value;
+        const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
+        const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
+        ctx.validateParams();
+
+        const condition: any = {};
+        if (isSelf) {
+            ctx.validateVisitorIdentity(IdentityTypeEnum.LoginUser);
+            condition.userId = ctx.userId;
+        }
+        if (isString(resourceType)) { // resourceType 与 omitResourceType互斥
+            condition.resourceType = new RegExp(`^${resourceType}$`, 'i');
+        } else if (isString(omitResourceType)) {
+            condition.resourceType = {$ne: omitResourceType};
+        }
+        if (includes([0, 1], status)) {
+            condition.status = status;
+        }
+        if (isString(keywords) && keywords.length > 0) {
+            const searchRegExp = new RegExp(keywords, 'i');
+            condition.$or = [{resourceName: searchRegExp}, {resourceType: searchRegExp}];
+        }
+        if (isDate(startCreateDate) && isDate(endCreateDate)) {
+            condition.createDate = {$gte: startCreateDate, $lte: endCreateDate};
+        } else if (isDate(startCreateDate)) {
+            condition.createDate = {$gte: startCreateDate};
+        } else if (isDate(endCreateDate)) {
+            condition.createDate = {$lte: endCreateDate};
+        }
+        if (!isEmpty(tags)) {
+            condition.tags = {$in: tags};
+        }
+        const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {updateDate: -1});
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
+        }
+        if (isLoadLatestVersionInfo) {
+            pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
+        }
+        ctx.success(pageResult);
+    }
+
+    /**
      * 搜索关键字补全
      */
     @get('/keywordSuggest')

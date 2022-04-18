@@ -16,6 +16,10 @@ export declare class ResourceController {
      */
     esSearch(): Promise<void>;
     /**
+     * DB搜索资源列表
+     */
+    searchForAdmin(): Promise<void>;
+    /**
      * 搜索关键字补全
      */
     keywordSuggest(): Promise<void>;
