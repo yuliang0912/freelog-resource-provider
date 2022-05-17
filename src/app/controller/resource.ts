@@ -127,6 +127,8 @@ export class ResourceController {
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
+        const userId = ctx.checkQuery('userId').ignoreParamWhenEmpty().isUserId().toInt().value;
+        const resourceId = ctx.checkQuery('resourceId').ignoreParamWhenEmpty().isResourceId().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -139,6 +141,9 @@ export class ResourceController {
         ctx.validateParams();
 
         const condition: any = {};
+        if (userId) {
+            condition.userId = userId;
+        }
         if (isSelf) {
             ctx.validateVisitorIdentity(IdentityTypeEnum.LoginUser);
             condition.userId = ctx.userId;
@@ -164,6 +169,9 @@ export class ResourceController {
         }
         if (!isEmpty(tags)) {
             condition.tags = {$in: tags};
+        }
+        if (resourceId) {
+            condition._id = resourceId;
         }
         const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {updateDate: -1});
         if (isLoadPolicyInfo) {
