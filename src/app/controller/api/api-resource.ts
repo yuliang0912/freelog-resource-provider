@@ -1,6 +1,6 @@
 import {controller, inject, post, provide} from "midway";
 import {ApiResourceService} from "../../service/api/api-resource-service";
-import {FreelogContext} from "egg-freelog-base";
+import {FreelogContext, IdentityTypeEnum, visitorIdentityValidator} from "egg-freelog-base";
 
 
 @provide()
@@ -13,6 +13,7 @@ export class ApiResourceController {
     @inject()
     apiResourceService: ApiResourceService;
 
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
     @post('/listByTagNameAndAfterCreateDate')
     async listByTagNameAndAfterCreateDate() {
         this.ctx.checkBody("tagName").exist();
@@ -24,6 +25,7 @@ export class ApiResourceController {
         this.ctx.success(await this.apiResourceService.listByTagNameAndAfterCreateDate(this.ctx.request.body));
     }
 
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
     @post(`/listByResourceIds`)
     async listByResourceIds() {
         this.ctx.checkBody("resourceIds").exist();
