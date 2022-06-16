@@ -317,7 +317,7 @@ export class ResourceController {
     }
 
     @get('/:resourceIdOrName/dependencyTree')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async dependencyTree() {
         const {ctx} = this;
         const resourceIdOrName = ctx.checkParams('resourceIdOrName').exist().decodeURIComponent().value;
@@ -368,7 +368,7 @@ export class ResourceController {
     }
 
     @get('/:resourceIdOrName/authTree')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async authTree() {
 
         const {ctx} = this;
@@ -417,7 +417,7 @@ export class ResourceController {
     }
 
     @get('/:resourceIdOrName/relationTree')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async relationTree() {
 
         const {ctx} = this;
