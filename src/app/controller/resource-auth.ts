@@ -60,7 +60,7 @@ export class ResourceAuthController {
     }
 
     // 资源批量授权
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/batchAuth/results')
     async resourceBatchAuth() {
         const resourceIds = this.ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
