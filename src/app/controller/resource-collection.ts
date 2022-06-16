@@ -111,7 +111,7 @@ export class ResourceCollectionController {
     }
 
     @get('/:resourceId/count')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async count() {
 
         const {ctx} = this;
