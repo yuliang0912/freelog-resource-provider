@@ -92,7 +92,7 @@ export class ResourceCollectionController {
     }
 
     @get('/batch/count')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async batchCount() {
 
         const {ctx} = this;

@@ -225,7 +225,7 @@ export class ResourceVersionController {
     }
 
     @get('/:resourceId/versions/:version')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async show() {
         const {ctx} = this;
         const resourceId = ctx.checkParams('resourceId').isResourceId().value;
