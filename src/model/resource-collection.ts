@@ -15,7 +15,7 @@ export class ResourceCollectionModel extends MongooseModelBase {
         const CollectionSchema = new this.mongoose.Schema({
             resourceId: {type: String, required: true},
             resourceName: {type: String, required: true},
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             authorId: {type: Number, required: true},
             authorName: {type: String, default: ''},
             userId: {type: Number, required: true},

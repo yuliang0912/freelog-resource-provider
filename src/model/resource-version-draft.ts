@@ -15,7 +15,7 @@ export class ResourceVersionDraftModel extends MongooseModelBase {
         const ResourceVersionDraftScheme = new this.mongoose.Schema({
             resourceId: {type: String, required: true}, // 资源ID,每个资源只能有一个草稿信息,数据提交过来如果存在,则直接更新
             userId: {type: Number, required: true},
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             draftData: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: false},
             status: {type: Number, default: 0, required: true},
         }, {

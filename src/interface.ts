@@ -12,7 +12,7 @@ export interface operationPolicyInfo {
 export interface CreateResourceOptions {
     userId: number;
     username: string;
-    resourceType: string;
+    resourceType: string[];
     name: string;
     intro?: string;
     policies?: operationPolicyInfo[];
@@ -123,7 +123,7 @@ export interface PolicyInfo extends BasePolicyInfo {
 export interface ResourceInfo {
     resourceId?: string;
     resourceName: string;
-    resourceType: string;
+    resourceType: string[];
     userId: number;
     username: string;
     resourceVersions: BaseResourceVersion[];
@@ -163,7 +163,7 @@ export interface ResourceVersionInfo extends BaseResourceVersion {
     resourceId: string;
     resourceName: string;
     userId: number;
-    resourceType: string;
+    resourceType: string[];
     fileSha1: string;
     filename: string;
     description?: string;
@@ -180,7 +180,7 @@ export interface ResourceVersionInfo extends BaseResourceVersion {
 export interface CollectionResourceInfo {
     resourceId: string;
     resourceName: string;
-    resourceType: string;
+    resourceType: string[];
     userId: number;
     authorId: number;
     authorName: string;
@@ -191,7 +191,7 @@ export interface ResourceDependencyTree {
     resourceName: string,
     version: string,
     versions: string[],
-    resourceType: string,
+    resourceType: string[],
     versionRange: string,
     versionId: string,
     fileSha1: string,
@@ -215,7 +215,7 @@ export interface IOutsideApiService {
 
     getFileStream(fileSha1: string): Promise<any>;
 
-    getFileObjectProperty(fileSha1: string, resourceType: string): Promise<object>;
+    getFileStorageInfo(fileSha1: string): Promise<any>;
 
     createPolicies(policyTexts: string[]): Promise<BasePolicyInfo[]>;
 

@@ -1,12 +1,15 @@
 import { IResourceService, IResourceVersionService } from '../../interface';
 import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
 import { ElasticSearchService } from '../service/elastic-search-service';
+import { ResourceTypeRepairService } from '../service/resource-type-repair-service';
 export declare class ResourceController {
     ctx: FreelogContext;
     resourceService: IResourceService;
     resourcePolicyValidator: IJsonSchemaValidate;
     resourceVersionService: IResourceVersionService;
     elasticSearchService: ElasticSearchService;
+    resourceTypeRepairService: ResourceTypeRepairService;
+    resourceTypeRepair(): Promise<void>;
     /**
      * DB搜索资源列表
      */

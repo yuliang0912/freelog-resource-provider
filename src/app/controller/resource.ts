@@ -4,9 +4,15 @@ import {controller, get, inject, post, provide, put} from 'midway';
 import {IResourceService, IResourceVersionService} from '../../interface';
 import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy, isDate} from 'lodash';
 import {
-    ArgumentError, IdentityTypeEnum, visitorIdentityValidator, CommonRegex, FreelogContext, IJsonSchemaValidate
+    ArgumentError,
+    IdentityTypeEnum,
+    visitorIdentityValidator,
+    CommonRegex,
+    FreelogContext,
+    IJsonSchemaValidate
 } from 'egg-freelog-base';
 import {ElasticSearchService} from '../service/elastic-search-service';
+import {ResourceTypeRepairService} from '../service/resource-type-repair-service';
 
 @provide()
 @controller('/v2/resources')
@@ -22,6 +28,13 @@ export class ResourceController {
     resourceVersionService: IResourceVersionService;
     @inject()
     elasticSearchService: ElasticSearchService;
+    @inject()
+    resourceTypeRepairService: ResourceTypeRepairService;
+
+    @put('/resourceTypeRepair')
+    async resourceTypeRepair() {
+        await this.resourceTypeRepairService.resourceTypeRepair().then(() => this.ctx.success(true));
+    }
 
     /**
      * DB搜索资源列表
@@ -200,7 +213,7 @@ export class ResourceController {
     async create(ctx: FreelogContext) {
 
         const name = ctx.checkBody('name').exist().isResourceName().trim().value;
-        const resourceType = ctx.checkBody('resourceType').exist().isResourceType().value;
+        const resourceType = ctx.checkBody('resourceType').exist().isArray().len(1, 5).value;
         const policies = ctx.checkBody('policies').optional().default([]).isArray().value;
         const intro = ctx.checkBody('intro').optional().default('').len(0, 1000).value;
         const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).default([]).value;
@@ -210,7 +223,9 @@ export class ResourceController {
         if (coverImages.some(x => !isURL(x.toString(), {protocols: ['https']}))) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'coverImages'));
         }
-
+        // if (resourceType.some(x => !CommonRegex.resourceType.test(x))) {
+        //     throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceType'));
+        // }
         this._policySchemaValidate(policies, 'addPolicy');
 
         const {userId, username} = ctx.identityInfo.userInfo;

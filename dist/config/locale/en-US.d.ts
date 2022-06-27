@@ -57,5 +57,6 @@ declare const _exports: {
     'subject-policy-name-duplicate-failed': string;
     'subject-policy-repeatability-validate-failed': string;
     'name is already existing': string;
+    'file-analyze-failed': string;
 };
 export = _exports;

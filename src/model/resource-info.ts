@@ -30,7 +30,7 @@ export class ResourceInfoModel extends MongooseModelBase {
 
         const resourceInfoScheme = new this.mongoose.Schema({
             resourceName: {type: String, required: true},
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             latestVersion: {type: String, default: '', required: false}, // 实际取值最大的版本,并非最新加入的
             resourceVersions: {type: [ResourceVersionSchema], default: [], required: false},
             userId: {type: Number, required: true},

@@ -97,29 +97,29 @@ export class ResourceVersionController {
         const baseUpcastResources = ctx.checkBody('baseUpcastResources').optional().isArray().default([]).value;
         ctx.validateParams();
 
-        const resolveResourceValidateResult = await this.resolveDependencyOrUpcastValidator.validate(resolveResources);
-        if (!isEmpty(resolveResourceValidateResult.errors)) {
+        const resolveResourceValidateResult = this.resolveDependencyOrUpcastValidator.validate(resolveResources);
+        if (!resolveResourceValidateResult.valid) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resolveResources'), {
                 errors: resolveResourceValidateResult.errors
             });
         }
 
-        const dependencyValidateResult = await this.resourceVersionDependencyValidator.validate(dependencies);
-        if (!isEmpty(dependencyValidateResult.errors)) {
+        const dependencyValidateResult = this.resourceVersionDependencyValidator.validate(dependencies);
+        if (!dependencyValidateResult.valid) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {
                 errors: dependencyValidateResult.errors
             });
         }
 
-        const upcastResourceValidateResult = await this.resourceUpcastValidator.validate(baseUpcastResources);
-        if (!isEmpty(upcastResourceValidateResult.errors)) {
+        const upcastResourceValidateResult = this.resourceUpcastValidator.validate(baseUpcastResources);
+        if (!upcastResourceValidateResult.valid) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'baseUpcastResources'), {
                 errors: upcastResourceValidateResult.errors
             });
         }
 
-        const customPropertyDescriptorValidateResult = await this.customPropertyValidator.validate(customPropertyDescriptors);
-        if (!isEmpty(customPropertyDescriptorValidateResult.errors)) {
+        const customPropertyDescriptorValidateResult = this.customPropertyValidator.validate(customPropertyDescriptors);
+        if (!customPropertyDescriptorValidateResult.valid) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'customPropertyDescriptors'), {
                 errors: customPropertyDescriptorValidateResult.errors
             });
@@ -128,11 +128,16 @@ export class ResourceVersionController {
         const resourceInfo = await this.resourceService.findByResourceId(resourceId);
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
 
-        const fileSystemProperty = await this.outsideApiService.getFileObjectProperty(fileSha1, resourceInfo.resourceType);
-        if (!fileSystemProperty) {
+        const fileStorageInfo = await this.outsideApiService.getFileStorageInfo(fileSha1);
+        if (!fileStorageInfo) {
             throw new ArgumentError(ctx.gettext('params-validate-failed', 'fileSha1'));
         }
-
+        if (fileStorageInfo.metaAnalyzeStatus === 1) {
+            throw new ArgumentError('文件属性正在分析中,请稍后再试!');
+        }
+        if (fileStorageInfo.metaAnalyzeStatus !== 2) {
+            throw new ArgumentError(ctx.gettext('file-analyze-failed'));
+        }
         // 目前允许同一个文件被当做资源的多个版本.也允许同一个文件加入多个资源.但是不可以跨越用户.
         const isCanBeCreate = await this.resourceVersionService.checkFileIsCanBeCreate(fileSha1);
         if (!isCanBeCreate) {
@@ -147,13 +152,10 @@ export class ResourceVersionController {
         if (!isEmpty(resourceVersions) && resourceVersions.every(x => semver.gt(x.version, version))) {
             throw new ArgumentError(ctx.gettext('resource-version-must-be-greater-than-latest-version'));
         }
-
-        Object.assign(fileSystemProperty, {mime: this.resourcePropertyGenerator.getResourceMimeType(filename)});
-
         const versionInfo = {
             version: semver.clean(version), fileSha1, filename, description,
             resolveResources, dependencies, customPropertyDescriptors, baseUpcastResources,
-            systemProperty: fileSystemProperty
+            systemProperty: Object.assign({fileSize: fileStorageInfo.fileSize}, fileStorageInfo.metaInfo)
         };
 
         await this.resourceVersionService.createResourceVersion(resourceInfo, versionInfo).then(ctx.success);

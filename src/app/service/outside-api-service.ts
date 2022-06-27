@@ -20,10 +20,9 @@ export class OutsideApiService implements IOutsideApiService {
     /**
      * 分析与获取文件系统属性
      * @param fileSha1
-     * @param resourceType
      */
-    async getFileObjectProperty(fileSha1: string, resourceType: string) {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/property?resourceType=${resourceType}`);
+    async getFileStorageInfo(fileSha1: string) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.storageInfo}/files/${fileSha1}/info`);
     }
 
     /**

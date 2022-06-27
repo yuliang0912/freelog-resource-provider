@@ -120,7 +120,9 @@ module.exports = {
 
     'subject-policy-repeatability-validate-failed': '资源策略校验失败,存在重复的策略',
 
-    'name is already existing': '资源名已经存在'
+    'name is already existing': '资源名已经存在',
+
+    'file-analyze-failed': '文件属性分析失败.'
 }
 
 

@@ -10,9 +10,8 @@ export declare class OutsideApiService implements IOutsideApiService {
     /**
      * 分析与获取文件系统属性
      * @param fileSha1
-     * @param resourceType
      */
-    getFileObjectProperty(fileSha1: string, resourceType: string): Promise<any>;
+    getFileStorageInfo(fileSha1: string): Promise<any>;
     /**
      * 批量签约(已经签过不会重签,合约服务会自动过滤)
      * @param licenseeResourceId

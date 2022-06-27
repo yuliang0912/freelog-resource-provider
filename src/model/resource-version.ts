@@ -51,7 +51,7 @@ export class ResourceVersionModel extends MongooseModelBase {
             resourceName: {type: String, required: true},
             version: {type: String, required: true},
             userId: {type: Number, required: true},
-            resourceType: {type: String, required: true},
+            resourceType: {type: [String], required: true},
             fileSha1: {type: String, required: true},
             filename: {type: String, required: true}, // 文件名称,用于下载时使用.会通过后缀分析
             dependencies: {type: [BaseDependencyScheme], required: false},

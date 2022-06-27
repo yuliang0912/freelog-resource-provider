@@ -213,7 +213,7 @@ export class ResourceService implements IResourceService {
             dependencyTree = await this.getResourceDependencyTree({} as ResourceInfo, versionInfo, {isContainRootNode: true});
         }
 
-        const resourceTypeMap = new Map<string, string>();
+        const resourceTypeMap = new Map<string, string[]>();
         const resourceIds = first(dependencyTree).dependencies?.map(dependency => dependency.baseUpcastResources.map(x => x.resourceId)).flat();
         if (resourceIds.length) {
             await this.resourceProvider.find({_id: {$in: resourceIds}}, '_id resourceType').then(list => {

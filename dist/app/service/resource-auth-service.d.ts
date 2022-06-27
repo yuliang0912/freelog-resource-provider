@@ -28,7 +28,7 @@ export declare class ResourceAuthService implements IResourceAuthService {
     resourceRelationTreeAuth(resourceInfo: ResourceInfo, versionInfo: ResourceVersionInfo): Promise<{
         resourceId: string;
         resourceName: string;
-        resourceType: string;
+        resourceType: string[];
         versionRanges: any[];
         versions: string[];
         versionIds: string[];

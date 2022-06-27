@@ -146,7 +146,7 @@ export class ResourceAuthService implements IResourceAuthService {
             return new Map(list.map(x => [x.contractId, x]));
         });
 
-        const resourceTypeMap = new Map<string, string>();
+        const resourceTypeMap = new Map<string, string[]>();
         const resourceIds = dependencyTree.dependencies?.map(dependency => dependency.baseUpcastResources.map(x => x.resourceId)).flat();
         if (!isEmpty(resourceIds)) {
             await this.resourceService.find({_id: {$in: resourceIds}}, '_id resourceType').then(list => {
