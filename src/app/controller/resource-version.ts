@@ -184,7 +184,7 @@ export class ResourceVersionController {
         ctx.validateParams();
 
         await this.resourceVersionService.find({
-            fileSha1, userId: ctx.userId
+            fileSha1
         }, projection.join(' ')).then(ctx.success);
     }
 
