@@ -175,6 +175,19 @@ export class ResourceVersionController {
         }, projection.join(' ')).then(ctx.success);
     }
 
+    @get('/files/:fileSha1/versions/admin')
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    async versionsBySha1ForAdmin() {
+        const {ctx} = this;
+        const fileSha1 = ctx.checkParams('fileSha1').exist().isSha1().toLowercase().value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        await this.resourceVersionService.find({
+            fileSha1, userId: ctx.userId
+        }, projection.join(' ')).then(ctx.success);
+    }
+
     // 获取版本属性
     @get('/:resourceId/versions/:version/property')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)

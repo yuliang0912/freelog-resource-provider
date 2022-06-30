@@ -19,6 +19,7 @@ export class ResourceTypeRepairService {
             for (let resourceInfo of list) {
                 const resourceType = resourceInfo.resourceType;
                 const resourceId = resourceInfo.resourceId;
+                this.resourceProvider.updateOne({_id: resourceId}, {resourceType}).then();
                 this.resourceVersionProvider.updateMany({resourceId}, {resourceType}).then();
                 this.resourceCollectionProvider.updateMany({resourceId}, {resourceType}).then();
             }

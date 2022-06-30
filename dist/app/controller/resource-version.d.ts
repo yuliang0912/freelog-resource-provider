@@ -18,6 +18,7 @@ export declare class ResourceVersionController {
     resourceVersionDraft(): Promise<void>;
     create(): Promise<void>;
     versionsBySha1(): Promise<void>;
+    versionsBySha1ForAdmin(): Promise<void>;
     versionProperty(): Promise<FreelogContext>;
     createOrUpdateResourceVersionDraft(): Promise<void>;
     validateResourceVersionDependencies(): Promise<void>;
