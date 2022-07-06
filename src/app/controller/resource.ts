@@ -31,9 +31,31 @@ export class ResourceController {
     @inject()
     resourceTypeRepairService: ResourceTypeRepairService;
 
-    @put('/resourceTypeRepair')
+    @get('/resourceTypeRepair')
     async resourceTypeRepair() {
         await this.resourceTypeRepairService.resourceTypeRepair().then(() => this.ctx.success(true));
+    }
+
+    @get('/resourceMetaRepair')
+    async resourceMetaRepair() {
+        await this.resourceTypeRepairService.resourceMetaRepair().then(() => this.ctx.success(true));
+    }
+
+    @get('/recommend')
+    async recommendResources() {
+        const {ctx} = this;
+        // 推荐类型 1:推荐主题资源 2:占位资源
+        const recommendType = ctx.checkQuery('recommendType').exist().toInt().in([1, 2]).value;
+        ctx.validateParams();
+
+        const dataMap = new Map<string, string[]>();
+        dataMap.set('test_1', ['60ef9c4ea11650002e840fcd', '611372050938740039ad6df2', '61400afcf27e48003f5e230c', '617654aae886b0003419469d', '61d6b5652ae3ac002eb85783']);
+        dataMap.set('test_2', ['62b01142d2bca6002e366f20']);
+        const resourceIds = dataMap.get(`${ctx.app.env}_${recommendType}`) ?? [];
+        if (isEmpty(resourceIds)) {
+            return ctx.success([]);
+        }
+        await this.resourceService.find({_id: {$in: resourceIds}}).then(ctx.success);
     }
 
     /**
