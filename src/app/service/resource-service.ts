@@ -5,6 +5,7 @@ import {
     isArray,
     isUndefined,
     intersectionWith,
+    isNumber,
     difference,
     isString,
     omit,
@@ -286,11 +287,15 @@ export class ResourceService implements IResourceService {
         return this.resourceProvider.findOne({uniqueKey}, ...args);
     }
 
-    async findUserCreatedResourceCounts(userIds: number[]) {
+    async findUserCreatedResourceCounts(userIds: number[], status?: number) {
+        let condition: any = {
+            $match: {userId: {$in: userIds}}
+        };
+        if (isNumber(status)) {
+            condition.status = status;
+        }
         return this.resourceProvider.aggregate([
-            {
-                $match: {userId: {$in: userIds}}
-            },
+            condition,
             {
                 $group: {_id: '$userId', count: {'$sum': 1}}
             },

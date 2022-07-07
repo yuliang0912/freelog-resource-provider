@@ -222,8 +222,9 @@ export interface IResourceService {
     /**
      * 查找用户创建的资源数量
      * @param userIds
+     * @param status
      */
-    findUserCreatedResourceCounts(userIds: number[]): any;
+    findUserCreatedResourceCounts(userIds: number[], status?: number): any;
     /**
      * 从依赖树中获取指定的所有发行版本(查找多重上抛)
      * 例如深度2的树节点上抛了A-1.0,深度3节点也上抛了A-1.1.

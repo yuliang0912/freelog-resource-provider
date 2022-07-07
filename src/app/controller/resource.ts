@@ -70,6 +70,7 @@ export class ResourceController {
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
         const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
+        const userId = ctx.checkQuery('userId').ignoreParamWhenEmpty().isUserId().toInt().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -82,6 +83,9 @@ export class ResourceController {
         ctx.validateParams();
 
         const condition: any = {};
+        if (userId) {
+            condition.userId = ctx.userId;
+        }
         if (isSelf) {
             ctx.validateVisitorIdentity(IdentityTypeEnum.LoginUser);
             condition.userId = ctx.userId;
@@ -268,9 +272,10 @@ export class ResourceController {
     async createdCount() {
         const {ctx} = this;
         const userIds = ctx.checkQuery('userIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
+        const status = ctx.checkQuery('status').optional().toInt().value;
         ctx.validateParams();
 
-        const list = await this.resourceService.findUserCreatedResourceCounts(userIds.map(x => parseInt(x)));
+        const list = await this.resourceService.findUserCreatedResourceCounts(userIds.map(x => parseInt(x)), status);
         ctx.success(userIds.map(userId => {
             const record = list.find(x => x.userId.toString() === userId);
             return {userId: parseInt(userId), createdResourceCount: record?.count ?? 0};
