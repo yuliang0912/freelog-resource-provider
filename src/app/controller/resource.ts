@@ -84,9 +84,8 @@ export class ResourceController {
 
         const condition: any = {};
         if (userId) {
-            condition.userId = ctx.userId;
-        }
-        if (isSelf) {
+            condition.userId = userId;
+        } else if (isSelf) {
             ctx.validateVisitorIdentity(IdentityTypeEnum.LoginUser);
             condition.userId = ctx.userId;
         }
@@ -112,6 +111,7 @@ export class ResourceController {
         if (!isEmpty(tags)) {
             condition.tags = {$in: tags};
         }
+        console.log(condition);
         const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {updateDate: -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
