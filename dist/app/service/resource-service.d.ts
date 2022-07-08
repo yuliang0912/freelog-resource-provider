@@ -198,6 +198,11 @@ export declare class ResourceService implements IResourceService {
      */
     fillResourcePolicyInfo(resources: ResourceInfo[], isTranslate?: boolean): Promise<ResourceInfo[]>;
     /**
+     * 填充资源冻结原因
+     * @param resources
+     */
+    fillResourceFreezeReason(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+    /**
      * 统计资源标签数量
      * @param tags
      */

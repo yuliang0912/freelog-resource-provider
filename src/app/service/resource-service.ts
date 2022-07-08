@@ -129,7 +129,10 @@ export class ResourceService implements IResourceService {
         }
         if (isArray(options.addPolicies) || isArray(options.updatePolicies)) {
             resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
-            updateInfo.status = ResourceService._getResourceStatus(resourceInfo, resourceInfo.resourceVersions, resourceInfo.policies);
+            // updateInfo.status = ResourceService._getResourceStatus(resourceInfo, resourceInfo.resourceVersions, resourceInfo.policies);
+        }
+        if (isNumber(options.status)) {
+            updateInfo.status = options.status;
         }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }
@@ -457,7 +460,6 @@ export class ResourceService implements IResourceService {
         return this.resourceTagProvider.updateMany({_id: {$in: tagList.map(x => x.tagId)}}, model).then(t => Boolean(t.ok));
     }
 
-
     /**
      * 批量设置或移除标签
      * @param resourceIds 资源对象
@@ -694,6 +696,32 @@ export class ResourceService implements IResourceService {
         });
     }
 
+    /**
+     * 填充资源冻结原因
+     * @param resources
+     */
+    async fillResourceFreezeReason(resources: ResourceInfo[]): Promise<ResourceInfo[]> {
+        const freezeResourceIds = resources.filter(x => (x.status & 2) === 2).map(x => x.resourceId);
+        if (isEmpty(freezeResourceIds)) {
+            return resources;
+        }
+        const condition = [
+            {$match: {resourceId: {$in: freezeResourceIds}, 'records.type': 1}},
+            {$unwind: {path: '$records'}},
+            {$match: {'records.type': 1}},
+            {$group: {_id: '$resourceId', records: {$last: '$records'}}},
+            {$project: {resourceId: '$_id', _id: false, freezeInfo: '$records'}}
+        ];
+        const resourceFreezeRecordMap: Map<string, string> = await this.resourceFreezeRecordProvider.aggregate(condition).then(list => {
+            return new Map(list.map(x => [x.resourceId, x.freezeInfo.remark.length ? x.freezeInfo.remark : x.freezeInfo.reason]));
+        });
+
+        return resources.map((item: any) => {
+            const resourceInfo = item.toObject ? item.toObject() : item;
+            resourceInfo.freezeReason = resourceFreezeRecordMap.get(resourceInfo.resourceId) ?? '';
+            return resourceInfo;
+        });
+    }
 
     /**
      * 统计资源标签数量

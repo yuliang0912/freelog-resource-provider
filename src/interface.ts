@@ -21,12 +21,13 @@ export interface CreateResourceOptions {
 }
 
 export interface UpdateResourceOptions {
-    resourceId: string;
+    resourceId?: string;
     intro?: string;
     coverImages?: [string];
     tags?: string[];
     addPolicies?: operationPolicyInfo[];
     updatePolicies?: operationPolicyInfo[];
+    status?: 0 | 1;
 }
 
 export interface CreateResourceVersionOptions {
@@ -275,6 +276,12 @@ export interface IResourceService {
      * @param resources
      */
     fillResourceLatestVersionInfo(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
+
+    /**
+     * 填充资源封禁原因
+     * @param resources
+     */
+    fillResourceFreezeReason(resources: ResourceInfo[]): Promise<ResourceInfo[]>;
 
     /**
      * 查找用户创建的资源数量

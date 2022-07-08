@@ -9,7 +9,7 @@ import {
     visitorIdentityValidator,
     CommonRegex,
     FreelogContext,
-    IJsonSchemaValidate
+    IJsonSchemaValidate, ApplicationError
 } from 'egg-freelog-base';
 import {ElasticSearchService} from '../service/elastic-search-service';
 import {ResourceTypeRepairService} from '../service/resource-type-repair-service';
@@ -77,6 +77,7 @@ export class ResourceController {
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
+        const isLoadFreezeReason = ctx.checkQuery('isLoadFreezeReason').optional().toInt().in([0, 1]).value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().len(1, 5).value;
         const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
         const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
@@ -111,13 +112,15 @@ export class ResourceController {
         if (!isEmpty(tags)) {
             condition.tags = {$in: tags};
         }
-        console.log(condition);
         const pageResult = await this.resourceService.findIntervalList(condition, skip, limit, projection, sort ?? {updateDate: -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }
         if (isLoadLatestVersionInfo) {
             pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
+        }
+        if (isLoadFreezeReason) {
+            pageResult.dataList = await this.resourceService.fillResourceFreezeReason(pageResult.dataList);
         }
         ctx.success(pageResult);
     }
@@ -136,20 +139,27 @@ export class ResourceController {
         const omitResourceType = ctx.checkQuery('omitResourceType').ignoreParamWhenEmpty().isResourceType().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().trim().value;
         const isSelf = ctx.checkQuery('isSelf').optional().default(0).toInt().in([0, 1]).value;
+        const userId = ctx.checkQuery('userId').ignoreParamWhenEmpty().isUserId().toInt().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
+        const isLoadFreezeReason = ctx.checkQuery('isLoadFreezeReason').optional().toInt().in([0, 1]).value;
         const tags = ctx.checkQuery('tags').ignoreParamWhenEmpty().toSplitArray().len(1, 5).value;
         const startCreateDate = ctx.checkQuery('startCreateDate').ignoreParamWhenEmpty().toDate().value;
         const endCreateDate = ctx.checkQuery('endCreateDate').ignoreParamWhenEmpty().toDate().value;
         ctx.validateParams();
-        const pageResult = await this.elasticSearchService.search(skip, limit, sort, keywords, isSelf ? ctx.userId : undefined, resourceType, omitResourceType, status, tags, projection, startCreateDate, endCreateDate);
+
+        const queryUserId = userId ? userId : isSelf ? ctx.userId : undefined;
+        const pageResult = await this.elasticSearchService.search(skip, limit, sort, keywords, queryUserId, resourceType, omitResourceType, status, tags, projection, startCreateDate, endCreateDate);
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.resourceService.fillResourcePolicyInfo(pageResult.dataList);
         }
         if (isLoadLatestVersionInfo) {
             pageResult.dataList = await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
+        }
+        if (isLoadFreezeReason) {
+            pageResult.dataList = await this.resourceService.fillResourceFreezeReason(pageResult.dataList);
         }
         ctx.success(pageResult);
     }
@@ -292,6 +302,7 @@ export class ResourceController {
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
+        const isLoadFreezeReason = ctx.checkQuery('isLoadFreezeReason').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
 
         let dataList = [];
@@ -307,6 +318,9 @@ export class ResourceController {
         }
         if (isLoadLatestVersionInfo) {
             dataList = await this.resourceService.fillResourceLatestVersionInfo(dataList);
+        }
+        if (isLoadFreezeReason) {
+            dataList = await this.resourceService.fillResourceFreezeReason(dataList);
         }
         ctx.success(dataList);
     }
@@ -343,6 +357,26 @@ export class ResourceController {
         };
 
         await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
+    }
+
+    @put('/:resourceId/status')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async updateOnlineStatus() {
+        const {ctx} = this;
+        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+        // 0:下架 1:上架 2:冻结(下架) 3:冻结(上架)
+        const status = ctx.checkBody('status').exist().toInt().in([0, 1]).value;
+        ctx.validateParams();
+
+        const resourceInfo = await this.resourceService.findOne({_id: resourceId});
+        ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
+        if ((resourceInfo.status & 2) == 2) {
+            throw new ApplicationError('资源已被冻结,无法执行上下架操作');
+        }
+        if (status === 1 && !resourceInfo.policies.some(x => x.status === 1)) {
+            throw new ApplicationError('资源上架时,最少需要一个启用的授权策略');
+        }
+        await this.resourceService.updateResource(resourceInfo, {status}).then(x => ctx.success(true));
     }
 
     // 批量设置或移除资源标签
@@ -514,6 +548,7 @@ export class ResourceController {
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
+        const isLoadFreezeReason = ctx.checkQuery('isLoadFreezeReason').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
 
         let resourceInfo = null;
@@ -524,12 +559,14 @@ export class ResourceController {
         } else {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'resourceIdOrName'));
         }
-
         if (resourceInfo && isLoadLatestVersionInfo) {
             resourceInfo = await this.resourceService.fillResourceLatestVersionInfo([resourceInfo]).then(first);
         }
         if (resourceInfo && isLoadPolicyInfo) {
             resourceInfo = await this.resourceService.fillResourcePolicyInfo([resourceInfo], isTranslate).then(first);
+        }
+        if (resourceInfo && isLoadFreezeReason) {
+            resourceInfo = await this.resourceService.fillResourceFreezeReason([resourceInfo]).then(first);
         }
         ctx.success(resourceInfo);
     }
