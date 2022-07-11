@@ -2,6 +2,7 @@ import { IResourceService, IResourceVersionService } from '../../interface';
 import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
 import { ElasticSearchService } from '../service/elastic-search-service';
 import { ResourceTypeRepairService } from '../service/resource-type-repair-service';
+import { ResourcePropertyGenerator } from '../../extend/resource-property-generator';
 export declare class ResourceController {
     ctx: FreelogContext;
     resourceService: IResourceService;
@@ -9,6 +10,7 @@ export declare class ResourceController {
     resourceVersionService: IResourceVersionService;
     elasticSearchService: ElasticSearchService;
     resourceTypeRepairService: ResourceTypeRepairService;
+    resourcePropertyGenerator: ResourcePropertyGenerator;
     resourceTypeRepair(): Promise<void>;
     resourceMetaRepair(): Promise<void>;
     recommendResources(): Promise<FreelogContext>;

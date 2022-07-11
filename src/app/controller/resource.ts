@@ -1,7 +1,7 @@
 import * as semver from 'semver';
 import {isURL} from 'validator';
 import {controller, get, inject, post, provide, put} from 'midway';
-import {IResourceService, IResourceVersionService} from '../../interface';
+import {IResourceService, IResourceVersionService, ResourceInfo} from '../../interface';
 import {first, includes, isEmpty, isString, isUndefined, pick, uniqBy, isDate} from 'lodash';
 import {
     ArgumentError,
@@ -13,6 +13,7 @@ import {
 } from 'egg-freelog-base';
 import {ElasticSearchService} from '../service/elastic-search-service';
 import {ResourceTypeRepairService} from '../service/resource-type-repair-service';
+import {ResourcePropertyGenerator} from '../../extend/resource-property-generator';
 
 @provide()
 @controller('/v2/resources')
@@ -30,6 +31,8 @@ export class ResourceController {
     elasticSearchService: ElasticSearchService;
     @inject()
     resourceTypeRepairService: ResourceTypeRepairService;
+    @inject()
+    resourcePropertyGenerator: ResourcePropertyGenerator;
 
     @get('/resourceTypeRepair')
     async resourceTypeRepair() {
@@ -298,6 +301,7 @@ export class ResourceController {
         const {ctx} = this;
         const resourceIds = ctx.checkQuery('resourceIds').optional().isSplitMongoObjectId().toSplitArray().value;
         const resourceNames = ctx.checkQuery('resourceNames').optional().decodeURIComponent().toSplitArray().value;
+        const status = ctx.checkQuery('status').ignoreParamWhenEmpty().isSplitNumber().toSplitArray().len(0, 10).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -305,14 +309,20 @@ export class ResourceController {
         const isLoadFreezeReason = ctx.checkQuery('isLoadFreezeReason').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
 
-        let dataList = [];
+        const condition: Partial<ResourceInfo> = {};
+        if (status) {
+            condition.status = {$in: status} as any;
+        }
         if (!isEmpty(resourceIds)) {
-            dataList = await this.resourceService.find({_id: {$in: resourceIds}}, projection.join(' '));
-        } else if (!isEmpty(resourceNames)) {
-            dataList = await this.resourceService.findByResourceNames(resourceNames, projection.join(' '));
-        } else {
+            condition['_id'] = {$in: resourceIds};
+        }
+        if (!isEmpty(resourceNames)) {
+            condition.uniqueKey = {$in: resourceNames.map(x => this.resourcePropertyGenerator.generateResourceUniqueKey(x))} as any;
+        }
+        if (isEmpty(resourceIds) && isEmpty(resourceNames)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
+        let dataList = await this.resourceService.find(condition, projection.join(' '));
         if (isLoadPolicyInfo) {
             dataList = await this.resourceService.fillResourcePolicyInfo(dataList, isTranslate);
         }
