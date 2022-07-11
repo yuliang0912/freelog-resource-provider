@@ -129,10 +129,13 @@ export class ResourceService implements IResourceService {
         }
         if (isArray(options.addPolicies) || isArray(options.updatePolicies)) {
             resourceInfo.policies = updateInfo.policies = [...existingPolicyMap.values()];
-            // updateInfo.status = ResourceService._getResourceStatus(resourceInfo, resourceInfo.resourceVersions, resourceInfo.policies);
         }
-        if (isNumber(options.status)) {
+        // 已被冻结的资源不允许修改资源状态
+        if (isNumber(options.status) && (resourceInfo.status & 2) !== 2) {
             updateInfo.status = options.status;
+        }
+        if (updateInfo.status === 1 && !resourceInfo.policies.some(x => x.status === 1)) {
+            throw new ApplicationError('资源上架时,最少需要一个启用的授权策略');
         }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }

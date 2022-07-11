@@ -336,9 +336,10 @@ export class ResourceController {
         const intro = ctx.checkBody('intro').optional().type('string').len(0, 1000).value;
         const coverImages = ctx.checkBody('coverImages').optional().isArray().len(0, 10).value;
         const tags = ctx.checkBody('tags').optional().isArray().len(0, 20).value;
+        const status = ctx.checkBody('status').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
 
-        if ([updatePolicies, addPolicies, intro, coverImages, tags].every(isUndefined)) {
+        if ([updatePolicies, addPolicies, intro, coverImages, tags, status].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed'));
         }
         if (!isEmpty(coverImages) && coverImages.some(x => !isURL(x.toString(), {protocols: ['https']}))) {
@@ -349,35 +350,57 @@ export class ResourceController {
         this._policySchemaValidate(updatePolicies, 'updatePolicy');
 
         const resourceInfo = await this.resourceService.findOne({_id: resourceId});
-
         ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
+        if (status === 1 && !resourceInfo.resourceVersions.length) {
+            throw new ApplicationError('资源上架时,最少需要一个创建一个版本');
+        }
 
         const updateResourceOptions = {
-            resourceId, intro, coverImages, tags, addPolicies, updatePolicies
+            resourceId, intro, coverImages, tags, addPolicies, updatePolicies, status
         };
 
         await this.resourceService.updateResource(resourceInfo, updateResourceOptions).then(ctx.success);
     }
 
-    @put('/:resourceId/status')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async updateOnlineStatus() {
-        const {ctx} = this;
-        const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
-        // 0:下架 1:上架 2:冻结(下架) 3:冻结(上架)
-        const status = ctx.checkBody('status').exist().toInt().in([0, 1]).value;
-        ctx.validateParams();
-
-        const resourceInfo = await this.resourceService.findOne({_id: resourceId});
-        ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
-        if ((resourceInfo.status & 2) == 2) {
-            throw new ApplicationError('资源已被冻结,无法执行上下架操作');
-        }
-        if (status === 1 && !resourceInfo.policies.some(x => x.status === 1)) {
-            throw new ApplicationError('资源上架时,最少需要一个启用的授权策略');
-        }
-        await this.resourceService.updateResource(resourceInfo, {status}).then(x => ctx.success(true));
-    }
+    // 通过修改资源信息接口实现
+    // @put('/:resourceId/status')
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    // async updateOnlineStatus() {
+    //     const {ctx} = this;
+    //     const resourceId = ctx.checkParams('resourceId').exist().isResourceId().value;
+    //     // 0:下架 1:上架 2:冻结(下架) 3:冻结(上架)
+    //     const status = ctx.checkBody('status').exist().toInt().in([0, 1]).value;
+    //     // 启用的授权策略
+    //     const enablePolicyIds = ctx.checkBody('enablePolicyIds').optional().isArray().len(0, 100).value;
+    //     // 禁用的授权策略
+    //     const disablePolicyIds = ctx.checkBody('disablePolicyIds').optional().isArray().len(0, 100).value;
+    //     ctx.validateParams();
+    //
+    //     const resourceInfo = await this.resourceService.findOne({_id: resourceId});
+    //     ctx.entityNullValueAndUserAuthorizationCheck(resourceInfo, {msg: ctx.gettext('params-validate-failed', 'resourceId')});
+    //     if ((resourceInfo.status & 2) == 2) {
+    //         throw new ApplicationError('资源已被冻结,无法执行上下架操作');
+    //     }
+    //     if (enablePolicyIds || disablePolicyIds) {
+    //         for (let policy of resourceInfo.policies) {
+    //             if (enablePolicyIds?.includes(policy.policyId)) {
+    //                 policy.status = 1;
+    //             }
+    //             if (disablePolicyIds?.includes(policy.policyId)) {
+    //                 policy.status = 0;
+    //             }
+    //         }
+    //     }
+    //     if (status === 1 && !resourceInfo.policies.some(x => x.status === 1)) {
+    //         throw new ApplicationError('资源上架时,最少需要一个启用的授权策略');
+    //     }
+    //     if (status === 1 && !resourceInfo.resourceVersions.length) {
+    //         throw new ApplicationError('资源上架时,最少需要一个创建一个版本');
+    //     }
+    //     resourceInfo.status = status;
+    //     const modify = pick(resourceInfo, ['status', 'policies']);
+    //     await this.resourceService.resourceProvider.updateOne({_id: resourceInfo.resourceId}, modify).then(x => ctx.success(true));
+    // }
 
     // 批量设置或移除资源标签
     @put('/tags/batchSetOrRemoveResourceTag')

@@ -32,7 +32,6 @@ export declare class ResourceController {
     createdCount(): Promise<void>;
     list(): Promise<void>;
     update(): Promise<void>;
-    updateOnlineStatus(): Promise<void>;
     batchSetOrRemoveResourceTag(): Promise<void>;
     dependencyTree(): Promise<FreelogContext>;
     authTree(): Promise<FreelogContext>;

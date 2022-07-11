@@ -1,5 +1,11 @@
 import {SubjectAuthResult} from './auth-interface';
-import {ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, ContractStatusEnum, PageResult} from 'egg-freelog-base';
+import {
+    ContractLicenseeIdentityTypeEnum,
+    SubjectTypeEnum,
+    ContractStatusEnum,
+    PageResult,
+    IMongodbOperation
+} from 'egg-freelog-base';
 import {EachMessagePayload} from 'kafkajs';
 
 export interface operationPolicyInfo {
@@ -230,6 +236,9 @@ export interface IOutsideApiService {
 }
 
 export interface IResourceService {
+
+    resourceProvider: IMongodbOperation<ResourceInfo>;
+
     createResource(options: CreateResourceOptions): Promise<ResourceInfo>;
 
     updateResource(resourceInfo: ResourceInfo, options: UpdateResourceOptions): Promise<ResourceInfo>;
