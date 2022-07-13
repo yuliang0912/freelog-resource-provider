@@ -81,8 +81,9 @@ export class ResourceService implements IResourceService {
         resourceInfo.status = ResourceService._getResourceStatus(resourceInfo, resourceInfo.resourceVersions, resourceInfo.policies);
         resourceInfo.uniqueKey = this.resourcePropertyGenerator.generateResourceUniqueKey(resourceInfo.resourceName);
         resourceInfo.resourceNameAbbreviation = options.name;
-
-        return this.resourceProvider.create(resourceInfo);
+        const resource = await this.resourceProvider.create(resourceInfo);
+        this.outsideApiService.sendActivityEvent('TS000021', resourceInfo.userId).catch(console.error);
+        return resource;
     }
 
     /**
@@ -136,6 +137,9 @@ export class ResourceService implements IResourceService {
         }
         if (updateInfo.status === 1 && !resourceInfo.policies.some(x => x.status === 1)) {
             throw new ApplicationError('资源上架时,最少需要一个启用的授权策略');
+        }
+        if (!isEmpty(options.addPolicies)) {
+            this.outsideApiService.sendActivityEvent('TS000023', resourceInfo.userId).catch(console.error);
         }
         return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
     }

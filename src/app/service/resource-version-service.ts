@@ -46,7 +46,10 @@ export class ResourceVersionService implements IResourceVersionService {
 
         const dependencies = await this._validateDependencies(resourceInfo.resourceId, options.dependencies, options?.resolveResources.map(x => x.resourceId));
         const isFirstVersion = isEmpty(resourceInfo.resourceVersions);
-        const {resolveResources, upcastResources} = await this._validateUpcastAndResolveResource(dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
+        const {
+            resolveResources,
+            upcastResources
+        } = await this._validateUpcastAndResolveResource(dependencies, options.resolveResources, isFirstVersion ? options.baseUpcastResources : resourceInfo.baseUpcastResources, isFirstVersion);
 
         const model: ResourceVersionInfo = {
             version: options.version,
@@ -70,7 +73,8 @@ export class ResourceVersionService implements IResourceVersionService {
         }
 
         if (!isEmpty(resolveResources)) {
-            const beSignSubjects = chain(resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+            const beSignSubjects = chain(resolveResources)
+                .map(({resourceId,contracts}) => contracts.map(({policyId}) => Object({
                 subjectId: resourceId, policyId
             }))).flattenDeep().value();
             await this.outsideApiService.batchSignResourceContracts(resourceInfo.resourceId, beSignSubjects).then(contracts => {
@@ -84,6 +88,8 @@ export class ResourceVersionService implements IResourceVersionService {
         const resourceVersion = await this.resourceVersionProvider.create(model);
         this.resourceVersionDraftProvider.deleteOne({resourceId: resourceInfo.resourceId}).then();
         await this.resourceService.createdResourceVersionHandle(resourceInfo, resourceVersion);
+
+        this.outsideApiService.sendActivityEvent('TS000022', resourceInfo.userId).catch(console.error);
 
         return resourceVersion;
     }
@@ -112,7 +118,10 @@ export class ResourceVersionService implements IResourceVersionService {
             throw new ApplicationError(this.ctx.gettext('release-scheme-update-resolve-release-invalid-error'), {invalidResolveResources});
         }
 
-        const beSignSubjects = chain(options.resolveResources).map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+        const beSignSubjects = chain(options.resolveResources).map(({
+                                                                        resourceId,
+                                                                        contracts
+                                                                    }) => contracts.map(({policyId}) => Object({
             subjectId: resourceId, policyId
         }))).flattenDeep().value();
 
@@ -408,7 +417,11 @@ export class ResourceVersionService implements IResourceVersionService {
     async _validateUpcastAndResolveResource(dependencies, resolveResources, baseUpcastResources, isCheckBaseUpcast = false) {
 
         // 检查发行有效性,策略有效性,上抛发行是否合理,声明处理的发行是否合理以及未处理的依赖项
-        const {upcastResources, backlogResources, allUntreatedResources} = await this._getRealUpcastAndResolveResources(dependencies, baseUpcastResources);
+        const {
+            upcastResources,
+            backlogResources,
+            allUntreatedResources
+        } = await this._getRealUpcastAndResolveResources(dependencies, baseUpcastResources);
 
         // 第一个发行方案需要检查基础上抛是否在范围内
         if (isCheckBaseUpcast) {

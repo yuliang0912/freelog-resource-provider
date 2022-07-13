@@ -42,4 +42,10 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param options
      */
     getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
+    /**
+     * 发送运营活动事件
+     * @param taskConfigCode
+     * @param userId
+     */
+    sendActivityEvent(taskConfigCode: string, userId: number): Promise<void>;
 }

@@ -233,6 +233,8 @@ export interface IOutsideApiService {
     getContractByContractIds(contractIds: string[], options?: object): Promise<ContractInfo[]>;
 
     getResourceContracts(subjectId: string, licenseeId: string | number, options?: object): Promise<ContractInfo[]>;
+
+    sendActivityEvent(taskConfigCode: string, userId: number): Promise<any>;
 }
 
 export interface IResourceService {
