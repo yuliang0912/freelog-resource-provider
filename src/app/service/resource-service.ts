@@ -302,7 +302,7 @@ export class ResourceService implements IResourceService {
             $match: {userId: {$in: userIds}}
         };
         if (isNumber(status)) {
-            condition.status = status;
+            condition.$match.status = status;
         }
         return this.resourceProvider.aggregate([
             condition,
