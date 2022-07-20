@@ -50,6 +50,31 @@ export class ResourceTypeRepairService {
     }
 
     /**
+     * 资源过期合约清理
+     */
+    async resourceExpiredContractClear() {
+        const resourceVersionInfos = await this.resourceVersionProvider.find({}, 'versionId resolveResources');
+        for (let resourceVersion of resourceVersionInfos) {
+            const contractIds = resourceVersion.resolveResources.map(x => x.contracts).flat().map(x => x.contractId);
+            const expiredContractSet = await this.outsideApiService.getContractByContractIds(contractIds, {
+                projection: 'contractId,status'
+            }).then(list => {
+                return new Set(list.filter(x => x.status === 1).map(x => x.contractId));
+            });
+            if (!expiredContractSet.size) {
+                continue;
+            }
+            console.log(resourceVersion.versionId, [...expiredContractSet.values()]);
+            for (let resolveResource of resourceVersion.resolveResources) {
+                resolveResource.contracts = resolveResource.contracts.filter(x => !expiredContractSet.has(x.contractId));
+            }
+            this.resourceVersionProvider.updateOne({versionId: resourceVersion.versionId}, {
+                resolveResources: resourceVersion.resolveResources
+            }).catch(console.error);
+        }
+    }
+
+    /**
      * 资源meta修复
      */
     async resourceMetaRepair() {

@@ -12,6 +12,10 @@ export declare class ResourceTypeRepairService {
      */
     resourceTypeRepair(): Promise<void>;
     /**
+     * 资源过期合约清理
+     */
+    resourceExpiredContractClear(): Promise<void>;
+    /**
      * 资源meta修复
      */
     resourceMetaRepair(): Promise<void>;

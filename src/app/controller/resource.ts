@@ -44,6 +44,11 @@ export class ResourceController {
         await this.resourceTypeRepairService.resourceMetaRepair().then(() => this.ctx.success(true));
     }
 
+    @get('/resourceExpiredContractClear')
+    async resourceExpiredContractClear() {
+        await this.resourceTypeRepairService.resourceExpiredContractClear().then(() => this.ctx.success(true));
+    }
+
     @get('/recommend')
     async recommendResources() {
         const {ctx} = this;

@@ -249,6 +249,7 @@ export class ResourceService implements IResourceService {
                     versions: [dependency.version],
                     versionIds: [dependency.versionId],
                     resolveResources: dependency.resolveResources,
+                    isUpcast: versionInfo.upcastResources?.some(x => x.resourceId === dependency.resourceId) ? 1 : 0,
                     children: dependency.baseUpcastResources.map(upcastResource => {
                         const resolveVersions = uniqBy(this.findResourceVersionFromDependencyTree(dependency.dependencies, upcastResource.resourceId), 'versionId');
                         return {
@@ -258,6 +259,7 @@ export class ResourceService implements IResourceService {
                             versionRanges: resolveVersions.map(x => x.versionRange),
                             versions: resolveVersions.map(x => x.version),
                             versionIds: resolveVersions.map(x => x.versionId),
+                            isUpcast: versionInfo.upcastResources?.some(x => x.resourceId === upcastResource.resourceId) ? 1 : 0,
                             children: []
                         };
                     })

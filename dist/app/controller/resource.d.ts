@@ -13,6 +13,7 @@ export declare class ResourceController {
     resourcePropertyGenerator: ResourcePropertyGenerator;
     resourceTypeRepair(): Promise<void>;
     resourceMetaRepair(): Promise<void>;
+    resourceExpiredContractClear(): Promise<void>;
     recommendResources(): Promise<FreelogContext>;
     /**
      * DB搜索资源列表
