@@ -173,6 +173,7 @@ export class ResourceAuthService implements IResourceAuthService {
                 versionRanges: [dependency.versionRange],
                 versions: [dependency.version],
                 versionIds: [dependency.versionId],
+                isUpcast: resourceInfo.baseUpcastResources.some(x => x.resourceId === dependency.resourceId),
                 children: []
             };
 
@@ -200,6 +201,7 @@ export class ResourceAuthService implements IResourceAuthService {
                     versionRanges: resolveVersions.map(x => x.versionRange),
                     versions: resolveVersions.map(x => x.version),
                     versionIds: resolveVersions.map(x => x.versionId),
+                    isUpcast: resourceInfo.baseUpcastResources.some(x => x.resourceId === upcast.resourceId),
                     downstreamIsAuth, selfAndUpstreamIsAuth, downstreamAuthContractIds,
                     children: []
                 };
