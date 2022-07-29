@@ -106,7 +106,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ResourceOperationController.prototype, "batchCreate", null);
 __decorate([
-    (0, midway_1.del)('/'),
+    (0, midway_1.put)('/'),
     (0, egg_freelog_base_1.visitorIdentityValidator)(egg_freelog_base_1.IdentityTypeEnum.LoginUser),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),

@@ -1,4 +1,4 @@
-import {controller, del, get, inject, post, priority, provide} from 'midway';
+import {controller, get, inject, post, priority, provide, put} from 'midway';
 import {FreelogContext, IdentityTypeEnum, visitorIdentityValidator} from 'egg-freelog-base';
 import {ResourceOperationService} from '../service/resource-operation-service';
 import {IResourceService} from '../../interface';
@@ -27,7 +27,7 @@ export class ResourceOperationController {
         await this.resourceOperationService.createResourceOperationDatas(type, resourceList).then(() => ctx.success(true));
     }
 
-    @del('/')
+    @put('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async batchDelete() {
         const {ctx} = this;
