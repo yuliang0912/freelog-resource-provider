@@ -24,7 +24,7 @@ export class ResourceOperationController {
         ctx.validateParams();
 
         const resourceList = await this.resourceService.find({_id: {$in: resourceIds}});
-        await this.resourceOperationService.createResourceOperationDatas(type, resourceList).then(ctx.success);
+        await this.resourceOperationService.createResourceOperationDatas(type, resourceList).then(() => ctx.success(true));
     }
 
     @del('/')
@@ -36,7 +36,7 @@ export class ResourceOperationController {
         ctx.validateParams();
 
         const resourceList = await this.resourceService.find({_id: {$in: resourceIds}});
-        
+
         await this.resourceOperationService.deleteResourceOperationDatas(type, resourceList).then(ctx.success);
     }
 
@@ -49,7 +49,7 @@ export class ResourceOperationController {
         const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
         const authorName = ctx.checkQuery('authorName').ignoreParamWhenEmpty().isUsername().value;
         const resourceName = ctx.checkQuery('resourceName').ignoreParamWhenEmpty().value;
-        const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2]).value;
+        const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2, 3]).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
@@ -82,5 +82,17 @@ export class ResourceOperationController {
             await this.resourceService.fillResourceLatestVersionInfo(pageResult.dataList);
         }
         ctx.success(pageResult);
+    }
+
+    @get('/list')
+    async list() {
+        const {ctx} = this;
+        const type = ctx.checkQuery('type').optional().default(1).in([1]).value;
+        const resourceIds = ctx.checkQuery('resourceIds').exist().isSplitResourceId().toSplitArray().len(1, 100).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+        await this.resourceOperationService.resourceOperationProvider.find({
+            type, resourceId: {$in: resourceIds}
+        }, projection?.join(' ')).then(ctx.success);
     }
 }

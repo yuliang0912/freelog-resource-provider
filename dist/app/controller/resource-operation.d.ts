@@ -8,4 +8,5 @@ export declare class ResourceOperationController {
     batchCreate(): Promise<void>;
     batchDelete(): Promise<void>;
     index(): Promise<FreelogContext>;
+    list(): Promise<void>;
 }
