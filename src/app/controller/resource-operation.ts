@@ -2,7 +2,7 @@ import {controller, get, inject, post, priority, provide, put} from 'midway';
 import {FreelogContext, IdentityTypeEnum, visitorIdentityValidator} from 'egg-freelog-base';
 import {ResourceOperationService} from '../service/resource-operation-service';
 import {IResourceService} from '../../interface';
-import {omit, isNumber} from 'lodash';
+import {omit} from 'lodash';
 
 @provide()
 @priority(11)
@@ -49,7 +49,7 @@ export class ResourceOperationController {
         const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
         const authorName = ctx.checkQuery('authorName').ignoreParamWhenEmpty().isUsername().value;
         const resourceName = ctx.checkQuery('resourceName').ignoreParamWhenEmpty().value;
-        const status = ctx.checkQuery('status').optional().toInt().in([0, 1, 2, 3]).value;
+        const statusList = ctx.checkQuery('status').optional().isSplitNumber().toSplitArray().len(0, 10).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
@@ -64,8 +64,8 @@ export class ResourceOperationController {
         if (resourceName?.length) {
             condition['resourceInfo.resourceName'] = new RegExp(resourceName, 'i');
         }
-        if (isNumber(status)) {
-            condition['resourceInfo.status'] = status;
+        if (statusList?.length) {
+            condition['resourceInfo.status'] = {$in: statusList};
         }
         const pageResult = await this.resourceOperationService.findIntervalListJoinResource(condition, skip, limit, undefined, sort ?? {updateDate: -1});
         if (!pageResult.dataList.length) {
