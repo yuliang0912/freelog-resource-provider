@@ -49,7 +49,7 @@ export class ResourceOperationController {
         const resourceType = ctx.checkQuery('resourceType').ignoreParamWhenEmpty().isResourceType().toLow().value;
         const authorName = ctx.checkQuery('authorName').ignoreParamWhenEmpty().isUsername().value;
         const resourceName = ctx.checkQuery('resourceName').ignoreParamWhenEmpty().value;
-        const statusList = ctx.checkQuery('status').optional().isSplitNumber().toSplitArray().len(0, 10).value;
+        const statusList = ctx.checkQuery('status').optional().ignoreParamWhenEmpty().toSplitArray().len(0, 10).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1]).value;
         const isLoadLatestVersionInfo = ctx.checkQuery('isLoadLatestVersionInfo').optional().toInt().in([0, 1]).value;
         ctx.validateParams();
@@ -65,7 +65,7 @@ export class ResourceOperationController {
             condition['resourceInfo.resourceName'] = new RegExp(resourceName, 'i');
         }
         if (statusList?.length) {
-            condition['resourceInfo.status'] = {$in: statusList};
+            condition['resourceInfo.status'] = {$in: statusList.map(x => parseInt(x))};
         }
         const pageResult = await this.resourceOperationService.findIntervalListJoinResource(condition, skip, limit, undefined, sort ?? {updateDate: -1});
         if (!pageResult.dataList.length) {
