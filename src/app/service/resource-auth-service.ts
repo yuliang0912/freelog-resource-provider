@@ -179,15 +179,19 @@ export class ResourceAuthService implements IResourceAuthService {
 
             const subDependencyAuthTree = isEmpty(dependency.resolveResources) ? [] : this.resourceService.findResourceVersionFromDependencyTree(dependencyTree.dependencies, dependency.resourceId);
             const selfAndUpstreamResolveResources = flattenResourceDependencyTree(subDependencyAuthTree).filter(x => !isEmpty(x.resolveResources));
+
             const selfAndUpstreamAuthFailedResources = authCheck(selfAndUpstreamResolveResources);
+            // 下游(根资源)解决当前资源所使用的合约ID.
             dependRelationTree.downstreamAuthContractIds = versionInfo.resolveResources.find(x => x.resourceId === dependency.resourceId)?.contracts ?? [];
-            dependRelationTree.downstreamIsAuth = isEmpty(dependRelationTree.downstreamAuthContractIds) || this.contractAuth(dependency.resourceId, dependRelationTree.downstreamAuthContractIds.map(x => contractMap.get(x.contractId)), 'auth').isAuth;
+            // 如果根资源没有解决此依赖,则依然设置为true. UI上一般来说true不显示任何标记. false会显示授权异常.
+            dependRelationTree.downstreamIsAuth = !versionInfo.resolveResources.some(x => x.resourceId === dependency.resourceId) || this.contractAuth(dependency.resourceId, dependRelationTree.downstreamAuthContractIds.map(x => contractMap.get(x.contractId)), 'auth').isAuth;
             dependRelationTree.selfAndUpstreamIsAuth = isEmpty(selfAndUpstreamResolveResources) || isEmpty(selfAndUpstreamAuthFailedResources);
 
             for (const upcast of dependency.baseUpcastResources) {
 
                 const downstreamAuthContractIds = versionInfo.resolveResources.find(x => x.resourceId === upcast.resourceId)?.contracts ?? [];
-                const downstreamIsAuth = isEmpty(downstreamAuthContractIds) || this.contractAuth(upcast.resourceId, downstreamAuthContractIds.map(x => contractMap.get(x.contractId)), 'auth').isAuth;
+                // 跟资源对上抛是否就地解决. 如果没有解决或者已解决且授权通过,则为true.
+                const downstreamIsAuth = !versionInfo.resolveResources.find(x => x.resourceId === upcast.resourceId) || this.contractAuth(upcast.resourceId, downstreamAuthContractIds.map(x => contractMap.get(x.contractId)), 'auth').isAuth;
                 const subUpcastAuthTree = this.resourceService.findResourceVersionFromDependencyTree(dependency.dependencies, upcast.resourceId).filter(x => !isEmpty(x.resolveResources));
                 const selfAndUpstreamResolveResources = flattenResourceDependencyTree(subUpcastAuthTree).filter(x => !isEmpty(x.resolveResources));
                 const selfAndUpstreamAuthFailedResources = authCheck(selfAndUpstreamResolveResources);
