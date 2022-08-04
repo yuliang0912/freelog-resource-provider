@@ -74,9 +74,9 @@ export class ResourceVersionService implements IResourceVersionService {
 
         if (!isEmpty(resolveResources)) {
             const beSignSubjects = chain(resolveResources)
-                .map(({resourceId,contracts}) => contracts.map(({policyId}) => Object({
-                subjectId: resourceId, policyId
-            }))).flattenDeep().value();
+                .map(({resourceId, contracts}) => contracts.map(({policyId}) => Object({
+                    subjectId: resourceId, policyId
+                }))).flattenDeep().value();
             await this.outsideApiService.batchSignResourceContracts(resourceInfo.resourceId, beSignSubjects).then(contracts => {
                 const contractMap = new Map<string, string>(contracts.map(x => [x.subjectId + x.policyId, x.contractId]));
                 model.resolveResources.forEach(resolveResource => resolveResource.contracts.forEach(resolveContractInfo => {
@@ -262,7 +262,7 @@ export class ResourceVersionService implements IResourceVersionService {
             return new Map(list.map(x => [x.subjectId + x.policyId, x.contractId]));
         });
 
-        const tasks = [], cancelFailedPolicies = [];
+        const tasks = [];
         for (let [version, subjectInfos] of versionModifyPolicyMap) {
             const resourceVersionInfo = resourceVersionMap.get(version);
             resourceVersionInfo.resolveResources.forEach(resolveResource => {
@@ -284,15 +284,9 @@ export class ResourceVersionService implements IResourceVersionService {
                     }
                 });
             });
-            if (resourceVersionInfo.resolveResources.some(x => isEmpty(x.contracts))) {
-                cancelFailedPolicies.push({
-                    version, subjectInfos: subjectInfos.filter(x => x.operation === 0)
-                });
-            } else {
-                tasks.push(this.resourceVersionProvider.updateOne({
-                    versionId: resourceVersionInfo.versionId
-                }, {resolveResources: resourceVersionInfo.resolveResources}));
-            }
+            tasks.push(this.resourceVersionProvider.updateOne({
+                versionId: resourceVersionInfo.versionId
+            }, {resolveResources: resourceVersionInfo.resolveResources}));
         }
 
         return Promise.all(tasks).then(list => Boolean(list.length && list.every(x => x.ok)));

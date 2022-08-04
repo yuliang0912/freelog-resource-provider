@@ -29,7 +29,7 @@ export default () => {
     };
 
     config.localIdentity = {
-        userId: 50028,
+        userId: 50060,
         username: 'yuliang',
         email: 'support@freelog.com'
     };
