@@ -46,6 +46,7 @@ export declare class OutsideApiService implements IOutsideApiService {
      * 发送运营活动事件
      * @param taskConfigCode
      * @param userId
+     * @param meta
      */
-    sendActivityEvent(taskConfigCode: string, userId: number): Promise<void>;
+    sendActivityEvent(taskConfigCode: string, userId: number, meta?: any): Promise<void>;
 }

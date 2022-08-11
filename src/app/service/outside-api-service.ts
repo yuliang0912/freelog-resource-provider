@@ -93,11 +93,12 @@ export class OutsideApiService implements IOutsideApiService {
      * 发送运营活动事件
      * @param taskConfigCode
      * @param userId
+     * @param meta
      */
-    async sendActivityEvent(taskConfigCode: string, userId: number) {
+    async sendActivityEvent(taskConfigCode: string, userId: number, meta?: any) {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.baseUrl}/client/v2/activities/task/records/complete4TaskConfigCode`, {
             method: 'post', contentType: 'json', data: {
-                taskConfigCode, userId
+                taskConfigCode, userId, meta
             }
         }, CurlResFormatEnum.Original).then(response => {
             if (response.status >= 400) {

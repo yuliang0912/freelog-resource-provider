@@ -141,7 +141,15 @@ export class ResourceService implements IResourceService {
         if (!isEmpty(options.addPolicies)) {
             this.outsideApiService.sendActivityEvent('TS000023', resourceInfo.userId).catch(console.error);
         }
-        return this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
+        const data = await this.resourceProvider.findOneAndUpdate({_id: options.resourceId}, updateInfo, {new: true});
+        if (resourceInfo.status !== 1 && updateInfo.status === 1) {
+            this.outsideApiService.sendActivityEvent('TS000041', resourceInfo.userId, {
+                resourceId: resourceInfo.resourceId,
+                resourceName: resourceInfo.resourceName,
+                resourceType: resourceInfo.resourceType
+            }).catch(console.error);
+        }
+        return data;
     }
 
     /**
