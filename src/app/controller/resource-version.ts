@@ -271,7 +271,10 @@ export class ResourceVersionController {
         ctx.body = fileStreamInfo.fileStream;
         ctx.attachment(fileStreamInfo.fileName);
         ctx.set('content-length', fileStreamInfo.fileSize.toString());
-        ctx.set('content-type', fileStreamInfo.contentType);
+        ctx.set('content-type', resourceVersionInfo.systemProperty.mime ?? fileStreamInfo.contentType);
+        if (/audio|video/.test(resourceVersionInfo.systemProperty.mime ?? '')) {
+            this.ctx.set('Accept-Ranges', 'bytes');
+        }
     }
 
     @get('/versions/:versionId/internalClientDownload')
@@ -296,6 +299,9 @@ export class ResourceVersionController {
         ctx.set('content-length', fileStreamInfo.fileSize.toString());
         // 此代码需要放到ctx.attachment后面.否则就是midway自动根据附件后缀名给你设置mime了.程序变的无法控制
         ctx.set('content-type', resourceVersionInfo.systemProperty.mime ?? fileStreamInfo.contentType);
+        if (/audio|video/.test(resourceVersionInfo.systemProperty.mime ?? '')) {
+            this.ctx.set('Accept-Ranges', 'bytes');
+        }
     }
 
     @get('/versions/isCanBeCreate')
